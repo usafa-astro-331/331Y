@@ -1,0 +1,50 @@
+clc; clearvars; close all
+
+Re = 6378.137; %km
+
+Pt = 20; %dBW
+
+Gt = 11.5; %dBi
+
+Ll = -0.9; %dB
+
+f = 4E9; %Hz
+
+h = 600; %km
+
+el = 15; %deg
+
+lambda = 299792458/f %m
+
+dmax = -Re*sind(el) + sqrt((Re*sind(el))^2 + h^2 + 2*Re*h)
+
+Ls = -10*log10(lambda/(4*pi*dmax)^2) %db
+
+theta = 3; %deg
+
+Dpar = 3; %m
+
+theta3db = 70*lambda/Dpar %deg
+LptRX = -12*(theta/theta3db)^2 
+
+theta3db = 2; %deg
+LptTX = -12*(theta/theta3db)^2 
+
+thetaPol = 10; %deg
+Lpol = 10*log10(cosd(thetaPol)^2) %db
+
+Azenith = -0.04; %from chart
+Latm = Azenith/sind(el) %db
+
+Lrain = 0;
+
+Lm = LptTX + LptRX + Lpol + Latm + Lrain
+
+Tr = 40 + 273.15; %K
+
+R = 2E6; %bps
+ 
+eta = 0.6; %assumed
+Gr = 10*log10((pi*Dpar/lambda)^2*eta) %dB
+
+EbN0 = Pt + Gt + Ll + Ls + Lm + Gr + 228.6 - 10*log10(Tr) - 10*log10(R)

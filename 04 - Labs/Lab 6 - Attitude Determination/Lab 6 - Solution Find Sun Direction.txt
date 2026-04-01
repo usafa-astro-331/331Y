@@ -1,0 +1,12 @@
+      // ////////////* find sun direction *////////////////////////////////////////
+      // // // uncomment sun_plusX & sun_plusY lines to calculate sun direction
+      // // // (highlight them, CTRL-/)
+
+      S_mag = sun_plusX + sun_minusX + sun_plusY + sun_minusY;
+      sun_X = (sun_plusX - sun_minusX) / S_mag;
+      sun_Y = (sun_plusY - sun_minusY) / S_mag;
+      sun_direction = (atan2(sun_Y, sun_X) * RAD_TO_DEG);
+      if (sun_direction < 0) {
+        sun_direction += 360; // Adjust to range 0-360
+      }
+      /////////////////////////////////////////////////////////////////////////////

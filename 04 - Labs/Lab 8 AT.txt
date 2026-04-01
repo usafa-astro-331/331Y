@@ -1,0 +1,13 @@
+Ideas for CYOA:
+
+PID control of sat attitude using RW  sun tracker using photo-resistors
+Magnetorquer 
+Robotic arm
+Long range telemetry
+Send pictures over telemetry
+New magnetometer, compare to old / learn to calibrate magnetometer
+Charge battery using solar
+
+Vibe test?
+PCB design
+Code operating system – combine all labs code into 1
