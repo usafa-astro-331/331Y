@@ -27,7 +27,7 @@
 /*---------------------------------------------------------------------------------------------*/
 // Objects:
 FsFile dataFile;   // data file object
-HardwareSerial Xbee(2); // Serial object for communication with XBee 
+HardwareSerial Xbee(2); // Serial object for communication with XBee
 SFE_MAX1704X lipo; // SparkFun Thing Plus ESP32-WROOM onboard fuel gauge (I2C addr 0x36)
 ICM_20948_I2C imu_sensor; // IMU object
 
@@ -82,7 +82,7 @@ void setup() {
   //----------------------------------------------
   // Initialize MAX17048 fuel gauge
   //----------------------------------------------
-  if (!lipo.begin(Wire)) // Uses I2C address 0x36) 
+  if (!lipo.begin(Wire)) // Uses I2C address 0x36)
   {
     Serial.println("[WARN] MAX17048 not detected on I2C (0x36). Battery telemetry (cmd 4) will be unavailable.");
   } else {
@@ -105,7 +105,7 @@ void setup() {
     // mySmplrt.a = 1; // Accel divider 1: 1125 / (1+1) = ~562.5 Hz
     // mySmplrt.g = 1; // Gyro divider 1: 1125 / (1+1) = ~562.5 Hz
     // imu_sensor.setSampleRate(ICM_20948_Internal_Acc, mySmplrt);
-    // imu_sensor.setSampleRate(ICM_20948_Internal_Gyr, mySmplrt);    
+    // imu_sensor.setSampleRate(ICM_20948_Internal_Gyr, mySmplrt);
     Serial.println("[INFO] IMU Initialized.");
   }
   //----------------------------------------------
@@ -125,7 +125,7 @@ void setup() {
 
   Serial.println("[INFO] SETUP COMPLETE.");
   neopixelWrite(RGB_BUILTIN, 0, 255, 0); // Set to green (R=0, G=255, B=0)
-  
+
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -146,7 +146,7 @@ void loop() {
     timeLastHeartBeat = millis();
     Serial.println(".");
     Xbee.println("*");
-  
+
   }
 
   delay(1);
@@ -174,7 +174,7 @@ void loop() {
  *       parsing. Commands are expected to be integers at the start of the
  *       string. Unrecognized commands are ignored.
  *
- * @warning This function uses blocking serial reads (Xbee.readString()) 
+ * @warning This function uses blocking serial reads (Xbee.readString())
  *          and may delay program execution if no command is received.
  *
  * @see get_sat_rssi(), runTest()
@@ -263,13 +263,13 @@ void get_command_from_ground_station() {
  */
 void get_sat_rssi() {
   Xbee.println(" standby for RSSI");
-  
+
   // put the radio in command mode:
   bool not_done = true;
   String ok_response = "OK\r";   //The﻿response we expect.
   String response = String("");  //Create an empty string
   Serial.println("Starting get_sat_rssi()");
-  
+
   // Read the text of the response into the response variable
   while (not_done) {  // As long as we did not get a response from the XBee
     response = String("");
@@ -287,7 +287,7 @@ void get_sat_rssi() {
     not_done = !response.equals(ok_response);  // Set the not_done flag to the opposite of the result of equality check
   }
   // Serial.println(response);
-      
+
 
   // If we got the right response, configure the radio and return true.   
   Xbee.print("ATDB\r");  // destination high and destination low addresses set to 0 means all messages will only go
@@ -295,12 +295,12 @@ void get_sat_rssi() {
   response = String("");
   while (Xbee.available() > 0) {
     response += (char)Xbee.read();  //Read a single character at a time
-    
+
   }
   Serial.println(response);
   Xbee.print("ATCN\r");  // Switch back to data mode
 
-  String response2 = response; 
+  String response2 = response;
   uint32_t dec_response = strtoul(response2.c_str(), NULL, 16);
 
   Xbee.print("RSSI: -");
@@ -343,7 +343,7 @@ void send_battery_telemetry() {
   Serial.print(" %, CR=");
   Serial.print(crate, 3);
   Serial.println(" %/hr");
-} 
+}
 
 /*---------------------------------------------------------------------------------------------*/
 // Run Test:
@@ -371,12 +371,12 @@ void lab6_run_test() {
   }
   Serial.println("[INFO] Ready to start Lab 6 test, send any key to begin (send 'X' to stop test)...");
   Xbee.println("[INFO] Ready to start Lab 6 test, send any key to begin (send 'X' to stop test)...");
-  
+
   while(!Serial.available() && !Xbee.available()){} // wait for user to send any key to start test
   delay(100); // small delay to ensure serial buffer is fully received
   while(Serial.available()) Serial.read(); // clear serial buffer
   while(Xbee.available()) Xbee.read(); // clear Xbee buffer
-  
+
   timeNext_testPoint = millis();
   int test_point_count = 0;
   while(true){
@@ -406,7 +406,7 @@ void lab6_run_test() {
     if(timeNow > timeNext_testPoint){ // Collect Test Point loop
       test_point_count++;
       timeNext_testPoint += interval_testPoint; // Update time for next Test Point
-      
+
       // Collect IMU Test Point:
       imu_sensor.getAGMT();
       gyro_Z = imu_sensor.gyrZ(); //this is negative to convert measurment to KestrelSAT body frame
@@ -486,12 +486,12 @@ void lab6_run_test() {
       //Print to USB Serial:
       Serial.print(test_point_string);
       //Print to XBee:
-      if(test_point_count % 10 == 0){ 
+      if(test_point_count % 10 == 0){
         dataFile.flush(); // save file every 10 test points
         Xbee.print("tp:");
         Xbee.println(test_point_count);
         // Xbee.print(test_point_string);
       }
     }
-  }  
+  }
 }
