@@ -91,6 +91,10 @@
 #include <TB9051FTGMotorCarrier.h>                        // Pololu Motor Carrier Library
 #include <ESP32Encoder.h>                                 // Motor encoder library to measure wheel speed
 
+#include "dual_serial.h"
+
+// #include std::string
+
 /*---------------------------------------------------------------------------------------------*/
 // Globals:
 /*---------------------------------------------------------------------------------------------*/
@@ -151,7 +155,7 @@ void setup() {
   // #define RGB_BUILTIN  2
   pinMode(RGB_BUILTIN, OUTPUT);
   pinMode(LED_BUILTIN, OUTPUT);
-  neopixelWrite(RGB_BUILTIN, 255, 0, 0); // Default to red (R=255, G=0, B=0)
+  neopixelWrite(RGB_BUILTIN, 25, 0, 0); // Default to red (R=255, G=0, B=0)
 
   //----------------------------------------------
   // Initialize Serial link with XBee
@@ -214,12 +218,13 @@ void setup() {
 
   Serial.println("[INFO] SETUP COMPLETE.");
   Xbee.println("[INFO] SETUP COMPLETE.SEND '1' FOR OPTIONS.");
-  neopixelWrite(RGB_BUILTIN, 0, 255, 0); // Set to green (R=0, G=255, B=0)
+  neopixelWrite(RGB_BUILTIN, 0, 25, 0); // Set to green (R=0, G=255, B=0)
   
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
 
+// void print_both(const HardwareSerial& xbee, const HardwareSerial& serial);
 /////////////////////////////////////////////////////////////////////////////////////////////////
 // MAIN LOOP:
 /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -236,7 +241,10 @@ void loop() {
     timeLastHeartBeat = millis();
     Serial.println("[INFO] Send '1' for Options");
     Xbee.println("*");
-    neopixelWrite(RGB_BUILTIN, 0, 255, 0); // Set to green (R=0, G=255, B=0)
+    neopixelWrite(RGB_BUILTIN, 0, 25, 0); // Set to green (R=0, G=255, B=0)
+    // serial_print_double(Xbee, Serial);
+    serial_print_double(Xbee, Serial, *"test");
+
   }
 
 }
@@ -655,6 +663,8 @@ void lab6_run_test() {
       S_mag = sun_plusX + sun_minusX + sun_plusY + sun_minusY;
       // sun_X = ;
       // sun_Y = ;
+      sun_X = (sun_plusX - sun_minusX);
+      sun_Y = (sun_plusY - sun_minusY);
       sun_direction = (atan2(sun_Y, sun_X) * RAD_TO_DEG);
       if (sun_direction < 0) {
         sun_direction += 360; // Adjust to range 0-360

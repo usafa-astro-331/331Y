@@ -1,0 +1,3 @@
+[submodule "labs/lib/Arduino_ZModem"]
+	path = labs/lib/Arduino_ZModem
+	url = https://github.com/ecm-bitflipper/Arduino_ZModem
