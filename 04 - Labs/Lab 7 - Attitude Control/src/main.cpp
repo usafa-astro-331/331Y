@@ -92,6 +92,9 @@
 #include <ESP32Encoder.h>                                 // Motor encoder library to measure wheel speed
 
 #include "dual_serial.h"
+#include "communication.h"
+  HardwareSerial Xbee(2);
+#include "main.h"
 
 // #include std::string
 
@@ -100,7 +103,7 @@
 /*---------------------------------------------------------------------------------------------*/
 // Objects:
 FsFile dataFile;   // data file object
-HardwareSerial Xbee(2); // Serial object for communication with XBee 
+
 SFE_MAX1704X lipo; // SparkFun Thing Plus ESP32-WROOM onboard fuel gauge (I2C addr 0x36)
 ICM_20948_I2C imu_sensor; // IMU object
 // Motor Variables/Object
@@ -242,8 +245,8 @@ void loop() {
     Serial.println("[INFO] Send '1' for Options");
     Xbee.println("*");
     neopixelWrite(RGB_BUILTIN, 0, 25, 0); // Set to green (R=0, G=255, B=0)
-    // serial_print_double(Xbee, Serial);
-    serial_print_double(Xbee, Serial, *"test");
+    // serial_print_twice(Xbee, Serial);
+    serial_print_twice(Xbee, Serial, "test");
 
   }
 
@@ -285,7 +288,8 @@ int get_command_from_ground_station()
     Serial.print("Received from XBee: ");
     Serial.println(received_string);
     received_int = received_string.toInt();
-  }else if (Serial.available())
+  }
+  else if (Serial.available())
   {
     String received_string = Serial.readStringUntil('\n');
     received_string.trim();
@@ -338,43 +342,28 @@ void process_main_menu() {
       break;
     
     case 1:
-      Xbee.print("0 - Stop reation wheel\n");
-      Xbee.print("1 - Print Options Menu\n");
-      Xbee.print("2 - Get RSSI\n");
-      Xbee.print("3 - Toggle LED\n");
-      Xbee.print("4 - Get Battery State (V, SOC, dSOC/dt) \n");
-      Xbee.print("5 - Set Motor Throttle Percent (-100...100)\n");
-      Xbee.print("6 - Lab 6: Run Test\n");
-      Xbee.print("7 - Lab 7: Run Test A\n");
-      Xbee.print("8 - Lab 7: Run Test B\n");
-      Xbee.print("9 - Stream RW speed\n");
-      Xbee.print("98 - SD Card: List Files (USB SERIAL ONLY)\n");
-      Xbee.print("99 - SD Card: Print File Menu (USB SERIAL ONLY)\n");
-      
-      Serial.print("0 - Stop reation wheel\n");
-      Serial.print("1 - Print Options Menu\n");
-      Serial.print("2 - Get RSSI\n");
-      Serial.print("3 - Toggle LED\n");
-      Serial.print("4 - Get Battery State (V, SOC, dSOC/dt) \n");
-      Serial.print("5 - Set Motor Throttle Percent (-100...100)\n");
-      Serial.print("6 - Lab 6: Run Test\n");
-      Serial.print("7 - Lab 7: Run Test A\n");
-      Serial.print("8 - Lab 7: Run Test B\n");
-      Serial.print("9 - Stream RW speed\n");
-      Serial.print("98 - SD Card: List Files (USB SERIAL ONLY)\n");
-      Serial.print("99 - SD Card: Print File Menu (USB SERIAL ONLY)\n");
+    serial_print_twice(Xbee, Serial, "0 - Stop reation wheel\n");
+    serial_print_twice(Xbee, Serial, "1 - Print Options Menu\n");
+    serial_print_twice(Xbee, Serial, "2 - Get RSSI\n");
+    serial_print_twice(Xbee, Serial, "3 - Toggle LED\n");
+    serial_print_twice(Xbee, Serial, "4 - Get Battery State (V, SOC, dSOC/dt) \n");
+    serial_print_twice(Xbee, Serial, "5 - Set Motor Throttle Percent (-100...100)\n");
+    serial_print_twice(Xbee, Serial, "6 - Lab 6: Run Test\n");
+    serial_print_twice(Xbee, Serial, "7 - Lab 7: Run Test A\n");
+    serial_print_twice(Xbee, Serial, "8 - Lab 7: Run Test B\n");
+    serial_print_twice(Xbee, Serial, "9 - Stream RW speed\n");
+    serial_print_twice(Xbee, Serial, "98 - SD Card: List Files (USB SERIAL ONLY)\n");
+    serial_print_twice(Xbee, Serial, "99 - SD Card: Print File Menu (USB SERIAL ONLY)\n");
       break;
 
     case 2:
       get_sat_rssi();
       break;
 
-    case 3:
-      digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
-      Serial.print("LED is now ");
-      Serial.println(digitalRead(LED_BUILTIN) ? "LED ON" : "LED OFF");
-      Xbee.println(digitalRead(LED_BUILTIN) ? " LED ON" : " LED OFF");
-      break;
+        case 3:
+    digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
+    serial_print_twice(Xbee, Serial, digitalRead(LED_BUILTIN) ? "LED ON" : "LED OFF");
+    break;
 
     case 4:
       send_battery_telemetry();
@@ -409,82 +398,12 @@ void process_main_menu() {
       break;
 
     default:
-      Xbee.println("[CAUTION] Invalid input from ground station, ignoring.");
-      Serial.println("[CAUTION] invalid input from ground station, ignoring.");
+      serial_print_twice(Xbee, Serial, "[CAUTION] Invalid input from ground station, ignoring.");
       break;
   }
   return;
 }//end function process_main_menu()
 
-/*---------------------------------------------------------------------------------------------*/
-// Get XBee RSSI:
-/*---------------------------------------------------------------------------------------------*/
-/**
- * @brief Query the connected XBee radio for received signal strength (RSSI).
- *
- * This function places the XBee module into command mode, issues the ATDB
- * command to request the RSSI of the last received packet, parses the hex
- * response into a decimal value, and prints the result over both Serial and
- * Xbee in dBm.
- *
- * @note The function uses blocking delays and loops; it will not return until
- *       the XBee responds correctly with "OK\r".
- *
- * @warning Assumes that Xbee is connected to an XBee radio and already
- *          initialized at the correct baud rate.
- *
- * @post After the function runs, the XBee is returned to data mode using the
- *       ATCN command.
- *
- * @see Digi XBee AT Command Reference for details on ATDB and ATCN commands.
- */
-void get_sat_rssi() {
-  Xbee.println(" standby for RSSI");
-  
-  // put the radio in command mode:
-  bool not_done = true;
-  String ok_response = "OK\r";   //The﻿response we expect.
-  String response = String("");  //Create an empty string
-  Serial.println("Starting get_sat_rssi()");
-  
-  // Read the text of the response into the response variable
-  while (not_done) {  // As long as we did not get a response from the XBee
-    response = String("");
-    delay(1100);
-    Xbee.print("+++");  // Put the XBee 3 into 'Command Mode'
-    // Serial.print("+++");   // Put the XBee 3 into 'Command Mode'
-
-    // delay(1100);  // Wait for the XBee to finish
-    while (response.length() < ok_response.length()) {
-      if (Xbee.available() > 0) {
-
-        response += (char)Xbee.read();  // Read a single character at a time
-      }
-    }
-    not_done = !response.equals(ok_response);  // Set the not_done flag to the opposite of the result of equality check
-  }
-  // Serial.println(response);
-      
-
-  // If we got the right response, configure the radio and return true.   
-  Xbee.print("ATDB\r");  // destination high and destination low addresses set to 0 means all messages will only go
-  delay(100);               // Wait for the XBee
-  response = String("");
-  while (Xbee.available() > 0) {
-    response += (char)Xbee.read();  //Read a single character at a time
-    
-  }
-  Serial.println(response);
-  Xbee.print("ATCN\r");  // Switch back to data mode
-
-  String response2 = response; 
-  uint32_t dec_response = strtoul(response2.c_str(), NULL, 16);
-
-  Xbee.print("RSSI: -");
-  Xbee.print(dec_response);
-  Xbee.println(" dBm");
-  Serial.println("sat rssi sent");
-} // end function get_rssi()
 
 /*---------------------------------------------------------------------------------------------*/
 // Get Battery Information:

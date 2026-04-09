@@ -9,7 +9,7 @@
 #endif //LAB_7_ATTITUDE_CONTROL_DUAL_SERIAL_H
 
 // void print_both(const HardwareSerial& xbee, const HardwareSerial& serial);
-inline void serial_print_double(HardwareSerial& a, HardwareSerial& b, const char message)
+inline void serial_print_twice(HardwareSerial& a, HardwareSerial& b, String message)
 {
     a.println(message);
     b.println(message);
