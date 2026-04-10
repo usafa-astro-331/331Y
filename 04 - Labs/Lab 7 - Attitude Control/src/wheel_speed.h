@@ -312,7 +312,7 @@ inline void lab7_run_test_B()
 }  // end set_speed()
 
 
-void stream_RWspeed()
+inline void stream_RWspeed()
 {
   Serial.println("Ready to stream RW Motor speed, send any key to start. Send 'X' to stop.");
   Xbee.println("Ready to stream RW Motor speed, send any key to start. Send 'X' to stop.");
@@ -363,3 +363,311 @@ void stream_RWspeed()
     }
   }
 } //end stream_RWspeed()
+
+
+/*---------------------------------------------------------------------------------------------*/
+// Lab 7: Run Test A
+/*---------------------------------------------------------------------------------------------*/
+/**
+ * @brief Runs Test A - Tabletop static test. Initiates a step input at 100% speed 3 seconds into test.
+ *         Used to determine reaction wheel torque. Test duration is 15 seconds.
+ * @details
+ *   - 0-3s: Motor off (speed_pwm = 0)
+ *   - 3-10s: Motor at full speed (speed_pwm = 1.0)
+ *   - 10-15s: Motor off (speed_pwm = 0)
+ * @return void
+ */
+inline void lab7_run_test_A() {
+
+  if(sd_createDataFile(&dataFile, "Lab7_testA")){
+    // write header row:
+    dataFile.println("mcu time(ms),gyro_Z(deg/s),mag_X(uT),mag_Y(uT),sun_direction(deg),sun_plusX(count),sun_plusY(count),sun_minusX(count),sun_minusY(count),w_RW_cmd(RPM),w_RW_meas(RPM)");
+    dataFile.flush();
+    char file_name[40];
+    dataFile.getName(file_name, sizeof(file_name));
+    Xbee.print("[INFO] Data file created successfully: ");
+    Xbee.println(file_name);
+    Serial.print("[INFO] Data file created successfully: ");
+    Serial.println(file_name);
+  } else {
+    Xbee.println("[ERROR] Failed to create data file. Aborting test.");
+    Serial.println("[ERROR] Failed to create data file. Aborting test.");
+    return;
+  }
+  Serial.println("[INFO] Ready to start Lab 7 test A, send any key to begin (wait for test to complete or send 'X' to abort)...");
+  Xbee.println("[INFO] Ready to start Lab 7 test A, send any key to begin (wait for test to complete or send 'X' to abort)...");
+
+  while(!Serial.available() && !Xbee.available()){} // wait for user to send any key to start test
+  delay(100); // small delay to ensure serial buffer is fully received
+  while(Serial.available()) Serial.read(); // clear serial buffer
+  while(Xbee.available()) Xbee.read(); // clear Xbee buffer
+
+  timeNext_testPoint = millis();
+  bool newUserInput = false;
+  float speed_pwm = 0.0;
+  uint32_t t0 = millis();
+  neopixelWrite(RGB_BUILTIN, 0, 255, 255); // Set to cyan (R=0, G=255, B=255)
+  while (true) { //test loop
+
+    // Check for User Input:
+    char c;
+    if (Serial.available() > 0) {  // Check for user input from USB
+      c = Serial.read();
+      newUserInput = true;
+    }
+    if (Xbee.available() > 0) {  // Check for user input from USB
+      c = Xbee.read();
+      newUserInput = true;
+    }
+    if(newUserInput){
+      newUserInput = false;
+      switch (c) {
+        case 'X':
+        case 'x':
+          dataFile.close();
+          Serial.print("[CAUTION] Test Canceled Early. File closed.");
+          Xbee.print("[CAUTION] Test Canceled Early. File closed.");
+          driver.setOutput(0);
+          return;
+        default:
+          Serial.println("[CAUTION] Invalid Input, continuing test...");
+          Xbee.println("[CAUTION] Invalid Input, continuing test...");
+          break;
+      }
+    }
+
+    // Set RW Motor Speed:
+    if ((millis() - t0) > 3000 && (millis() - t0) < 10000){
+      speed_pwm = 1.0;
+      driver.setOutput(speed_pwm);
+    } else if (millis() - t0 > 10000) {
+      speed_pwm = 0.0;
+      driver.setOutput(speed_pwm);
+    }
+
+    // Record test point:
+    if (millis() > timeNext_testPoint) {          // Collect Test Point loop
+      timeNext_testPoint += interval_testPoint;  // Update time for next Test Point
+      uint32_t time = millis() - t0;
+
+      // Get commanded reaction wheel speed:
+      float w_RW_cmd = -speed_pwm * 1000.0 * MOTOR_VOLTAGE / 12.0;
+      // Get measured reaction wheel speed:
+      static int64_t lastCount = 0;
+      static uint32_t timeLastEncMeas = 0;
+      uint32_t timeNow = millis();
+      int64_t c = enc.getCount();
+      int64_t dc = c - lastCount;
+      float dt_s = (timeNow - timeLastEncMeas) / 1000.0f;
+      float rev = (float)dc / ((float)CPR * 10.0);
+      float w_RW_meas = (rev / dt_s) * 60.0f;
+      lastCount = c;
+      timeLastEncMeas = timeNow;
+
+      // Print data to .csv file:
+      dataFile.print(time);
+      dataFile.print(",");
+      dataFile.print(gyro_Z);
+      dataFile.print(",");
+      dataFile.print(mag_X);
+      dataFile.print(",");
+      dataFile.print(mag_Y);
+      dataFile.print(",");
+      dataFile.print(sun_direction);
+      dataFile.print(",");
+      dataFile.print(sun_plusX);
+      dataFile.print(",");
+      dataFile.print(sun_plusY);
+      dataFile.print(",");
+      dataFile.print(sun_minusX);
+      dataFile.print(",");
+      dataFile.print(sun_minusY);
+      dataFile.print(",");
+      dataFile.print(w_RW_cmd);
+      dataFile.print(",");
+      dataFile.println(w_RW_meas);
+
+      dataFile.flush();  // save file
+
+      // Print data to USB & XBee serial:
+      String test_point_string;
+      test_point_string += "t:";
+      test_point_string += time;
+      test_point_string += ",w_RW_cmd:";
+      test_point_string += w_RW_cmd;
+      test_point_string += ",w_RW_meas:";
+      test_point_string += w_RW_meas;
+
+      test_point_string += "\n";
+      //Print to USB Serial:
+      Serial.print(test_point_string);
+      //Print to XBee:
+      // Xbee.print(test_point_string);
+
+      // Serial.println(millis() - time + t0);
+    }
+
+    // End test if complete:
+    if (millis() - t0 > 15000){
+      dataFile.close();
+      Serial.print("[INFO] Test A Complete. File closed.");
+      Xbee.print("[INFO] Test A Complete. File closed.");
+      return;
+    }
+  }
+}  // end function lab7_run_test_A()
+
+
+
+/*---------------------------------------------------------------------------------------------*/
+// Lab 7: Run Test A
+/*---------------------------------------------------------------------------------------------*/
+/**
+ * @brief Runs Test A - Tabletop static test. Initiates a step input at 100% speed 3 seconds into test.
+ *         Used to determine reaction wheel torque. Test duration is 15 seconds.
+ * @details
+ *   - 0-3s: Motor off (speed_pwm = 0)
+ *   - 3-10s: Motor at full speed (speed_pwm = 1.0)
+ *   - 10-15s: Motor off (speed_pwm = 0)
+ * @return void
+ */
+void lab7_run_test_A() {
+
+  if(sd_createDataFile(&dataFile, "Lab7_testA")){
+    // write header row:
+    dataFile.println("mcu time(ms),gyro_Z(deg/s),mag_X(uT),mag_Y(uT),sun_direction(deg),sun_plusX(count),sun_plusY(count),sun_minusX(count),sun_minusY(count),w_RW_cmd(RPM),w_RW_meas(RPM)");
+    dataFile.flush();
+    char file_name[40];
+    dataFile.getName(file_name, sizeof(file_name));
+    Xbee.print("[INFO] Data file created successfully: ");
+    Xbee.println(file_name);
+    Serial.print("[INFO] Data file created successfully: ");
+    Serial.println(file_name);
+  } else {
+    Xbee.println("[ERROR] Failed to create data file. Aborting test.");
+    Serial.println("[ERROR] Failed to create data file. Aborting test.");
+    return;
+  }
+  Serial.println("[INFO] Ready to start Lab 7 test A, send any key to begin (wait for test to complete or send 'X' to abort)...");
+  Xbee.println("[INFO] Ready to start Lab 7 test A, send any key to begin (wait for test to complete or send 'X' to abort)...");
+
+  while(!Serial.available() && !Xbee.available()){} // wait for user to send any key to start test
+  delay(100); // small delay to ensure serial buffer is fully received
+  while(Serial.available()) Serial.read(); // clear serial buffer
+  while(Xbee.available()) Xbee.read(); // clear Xbee buffer
+
+  timeNext_testPoint = millis();
+  bool newUserInput = false;
+  float speed_pwm = 0.0;
+  uint32_t t0 = millis();
+  neopixelWrite(RGB_BUILTIN, 0, 255, 255); // Set to cyan (R=0, G=255, B=255)
+  while (true) { //test loop
+
+    // Check for User Input:
+    char c;
+    if (Serial.available() > 0) {  // Check for user input from USB
+      c = Serial.read();
+      newUserInput = true;
+    }
+    if (Xbee.available() > 0) {  // Check for user input from USB
+      c = Xbee.read();
+      newUserInput = true;
+    }
+    if(newUserInput){
+      newUserInput = false;
+      switch (c) {
+        case 'X':
+        case 'x':
+          dataFile.close();
+          Serial.print("[CAUTION] Test Canceled Early. File closed.");
+          Xbee.print("[CAUTION] Test Canceled Early. File closed.");
+          driver.setOutput(0);
+          return;
+        default:
+          Serial.println("[CAUTION] Invalid Input, continuing test...");
+          Xbee.println("[CAUTION] Invalid Input, continuing test...");
+          break;
+      }
+    }
+
+    // Set RW Motor Speed:
+    if ((millis() - t0) > 3000 && (millis() - t0) < 10000){
+      speed_pwm = 1.0;
+      driver.setOutput(speed_pwm);
+    } else if (millis() - t0 > 10000) {
+      speed_pwm = 0.0;
+      driver.setOutput(speed_pwm);
+    }
+
+    // Record test point:
+    if (millis() > timeNext_testPoint) {          // Collect Test Point loop
+      timeNext_testPoint += interval_testPoint;  // Update time for next Test Point
+      uint32_t time = millis() - t0;
+
+      // Get commanded reaction wheel speed:
+      float w_RW_cmd = -speed_pwm * 1000.0 * MOTOR_VOLTAGE / 12.0;
+      // Get measured reaction wheel speed:
+      static int64_t lastCount = 0;
+      static uint32_t timeLastEncMeas = 0;
+      uint32_t timeNow = millis();
+      int64_t c = enc.getCount();
+      int64_t dc = c - lastCount;
+      float dt_s = (timeNow - timeLastEncMeas) / 1000.0f;
+      float rev = (float)dc / ((float)CPR * 10.0);
+      float w_RW_meas = (rev / dt_s) * 60.0f;
+      lastCount = c;
+      timeLastEncMeas = timeNow;
+
+      // Print data to .csv file:
+      dataFile.print(time);
+      dataFile.print(",");
+      dataFile.print(gyro_Z);
+      dataFile.print(",");
+      dataFile.print(mag_X);
+      dataFile.print(",");
+      dataFile.print(mag_Y);
+      dataFile.print(",");
+      dataFile.print(sun_direction);
+      dataFile.print(",");
+      dataFile.print(sun_plusX);
+      dataFile.print(",");
+      dataFile.print(sun_plusY);
+      dataFile.print(",");
+      dataFile.print(sun_minusX);
+      dataFile.print(",");
+      dataFile.print(sun_minusY);
+      dataFile.print(",");
+      dataFile.print(w_RW_cmd);
+      dataFile.print(",");
+      dataFile.println(w_RW_meas);
+
+      dataFile.flush();  // save file
+
+      // Print data to USB & XBee serial:
+      String test_point_string;
+      test_point_string += "t:";
+      test_point_string += time;
+      test_point_string += ",w_RW_cmd:";
+      test_point_string += w_RW_cmd;
+      test_point_string += ",w_RW_meas:";
+      test_point_string += w_RW_meas;
+
+      test_point_string += "\n";
+      //Print to USB Serial:
+      Serial.print(test_point_string);
+      //Print to XBee:
+      // Xbee.print(test_point_string);
+
+      // Serial.println(millis() - time + t0);
+    }
+
+    // End test if complete:
+    if (millis() - t0 > 15000){
+      dataFile.close();
+      Serial.print("[INFO] Test A Complete. File closed.");
+      Xbee.print("[INFO] Test A Complete. File closed.");
+      return;
+    }
+  }
+}  // end function lab7_run_test_A()
+
