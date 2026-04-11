@@ -11,6 +11,6 @@
 // void print_both(const HardwareSerial& xbee, const HardwareSerial& serial);
 inline void serial_print_twice(HardwareSerial& a, HardwareSerial& b, String message)
 {
-    a.println(message);
-    b.println(message);
+    a.print(message);
+    b.print(message);
 }

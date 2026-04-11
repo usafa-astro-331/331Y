@@ -91,12 +91,13 @@
 #include <TB9051FTGMotorCarrier.h>                        // Pololu Motor Carrier Library
 #include <ESP32Encoder.h>                                 // Motor encoder library to measure wheel speed
 
-#include "dual_serial.h"
 #include "communication.h"
   HardwareSerial Xbee(2);
 #include "main.h"
 
 #include "wheel_speed.h"
+#include "att_determ.h"
+#include "electrical.h"
 
 /*---------------------------------------------------------------------------------------------*/
 // Globals:
@@ -104,13 +105,13 @@
 // Objects:
 FsFile dataFile;   // data file object
 
-SFE_MAX1704X lipo; // SparkFun Thing Plus ESP32-WROOM onboard fuel gauge (I2C addr 0x36)
+// SFE_MAX1704X lipo; // SparkFun Thing Plus ESP32-WROOM onboard fuel gauge (I2C addr 0x36)
 ICM_20948_I2C imu_sensor; // IMU object
 // Motor Variables/Object
 constexpr uint8_t pwm1Pin{MOTOR_PWM_1_PIN}; // PWM1
 constexpr uint8_t pwm2Pin{MOTOR_PWM_2_PIN}; // PWM2
 TB9051FTGMotorCarrier driver{ pwm1Pin, pwm2Pin };// Instantiate TB9051FTGMotorCarrier
-ESP32Encoder enc;
+// ESP32Encoder enc;
 
 // Variables:
 uint32_t timeLastCheckForCommand; // time of next Xbee check
@@ -126,23 +127,23 @@ int16_t n_sun_sensor_reads = 5; // number of readings to average for sun sensor 
 uint32_t timeNext_testPoint; // time of next test point (ms)
 uint32_t interval_testPoint = 50; // time interval between test points (ms)
 
-float gyro_Z = 0.0;
-float mag_X = 0.0;
-float mag_Y = 0.0;
+// float gyro_Z = 0.0;
+// float mag_X = 0.0;
+// float mag_Y = 0.0;
 
 /*---------------------------------------------------------------------------------------------*/
 // Function Prototypes (see defintiions after loop()):
 /*---------------------------------------------------------------------------------------------*/
-int get_command_from_ground_station();
+// int get_command_from_ground_station();
 void process_main_menu();
-void get_sat_rssi();
-void send_battery_telemetry();
-void manual_set_RW_speed();
-void lab6_run_test();
-void lab7_run_test_A();
-void lab7_run_test_B();
-float set_speed_test_B(uint32_t t0);
-void stream_RWspeed();
+// void get_sat_rssi();
+// void send_battery_telemetry();
+// void manual_set_RW_speed();
+// void lab6_run_test();
+// void lab7_run_test_A();
+// void lab7_run_test_B();
+// float set_speed_test_B(uint32_t t0);
+// void stream_RWspeed();
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 // SETUP:
@@ -226,8 +227,8 @@ void setup() {
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-// void print_both(const HardwareSerial& xbee, const HardwareSerial& serial);
+char8_t heartbeats[6] = {'⣾','⣽','⣻','⣟','⣯','⣷'};
+int heartbeat_num = 0;
 /////////////////////////////////////////////////////////////////////////////////////////////////
 // MAIN LOOP:
 /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -242,11 +243,18 @@ void loop() {
 
   if (timeLastHeartBeat + interval_heartBeat < millis()) { // periodic heartbeat to indicate program is alive
     timeLastHeartBeat = millis();
-    Serial.println("[INFO] Send '1' for Options");
-    Xbee.println("*");
-    neopixelWrite(RGB_BUILTIN, 0, 25, 0); // Set to green (R=0, G=255, B=0)
-    // serial_print_twice(Xbee, Serial);
-    serial_print_twice(Xbee, Serial, "test");
+
+    // Serial.println("[INFO] Send '1' for Options")
+    heartbeat_num = (heartbeat_num + 1) % sizeof(heartbeats);
+    // Serial.printf("count:%lld,dc:%lld,rpm:%.2f\n", (long long)c, (long long)dc, rpm);
+    // Serial.print("\h")
+    // Serial.print(heartbeats[heartbeat_num]);
+    Serial.printf("\r%c", heartbeats[heartbeat_num]);
+
+    // Xbee.println("*");
+    // neopixelWrite(RGB_BUILTIN, 0, 25, 0); // Set to green (R=0, G=255, B=0)
+    // // serial_print_twice(Xbee, Serial);
+    // serial_print_twice(Xbee, Serial, "test");
 
   }
 
@@ -386,7 +394,11 @@ void process_main_menu() {
       break;
 
     case 9:
-      stream_RWspeed();
+      stream_RW_speed();
+      break;
+
+    case 10:
+      IV_data();
       break;
 
     case 98:
@@ -404,242 +416,3 @@ void process_main_menu() {
   return;
 }//end function process_main_menu()
 
-
-/*---------------------------------------------------------------------------------------------*/
-// Get Battery Information:
-/*---------------------------------------------------------------------------------------------*/
-/**
- * @brief Send MAX17048 battery telemetry over the XBee link.
- *
- * Reads:
- *  - Battery voltage (V)
- *  - State of Charge (SOC, %)
- *  - Change / discharge rate (dSOC/dt, %/hr; negative = discharging)
- *
- * Output format (single line):
- *   BAT,V=<volts>,SOC=<percent>,CR=<percent_per_hr>
- */
-void send_battery_telemetry() {
-
-  const float v = lipo.getVoltage();
-  const float soc = lipo.getSOC();
-  const float crate = lipo.getChangeRate(); // %/hr (positive=charging, negative=discharging)
-
-  // Ground-station friendly, parseable response
-  Xbee.print("BAT,V=");
-  Xbee.print(v, 3);
-  Xbee.print("V, SOC=");
-  Xbee.print(soc, 1);
-  Xbee.print("%, CR=");
-  Xbee.print(crate, 3);
-  Xbee.println("%/hr");
-
-  // Also mirror to USB serial for debugging
-  Serial.print("[BAT] V=");
-  Serial.print(v, 3);
-  Serial.print(" V, SOC=");
-  Serial.print(soc, 1);
-  Serial.print(" %, CR=");
-  Serial.print(crate, 3);
-  Serial.println(" %/hr");
-} 
-
-
-/*---------------------------------------------------------------------------------------------*/
-// Manually Set Reaction Wheel Speed:
-/*---------------------------------------------------------------------------------------------*/
-/**
- * @brief Prompts user to manually set the reaction wheel motor speed
- * 
- * Requests a throttle percentage from the user (-100 to 100) via Serial or XBee,
- * validates the input, and applies it to the motor driver.
- * 
- * @note Input values outside the range [-100, 100] are clamped to the limits.
- * 
- * @return none
- */
-void manual_set_RW_speed(){
-  Serial.println("Enter RW Motor Throttle Percent (-100 to 100):");
-  Xbee.println("Enter RW Motor Throttle Percent (-100 to 100):");
-  while(!Serial.available() && !Xbee.available()){} // wait for user to send any key to start test
-  delay(100); // small delay to ensure serial buffer is fully received
-  
-  int rw_speed_int = get_command_from_ground_station();
-  if (rw_speed_int>100) rw_speed_int = 100;
-  if (rw_speed_int<-100) rw_speed_int = -100;
-  float rw_speed = float(rw_speed_int) / 100.0;
-  
-  Serial.println("Setting motor speed to: ");
-  Serial.println(rw_speed);
-  Xbee.println("Setting motor speed to: ");
-  Xbee.println(rw_speed);
-
-  delay(500);
-
-  driver.setOutput(rw_speed);
-
-  while(Serial.available()) Serial.read(); // clear serial buffer
-  while(Xbee.available()) Xbee.read(); // clear Xbee buffer
-}
-
-/*---------------------------------------------------------------------------------------------*/
-// Run Lab 6 Test:
-/*---------------------------------------------------------------------------------------------*/
-/**
- * @brief Runs the test for Lab 6 - Attitude Determination
- * 
- * Collects IMU (gyroscope, magnetometer) and sun sensor data at regular intervals
- * and logs all readings to an SD card file. Test continues until user sends 'X'.
- * 
- * @note Data is written to a CSV file with the following columns:
- *       mcu time (ms), gyro Z (dps), mag X (uT), mag Y (uT), sun direction (deg),
- *       sun_plusX, sun_plusY, sun_minusX, sun_minusY
- * 
- * @return none
- */
-void lab6_run_test() {
-
-  char file_name[40];
-  if(sd_createDataFile(&dataFile, "Lab6_test")){
-    // write header row:
-    dataFile.println("mcu time (ms),gyro Z (dps),mag X (uT),mag Y (uT),sun direction (deg),sun_plusX,sun_plusY,sun_minusX,sun_minusY");
-    dataFile.flush();
-    dataFile.getName(file_name, sizeof(file_name));
-    Xbee.print("[INFO] Data file created successfully: ");
-    Xbee.println(file_name);
-    Serial.print("[INFO] Data file created successfully: ");
-    Serial.println(file_name);
-  } else {
-    Xbee.println("[ERROR] Failed to create data file. Aborting test.");
-    Serial.println("[ERROR] Failed to create data file. Aborting test.");
-    return;
-  }
-  Serial.println("[INFO] Ready to start Lab 6 test, send any key to begin (send 'X' to stop test)...");
-  Xbee.println("[INFO] Ready to start Lab 6 test, send any key to begin (send 'X' to stop test)...");
-  
-  while(!Serial.available() && !Xbee.available()){} // wait for user to send any key to start test
-  delay(100); // small delay to ensure serial buffer is fully received
-  while(Serial.available()) Serial.read(); // clear serial buffer
-  while(Xbee.available()) Xbee.read(); // clear Xbee buffer
-  
-  timeNext_testPoint = millis();
-  int test_point_count = 0;
-  neopixelWrite(RGB_BUILTIN, 255, 165, 0); // Set to orange (R=255, G=165, B=0)
-  while(true){
-
-    if(Serial.available() > 0 || Xbee.available() > 0) { // Check for user input from USB or XBee
-      char c = (Serial.available() > 0) ? Serial.read() : Xbee.read();
-      if(c == 'X' || c == 'x') { // If user sent 'X', stop the test
-        Serial.print("[INFO] Test Complete. File ");
-        Serial.print(file_name);
-        Xbee.print("[INFO] Test Complete. File: ");
-        Xbee.print(file_name);
-        if(dataFile.close()) {
-          Serial.println(" closed.");
-          Xbee.println(" closed.");
-        } else {
-          Serial.println(" failed to close.");
-          Xbee.println(" failed to close.");
-        }
-        return;
-      } else {
-        Serial.println("[CAUTION] Invalid Input, continuing test...");
-        Xbee.println("[CAUTION] Invalid Input, continuing test...");
-      }
-    }
-
-    uint32_t timeNow = millis();
-    if(timeNow > timeNext_testPoint){ // Collect Test Point loop
-      test_point_count++;
-      timeNext_testPoint += interval_testPoint; // Update time for next Test Point
-      
-      // Collect IMU Test Point:
-      imu_sensor.getAGMT();
-      gyro_Z = imu_sensor.gyrZ(); 
-      mag_X = imu_sensor.magX();
-      mag_Y = imu_sensor.magY();
-
-      // Collect Sun Sensor Test Point:
-      // Average readings for each analog channel
-      sun_plusX = 0.0;
-      sun_minusX = 0.0;
-      sun_plusY = 0.0;
-      sun_minusY = 0.0;
-      for (int i = 0; i < n_sun_sensor_reads; i++) {
-        sun_plusX += analogRead(SUN_SENSOR_PLUS_X_PIN);
-        sun_minusX += analogRead(SUN_SENSOR_MINUS_X_PIN);
-        sun_plusY += analogRead(SUN_SENSOR_PLUS_Y_PIN);
-        sun_minusY += analogRead(SUN_SENSOR_MINUS_Y_PIN);
-      }
-      sun_plusX /= n_sun_sensor_reads;
-      sun_minusX /= n_sun_sensor_reads;
-      sun_plusY /= n_sun_sensor_reads;
-      sun_minusY /= n_sun_sensor_reads;
-
-      // ////////////* find sun direction *////////////////////////////////////////
-      // // // uncomment sun_plusX & sun_plusY lines to calculate sun direction
-      // // // (highlight them, CTRL-/)
-      S_mag = sun_plusX + sun_minusX + sun_plusY + sun_minusY;
-      // sun_X = ;
-      // sun_Y = ;
-      sun_X = (sun_plusX - sun_minusX);
-      sun_Y = (sun_plusY - sun_minusY);
-      sun_direction = (atan2(sun_Y, sun_X) * RAD_TO_DEG);
-      if (sun_direction < 0) {
-        sun_direction += 360; // Adjust to range 0-360
-      }
-      /////////////////////////////////////////////////////////////////////////////
-
-      // Print data to .csv file:
-      dataFile.print(timeNow);
-      dataFile.print(",");
-      dataFile.print(gyro_Z,4);
-      dataFile.print(",");
-      dataFile.print(mag_X,4);
-      dataFile.print(",");
-      dataFile.print(mag_Y,4);
-      dataFile.print(",");
-      dataFile.print(sun_direction,4);
-      dataFile.print(",");
-      dataFile.print(sun_plusX);
-      dataFile.print(",");
-      dataFile.print(sun_plusY);
-      dataFile.print(",");
-      dataFile.print(sun_minusX);
-      dataFile.print(",");
-      dataFile.println(sun_minusY);
-
-      // Print data to USB & XBee serial:
-      String test_point_string;
-      test_point_string += "t:";
-      test_point_string += timeNow;
-      test_point_string += ",gZ:";
-      test_point_string += gyro_Z;
-      test_point_string += ",mX:";
-      test_point_string += mag_X;
-      test_point_string += ",mY:";
-      test_point_string += mag_Y;
-      test_point_string += ",sDir:";
-      test_point_string += sun_direction;
-      test_point_string += ",s+X:";
-      test_point_string += sun_plusX;
-      test_point_string += ",s+Y:";
-      test_point_string += sun_plusY;
-      test_point_string += ",s-X:";
-      test_point_string += sun_minusX;
-      test_point_string += ",s-Y:";
-      test_point_string += sun_minusY;
-      test_point_string += "\n";
-
-      //Print to USB Serial:
-      Serial.print(test_point_string);
-      //Print to XBee:
-      if(test_point_count % 10 == 0){ 
-        dataFile.flush(); // save file every 10 test points
-        Xbee.print("tp:");
-        Xbee.println(test_point_count);
-        // Xbee.print(test_point_string);
-      }
-    }
-  }  
-}
