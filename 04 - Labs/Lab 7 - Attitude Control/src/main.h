@@ -2,6 +2,7 @@
 
 #include "dual_serial.h"
 #include <Adafruit_INA238.h>
+auto ina238 = Adafruit_INA238();
 
 
 

@@ -90,6 +90,8 @@
 #include <ICM_20948.h>                                    // Sparkfun IMU library
 #include <TB9051FTGMotorCarrier.h>                        // Pololu Motor Carrier Library
 #include <ESP32Encoder.h>                                 // Motor encoder library to measure wheel speed
+#include <Adafruit_INA238.h>
+
 
 #include "communication.h"
   HardwareSerial Xbee(2);
@@ -178,7 +180,7 @@ void setup() {
   //----------------------------------------------
   // Initialize MAX17048 fuel gauge
   //----------------------------------------------
-  if (!lipo.begin(Wire)) // Uses I2C address 0x36) 
+  if (!lipo.begin(Wire)) // Uses I2C address 0x36)
   {
     Serial.println("[WARN] MAX17048 not detected on I2C (0x36). Battery telemetry (cmd 4) will be unavailable.");
   } else {
@@ -227,7 +229,7 @@ void setup() {
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
-char8_t heartbeats[6] = {'⣾','⣽','⣻','⣟','⣯','⣷'};
+char heartbeats[] = {'|','/','-','\\'};
 int heartbeat_num = 0;
 /////////////////////////////////////////////////////////////////////////////////////////////////
 // MAIN LOOP:

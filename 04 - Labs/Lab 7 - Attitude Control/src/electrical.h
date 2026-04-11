@@ -2,7 +2,7 @@
 
 #include "main.h"
 
-Adafruit_INA238 ina238 = Adafruit_INA238();
+// Adafruit_INA238 ina238 = Adafruit_INA238();
 
 constexpr int num_samples_per_testpoint = 40; // number of samples per testpoint to average over
 
@@ -56,8 +56,11 @@ inline void send_battery_telemetry() {
 // */
 inline void IV_data(){
     Serial.println("ivtest");
-  // neopixelWrite(RGB_BUILTIN, 0, 0, 255); // Set to blue (R=0, G=0, B=255)
-  //
+  neopixelWrite(RGB_BUILTIN, 0, 0, 255); // Set to blue (R=0, G=0, B=255)
+
+  float current = 0.0;
+    current = ina238.getCurrent_mA();
+
   //
   // sd_createDataFile(&dataFile, "Lab3_IV_curve"); // create data file on SD card
   //
@@ -67,20 +70,20 @@ inline void IV_data(){
   // while(Serial.available()>0) Serial.read(); // clear any characters in buffer
   // while(true){
   //
-  //   if(Serial.available()>0){ // Check for user input
-  //     char c = Serial.read();
-  //     switch(c){
-  //       case 'X':
-  //         while(Serial.available()>0) Serial.read(); // clear any characters in buffer
-  //         dataFile.close();
-  //         Serial.println("[INFO] Test Complete.");
-  //         neopixelWrite(RGB_BUILTIN, 0, 255, 0); // Set to green (R=0, G=255, B=0)
-  //         return;
-  //       default:
-  //         Serial.println("[CAUTION] Invalid Input, continuing test...");
-  //         break;
-  //     }
-  //   }
+  //   // if(Serial.available()>0){ // Check for user input
+  //   //   char c = Serial.read();
+  //   //   switch(c){
+  //   //     case 'X':
+  //   //       while(Serial.available()>0) Serial.read(); // clear any characters in buffer
+  //   //       dataFile.close();
+  //   //       Serial.println("[INFO] Test Complete.");
+  //   //       neopixelWrite(RGB_BUILTIN, 0, 255, 0); // Set to green (R=0, G=255, B=0)
+  //   //       return;
+  //   //     default:
+  //   //       Serial.println("[CAUTION] Invalid Input, continuing test...");
+  //   //       break;
+  //   //   }
+  //   // }
   //
   //   if(millis() > timeNext_testPoint){ // Collect Test Point loop
   //     uint32_t startTime = millis();
@@ -91,26 +94,26 @@ inline void IV_data(){
   //     float testPoint_voltage_V = 0.0;
   //     for (int ii = 0; ii < num_samples_per_testpoint; ii++){ // sum X readings
   //       testPoint_current_mA += ina238.getCurrent_mA();
-  //       testPoint_voltage_V += ina238.getBusVoltage_V() + (ina238.getShuntVoltage_mV() / 1000.0);
+  //       // testPoint_voltage_V += ina238.getBusVoltage_V() + (ina238.getShuntVoltage_mV() / 1000.0);
   //     }
-  //     testPoint_current_mA /= num_samples_per_testpoint; // average readings
-  //     testPoint_voltage_V /= num_samples_per_testpoint; // average readings
-  //
-  //     // Print data to file:
-  //     dataFile.print(millis());
-  //     dataFile.print(",");
-  //     dataFile.print(testPoint_current_mA,6);
-  //     dataFile.print(",");
-  //     dataFile.println(testPoint_voltage_V,6);
-  //     dataFile.flush(); // save file
-  //
-  //     //Print to Serial:
-  //     Serial.print("Current(mA):");
-  //     Serial.print(testPoint_current_mA,6);
-  //     Serial.print(",Voltage(V):");
-  //     Serial.println(testPoint_voltage_V,6);
-  //     // Serial.print(",collectTime(ms):");
-  //     // Serial.println(millis() - startTime); //~95 ms per test point
-  //   }
+  //     // testPoint_current_mA /= num_samples_per_testpoint; // average readings
+  //     // testPoint_voltage_V /= num_samples_per_testpoint; // average readings
+  //     //
+  //     // // Print data to file:
+  //     // dataFile.print(millis());
+  //     // dataFile.print(",");
+  //     // dataFile.print(testPoint_current_mA,6);
+  //     // dataFile.print(",");
+  //     // dataFile.println(testPoint_voltage_V,6);
+  //     // dataFile.flush(); // save file
+  //     //
+  //     // //Print to Serial:
+  //     // Serial.print("Current(mA):");
+  //     // Serial.print(testPoint_current_mA,6);
+  //     // Serial.print(",Voltage(V):");
+  //     // Serial.println(testPoint_voltage_V,6);
+  //     // // Serial.print(",collectTime(ms):");
+  //     // // Serial.println(millis() - startTime); //~95 ms per test point
+    // }
   // }
 } // end function IV_data()
