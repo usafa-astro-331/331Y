@@ -56,64 +56,139 @@ inline void send_battery_telemetry() {
 // */
 inline void IV_data(){
     Serial.println("ivtest");
-  neopixelWrite(RGB_BUILTIN, 0, 0, 255); // Set to blue (R=0, G=0, B=255)
+  neopixelWrite(RGB_BUILTIN, 0, 0, 25); // Set to blue (R=0, G=0, B=255)
 
-  float current = 0.0;
-    current = ina238.getCurrent_mA();
+  sd_createDataFile(&dataFile, "Lab3_IV_curve"); // create data file on SD card
 
-  //
-  // sd_createDataFile(&dataFile, "Lab3_IV_curve"); // create data file on SD card
-  //
-  // while(Serial.available()>0) Serial.read(); // clear any characters in buffer
-  // Serial.println("[INFO] Send any key to start. ***Send 'X' to stop test.***");
-  // while(!Serial.available()){delay(10);} // Wait for user to start test
-  // while(Serial.available()>0) Serial.read(); // clear any characters in buffer
-  // while(true){
-  //
-  //   // if(Serial.available()>0){ // Check for user input
-  //   //   char c = Serial.read();
-  //   //   switch(c){
-  //   //     case 'X':
-  //   //       while(Serial.available()>0) Serial.read(); // clear any characters in buffer
-  //   //       dataFile.close();
-  //   //       Serial.println("[INFO] Test Complete.");
-  //   //       neopixelWrite(RGB_BUILTIN, 0, 255, 0); // Set to green (R=0, G=255, B=0)
-  //   //       return;
-  //   //     default:
-  //   //       Serial.println("[CAUTION] Invalid Input, continuing test...");
-  //   //       break;
-  //   //   }
-  //   // }
-  //
-  //   if(millis() > timeNext_testPoint){ // Collect Test Point loop
-  //     uint32_t startTime = millis();
-  //     timeNext_testPoint += interval_testPoint; // Update time for next Test Point
-  //
-  //     // Collect Test Point (each reading takes ~ 1ms):
-  //     float testPoint_current_mA = 0.0;
-  //     float testPoint_voltage_V = 0.0;
-  //     for (int ii = 0; ii < num_samples_per_testpoint; ii++){ // sum X readings
-  //       testPoint_current_mA += ina238.getCurrent_mA();
-  //       // testPoint_voltage_V += ina238.getBusVoltage_V() + (ina238.getShuntVoltage_mV() / 1000.0);
-  //     }
-  //     // testPoint_current_mA /= num_samples_per_testpoint; // average readings
-  //     // testPoint_voltage_V /= num_samples_per_testpoint; // average readings
-  //     //
-  //     // // Print data to file:
-  //     // dataFile.print(millis());
-  //     // dataFile.print(",");
-  //     // dataFile.print(testPoint_current_mA,6);
-  //     // dataFile.print(",");
-  //     // dataFile.println(testPoint_voltage_V,6);
-  //     // dataFile.flush(); // save file
-  //     //
-  //     // //Print to Serial:
-  //     // Serial.print("Current(mA):");
-  //     // Serial.print(testPoint_current_mA,6);
-  //     // Serial.print(",Voltage(V):");
-  //     // Serial.println(testPoint_voltage_V,6);
-  //     // // Serial.print(",collectTime(ms):");
-  //     // // Serial.println(millis() - startTime); //~95 ms per test point
-    // }
-  // }
+  while(Serial.available()>0) Serial.read(); // clear any characters in buffer
+  Serial.println("[INFO] Send any key to start. ***Send 'X' to stop test.***");
+  while(!Serial.available()){delay(10);} // Wait for user to start test
+  while(Serial.available()>0) Serial.read(); // clear any characters in buffer
+  while(true){
+
+    if(Serial.available()>0){ // Check for user input
+      char c = Serial.read();
+      switch(c){
+        case 'X':
+          while(Serial.available()>0) Serial.read(); // clear any characters in buffer
+          dataFile.close();
+          Serial.println("[INFO] Test Complete.");
+          neopixelWrite(RGB_BUILTIN, 0, 25, 0); // Set to green (R=0, G=255, B=0)
+          return;
+        default:
+          Serial.println("[CAUTION] Invalid Input, continuing test...");
+          break;
+      }
+    }
+
+    if(millis() > timeNext_testPoint){ // Collect Test Point loop
+      uint32_t startTime = millis();
+      timeNext_testPoint += interval_testPoint; // Update time for next Test Point
+
+      // Collect Test Point (each reading takes ~ 1ms):
+      float testPoint_current_mA = 0.0;
+      float testPoint_voltage_V = 0.0;
+      for (int ii = 0; ii < num_samples_per_testpoint; ii++){ // sum X readings
+        testPoint_current_mA += ina238.getCurrent_mA();
+        testPoint_voltage_V += ina238.getBusVoltage_V() + (ina238.getShuntVoltage_mV() / 1000.0);
+      }
+      testPoint_current_mA /= num_samples_per_testpoint; // average readings
+      testPoint_voltage_V /= num_samples_per_testpoint; // average readings
+
+      // Print data to file:
+      dataFile.print(millis());
+      dataFile.print(",");
+      dataFile.print(testPoint_current_mA,6);
+      dataFile.print(",");
+      dataFile.println(testPoint_voltage_V,6);
+      dataFile.flush(); // save file
+
+      //Print to Serial:
+      Serial.print("Current(mA):");
+      Serial.print(testPoint_current_mA,6);
+      Serial.print(",Voltage(V):");
+      Serial.println(testPoint_voltage_V,6);
+      // Serial.print(",collectTime(ms):");
+      // Serial.println(millis() - startTime); //~95 ms per test point
+    }
+  }
 } // end function IV_data()
+
+inline void initINA238()
+{
+  if (!ina238.begin()) {
+    Serial.println("[ERROR] Couldn't find INA238 chip");
+    while (1)
+      ;
+  }
+  Serial.println("[INFO] Found INA238 chip");
+  // set shunt resistance and max current
+  ina238.setShunt(0.015, 0.5); //
+
+  ina238.setAveragingCount(INA2XX_COUNT_128);
+  uint16_t counts[] = {1, 4, 16, 64, 128, 256, 512, 1024};
+  Serial.print("[INFO] Averaging counts: ");
+  Serial.println(counts[ina238.getAveragingCount()]);
+
+  // set the time over which to measure the current and bus voltage
+  ina238.setVoltageConversionTime(INA2XX_TIME_150_us);
+  Serial.print("[INFO] Voltage conversion time: ");
+  switch (ina238.getVoltageConversionTime()) {
+  case INA2XX_TIME_50_us:
+    Serial.print("50");
+    break;
+  case INA2XX_TIME_84_us:
+    Serial.print("84");
+    break;
+  case INA2XX_TIME_150_us:
+    Serial.print("150");
+    break;
+  case INA2XX_TIME_280_us:
+    Serial.print("280");
+    break;
+  case INA2XX_TIME_540_us:
+    Serial.print("540");
+    break;
+  case INA2XX_TIME_1052_us:
+    Serial.print("1052");
+    break;
+  case INA2XX_TIME_2074_us:
+    Serial.print("2074");
+    break;
+  case INA2XX_TIME_4120_us:
+    Serial.print("4120");
+    break;
+  }
+  Serial.println(" uS");
+
+  ina238.setCurrentConversionTime(INA2XX_TIME_150_us);
+  Serial.print("[INFO] Current conversion time: ");
+  switch (ina238.getCurrentConversionTime()) {
+  case INA2XX_TIME_50_us:
+    Serial.print("50");
+    break;
+  case INA2XX_TIME_84_us:
+    Serial.print("84");
+    break;
+  case INA2XX_TIME_150_us:
+    Serial.print("150");
+    break;
+  case INA2XX_TIME_280_us:
+    Serial.print("280");
+    break;
+  case INA2XX_TIME_540_us:
+    Serial.print("540");
+    break;
+  case INA2XX_TIME_1052_us:
+    Serial.print("1052");
+    break;
+  case INA2XX_TIME_2074_us:
+    Serial.print("2074");
+    break;
+  case INA2XX_TIME_4120_us:
+    Serial.print("4120");
+    break;
+  }
+  Serial.println(" uS");
+} // end function initINA238()
+
