@@ -4,7 +4,7 @@
 #include <Adafruit_INA238.h>
 auto ina238 = Adafruit_INA238();
 
-
+#include "menu.h"
 
 extern HardwareSerial Xbee; // Serial object for communication with XBee
 extern FsFile dataFile;

@@ -1,3 +1,6 @@
 [submodule "labs/lib/Arduino_ZModem"]
 	path = labs/lib/Arduino_ZModem
 	url = https://github.com/ecm-bitflipper/Arduino_ZModem
+[submodule "04 - Labs/Lab 7 - Attitude Control/lib/SerialMenu"]
+	path = 04 - Labs/Lab 7 - Attitude Control/lib/SerialMenu
+	url = https://github.com/sonyhome/SerialMenu

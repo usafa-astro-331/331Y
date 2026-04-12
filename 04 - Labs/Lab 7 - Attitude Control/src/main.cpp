@@ -101,6 +101,8 @@
 #include "att_determ.h"
 #include "electrical.h"
 
+#include "menu.h"
+
 /*---------------------------------------------------------------------------------------------*/
 // Globals:
 /*---------------------------------------------------------------------------------------------*/
@@ -119,7 +121,7 @@ TB9051FTGMotorCarrier driver{ pwm1Pin, pwm2Pin };// Instantiate TB9051FTGMotorCa
 uint32_t timeLastCheckForCommand; // time of next Xbee check
 uint32_t interval_CheckForCommand = 10; // time interval between Xbee/Serial checks (ms)
 uint32_t timeLastHeartBeat; // time of last heartbeat (ms)
-uint32_t interval_heartBeat = 3000; // interval between heartbeat (ms)
+uint32_t interval_heartBeat = 500; // interval between heartbeat (ms)
 
 float sun_plusX, sun_minusX, sun_plusY, sun_minusY;
 float sun_X = 0.0, sun_Y = 0.0, sun_direction = 0.0;
@@ -159,6 +161,9 @@ void setup() {
 
   Wire.begin(); // Initialize I2C communication
 
+  menu.load(menu1, menu1Size);
+  menu.show();
+
   // Initialize built-in RGB LED (WS2812) and STAT LED
   // #define RGB_BUILTIN  2
   pinMode(RGB_BUILTIN, OUTPUT);
@@ -170,7 +175,7 @@ void setup() {
   //----------------------------------------------
   Xbee.begin(9600,SERIAL_8N1, XBEE_RX, XBEE_TX);  // Begin MCU <> XBee communication
   Xbee.setTimeout(20);
-  Xbee.println("[INFO] KestrelSAT online \npress 1 for options");
+  Xbee.print("[INFO] KestrelSAT online \npress 1 for options\n\n");
   // ----------------------------------------------
 
   //----------------------------------------------
@@ -245,27 +250,31 @@ void loop() {
   //----------------------------------------------
   // Check for data from ground station
   // ----------------------------------------------
-  if (timeLastCheckForCommand + interval_CheckForCommand < millis()) { // periodic Xbee send
-    timeLastCheckForCommand = millis();
-    process_main_menu();
-  }
+  // if (timeLastCheckForCommand + interval_CheckForCommand < millis()) { // periodic Xbee send
+  //   timeLastCheckForCommand = millis();
+  //   process_main_menu();
+  // }
+  //
+  // if (timeLastHeartBeat + interval_heartBeat < millis()) { // periodic heartbeat to indicate program is alive
+  //   timeLastHeartBeat = millis();
+  //
+  //   // Serial.println("[INFO] Send '1' for Options")
+  //   heartbeat_num = (heartbeat_num + 1) % sizeof(heartbeats);
+  //   // Serial.printf("count:%lld,dc:%lld,rpm:%.2f\n", (long long)c, (long long)dc, rpm);
+  //   // Serial.print("\h")
+  //   // Serial.print(heartbeats[heartbeat_num]);
+  //   Serial.printf("\r%c", heartbeats[heartbeat_num]);
+  //
+  //   // Xbee.println("*");
+  //   // neopixelWrite(RGB_BUILTIN, 0, 25, 0); // Set to green (R=0, G=255, B=0)
+  //   // // serial_print_twice(Xbee, Serial);
+  //   // serial_print_twice(Xbee, Serial, "test");
+  //
+  // }
 
-  if (timeLastHeartBeat + interval_heartBeat < millis()) { // periodic heartbeat to indicate program is alive
-    timeLastHeartBeat = millis();
+  menu.run(100);
+  delay(100);
 
-    // Serial.println("[INFO] Send '1' for Options")
-    heartbeat_num = (heartbeat_num + 1) % sizeof(heartbeats);
-    // Serial.printf("count:%lld,dc:%lld,rpm:%.2f\n", (long long)c, (long long)dc, rpm);
-    // Serial.print("\h")
-    // Serial.print(heartbeats[heartbeat_num]);
-    Serial.printf("\r%c", heartbeats[heartbeat_num]);
-
-    // Xbee.println("*");
-    // neopixelWrite(RGB_BUILTIN, 0, 25, 0); // Set to green (R=0, G=255, B=0)
-    // // serial_print_twice(Xbee, Serial);
-    // serial_print_twice(Xbee, Serial, "test");
-
-  }
 
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -370,7 +379,7 @@ void process_main_menu() {
     serial_print_twice(Xbee, Serial, "8 - Lab 7: Run Test B\n");
     serial_print_twice(Xbee, Serial, "9 - Stream RW speed\n");
     serial_print_twice(Xbee, Serial, "98 - SD Card: List Files (USB SERIAL ONLY)\n");
-    serial_print_twice(Xbee, Serial, "99 - SD Card: Print File Menu (USB SERIAL ONLY)\n");
+    serial_print_twice(Xbee, Serial, "99 - SD Card: Print File Menu (USB SERIAL ONLY)\n\n");
       break;
 
     case 2:
