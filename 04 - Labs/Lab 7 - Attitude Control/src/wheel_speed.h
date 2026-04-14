@@ -33,7 +33,6 @@ float mag_Y = 0.0;
 float set_speed_test_B(uint32_t);
 
 void manual_set_RW_speed();
-void lab6_run_test();
 void lab7_run_test_A();
 void lab7_run_test_B();
 void stream_RW_speed();

@@ -1,8 +1,10 @@
 #pragma once
+#include "att_determ.h"
 #include "../lib/SerialMenu/src/SerialMenu.hpp"
 #include "communication.h"
 #include "main.h"
 #include "wheel_speed.h"
+#include "electrical.h"
 
 //
 // const SerialMenu& menu = SerialMenu::get();
@@ -60,13 +62,22 @@ extern uint8_t remote_sensing_menu_size;
     SerialMenuEntry main_menu[] = {
         {"main menu:", false, ' ', [](){ menu.show(); }},
         {"1: communication", false, '1', [](){ menu.load(communication_menu, communication_menu_size); menu.show(); } },
-        // {"2: electrical",       false, '2', [](){ menu.load(electrical_menu, electrical_menu_size); menu.show(); } },
-        // {"3: attitude determination",       false, 'y', [](){ menu.load(att_determ_menu); menu.show(); } },
-        {"4: attitude control",       false, '4', [](){ menu.load(att_control_menu, att_control_menu_size); menu.show(); } },
-        // {"5: remote sensing",       false, 'y', [](){ menu.load(remote_sensing_menu); menu.show(); } },
+        {"2: electrical", false, '2', [](){ menu.load(electrical_menu, electrical_menu_size); menu.show(); } },
+        {"3: attitude determination", false, 'y', [](){ menu.load(att_determ_menu, att_determ_menu_size); menu.show(); } },
+        {"4: attitude control", false, '4', [](){ menu.load(att_control_menu, att_control_menu_size); menu.show(); } },
+        // {"5: remote sensing, false, 'y', [](){ menu.load(remote_sensing_menu); menu.show(); } },
         {" ",       false,  'z', [](){ menu.show(); } }
     };
     uint8_t main_menu_size = GET_MENU_SIZE(main_menu);
+
+    SerialMenuEntry electrical_menu[] = {
+	{"electrical menu", false, ' ', [](){ menu.show(); } },
+	{"0: return to main menu", false, '0', [](){ menu.load(main_menu,main_menu_size); menu.show(); } },
+	{"1: IV data", false, '1', [](){ IV_data(); pause_refresh();} },
+	{"2: battery telemetry",false, '2', [](){ send_battery_telemetry(); pause_refresh();} },
+	{" ", false, 'z', [](){ menu.show(); } },
+   };
+    uint8_t electrical_menu_size = GET_MENU_SIZE(electrical_menu);
 
     SerialMenuEntry communication_menu[] = {
     {"communication menu", false, ' ', [](){ menu.show(); } },
@@ -77,22 +88,24 @@ extern uint8_t remote_sensing_menu_size;
    };
     uint8_t communication_menu_size = GET_MENU_SIZE(communication_menu);
 
-    SerialMenuEntry att_control_menu[] = {
-    {"attitude control menu", false, ' ', [](){ menu.show(); } },
-    {"0: return to main menu", false, '0', [](){ menu.load(main_menu,main_menu_size); menu.show(); } },
-    {"1: set manual RW speed",      false, '1', [](){ manual_set_RW_speed(); pause_refresh();} },
-    {"2: stream RW speed",false, '2', [](){ stream_RW_speed(); pause_refresh();} },
-    {"3: run test A",false, '3', [](){ lab7_run_test_A(); pause_refresh();} },
-    {"4: run test B",false, '4', [](){ lab7_run_test_B; pause_refresh();} },
-    {" ", false, 'z', [](){ menu.show(); } },
+	SerialMenuEntry att_determ_menu[] = {
+	{"attitude determination menu", false, ' ', [](){ menu.show(); } },
+	{"0: return to main menu", false, '0', [](){ menu.load(main_menu,main_menu_size); menu.show(); } },
+	{"1: run test",false, '1', [](){ lab6_run_test(); pause_refresh();} },
+	{" ", false, 'z', [](){ menu.show(); } },
    };
-    uint8_t att_control_menu_size = GET_MENU_SIZE(att_control_menu);
+	uint8_t att_determ_menu_size = GET_MENU_SIZE(att_determ_menu);
 
-
-
-
-// lab6_run_test();
-
+	SerialMenuEntry att_control_menu[] = {
+	{"attitude control menu", false, ' ', [](){ menu.show(); } },
+	{"0: return to main menu", false, '0', [](){ menu.load(main_menu,main_menu_size); menu.show(); } },
+	{"1: set manual RW speed",      false, '1', [](){ manual_set_RW_speed(); pause_refresh();} },
+	{"2: stream RW speed",false, '2', [](){ stream_RW_speed(); pause_refresh();} },
+	{"3: run test A",false, '3', [](){ lab7_run_test_A(); pause_refresh();} },
+	{"4: run test B",false, '4', [](){ lab7_run_test_B; pause_refresh();} },
+	{" ", false, 'z', [](){ menu.show(); } },
+   };
+	uint8_t att_control_menu_size = GET_MENU_SIZE(att_control_menu);
 
 
 inline void pause_refresh()
@@ -104,7 +117,7 @@ inline void pause_refresh()
     Serial.read();
 
     // send clear-screen sequence
-    byte clear_screen[] = {0x1B, 0x5B, 0x32, 0x4A, 0x1B, 0x5B, 0x48 };
+    byte clear_screen[] = {0x1B, 0x5B, 0x32, 0x4A, 0x1B, 0x5B, 0x48, 0x0D};
     Serial.write(clear_screen, sizeof(clear_screen));
 
     // display menu

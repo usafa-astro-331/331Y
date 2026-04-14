@@ -1,6 +1,8 @@
 #pragma once
 
 #include "main.h"
+extern FsFile dataFile;   // data file object
+int get_command_from_ground_station();
 
 /*---------------------------------------------------------------------------------------------*/
 // Run Lab 6 Test:
@@ -37,14 +39,16 @@ inline void lab6_run_test() {
   Serial.println("[INFO] Ready to start Lab 6 test, send any key to begin (send 'X' to stop test)...");
   Xbee.println("[INFO] Ready to start Lab 6 test, send any key to begin (send 'X' to stop test)...");
 
-  while(!Serial.available() && !Xbee.available()){} // wait for user to send any key to start test
-  delay(100); // small delay to ensure serial buffer is fully received
-  while(Serial.available()) Serial.read(); // clear serial buffer
-  while(Xbee.available()) Xbee.read(); // clear Xbee buffer
+  // while(!Serial.available() && !Xbee.available()){} // wait for user to send any key to start test
+  // delay(100); // small delay to ensure serial buffer is fully received
+  // while(Serial.available()) Serial.read(); // clear serial buffer
+  // while(Xbee.available()) Xbee.read(); // clear Xbee buffer
+
+  int start = get_command_from_ground_station();
 
   timeNext_testPoint = millis();
   int test_point_count = 0;
-  neopixelWrite(RGB_BUILTIN, 255, 165, 0); // Set to orange (R=255, G=165, B=0)
+  neopixelWrite(RGB_BUILTIN, 25, 16, 0); // Set to orange (R=255, G=165, B=0)
   while(true){
 
     if(Serial.available() > 0 || Xbee.available() > 0) { // Check for user input from USB or XBee
