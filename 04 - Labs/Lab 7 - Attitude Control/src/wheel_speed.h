@@ -3,6 +3,7 @@
 int get_command_from_ground_station();
 
 #include "main.h"
+#include <vector>
 
 extern FsFile dataFile;   // data file object
 extern TB9051FTGMotorCarrier driver;
@@ -285,6 +286,15 @@ inline void lab7_run_test_B()
   static float base_speed = 0.6;
   static float ramp_speed = 0.4;
   float motor_PWM_cmd = 0.0;
+
+  std::vector<float> times = {0, 1, 2, 10, 2.5, 2.5, 10, 2.5, 2.5, 10, 1, 1};
+  std::vector<float> speeds = {0, 0, 0.6, 0.6, 0.7, 0.6, 0.6, 0.5, 0.6, 0.6, 0, 0};
+
+for (size_t ii = 1 < interval.size(); ++i)
+{
+  times[ii] += times[ii-1];
+  
+}
 
   // std::array<float, 11> wheel_time = {0, 1e3, 10e3, 15e3, 17.5e3, 20e3, 25e3, 27.5e3, 30e3, 35e3, 36e3};
   // std::array<float, 11> wheel_speed = {base_speed, base_speed, 1e3, 10e3, 15e3, 17.5e3, 20e3, 25e3, 27.5e3, base_speed, base_speed};
