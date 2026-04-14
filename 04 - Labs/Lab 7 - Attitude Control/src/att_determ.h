@@ -1,8 +1,23 @@
 #pragma once
 
 #include "main.h"
+#include "wheel_speed.h"
 extern FsFile dataFile;   // data file object
 int get_command_from_ground_station();
+
+uint32_t timeNext_testPoint;        // time of next test point (ms)
+uint32_t interval_testPoint = 50;  // time interval between test points (ms)
+
+extern float gyro_Z, mag_X, mag_Y;
+extern ICM_20948_I2C imu_sensor;
+
+extern int sun_plusX, sun_minusX, sun_plusY, sun_minusY;
+
+extern int n_sun_sensor_reads;
+
+extern int S_mag, sun_X, sun_Y;
+
+extern float sun_direction;
 
 /*---------------------------------------------------------------------------------------------*/
 // Run Lab 6 Test:
@@ -85,10 +100,10 @@ inline void lab6_run_test() {
 
       // Collect Sun Sensor Test Point:
       // Average readings for each analog channel
-      sun_plusX = 0.0;
-      sun_minusX = 0.0;
-      sun_plusY = 0.0;
-      sun_minusY = 0.0;
+      sun_plusX = 0;
+      sun_minusX = 0;
+      sun_plusY = 0;
+      sun_minusY = 0;
       for (int i = 0; i < n_sun_sensor_reads; i++) {
         sun_plusX += analogRead(SUN_SENSOR_PLUS_X_PIN);
         sun_minusX += analogRead(SUN_SENSOR_MINUS_X_PIN);

@@ -16,13 +16,14 @@ ICM_20948_I2C imu_sensor; // IMU object
 // uint32_t timeLastHeartBeat; // time of last heartbeat (ms)
 // uint32_t interval_heartBeat; // interval between heartbeat (ms)
 
-float sun_plusX, sun_minusX, sun_plusY, sun_minusY;
-float sun_X = 0.0, sun_Y = 0.0, sun_direction = 0.0;
-float S_mag;
-int16_t n_sun_sensor_reads = 5; // number of readings to average for sun sensor test point
+int sun_plusX, sun_minusX, sun_plusY, sun_minusY;
+int sun_X, sun_Y;
+float sun_direction = 0.0;
+int S_mag;
+int n_sun_sensor_reads = 5; // number of readings to average for sun sensor test point
 
-uint32_t timeNext_testPoint; // time of next test point (ms)
-uint32_t interval_testPoint = 50; // time interval between test points (ms)
+extern uint32_t timeNext_testPoint; // time of next test point (ms)
+extern uint32_t interval_testPoint; // time interval between test points (ms)
 
 float gyro_Z = 0.0;
 float mag_X = 0.0;
