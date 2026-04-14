@@ -1,20 +1,11 @@
 #pragma once
-#include <SerialMenu.hpp>
+#include "../lib/SerialMenu/src/SerialMenu.hpp"
+#include "communication.h"
+#include "main.h"
+#include "wheel_speed.h"
+
 //
 // const SerialMenu& menu = SerialMenu::get();
-//
-//
-//
-// // declare flight phases ////////
-// enum MENU_CHOICES{ // define valid flight phase names
-//     main = 0,
-//     communication = 1,
-//     electrical = 2,
-//     att_determ = 3,
-//     att_control = 4,
-//     files = 5,
-//   };
-// MENU_CHOICES menu_status = main;  // variable flight_phase can hold one of the 5 valid phases
 //
 // const SerialMenuEntry communication_menu[];
 // const uint8_t communication_menu_size;
@@ -37,16 +28,27 @@
 //
 //
 
+void pause_refresh();
 
+
+class SerialMenu;
  SerialMenu& menu = SerialMenu::get();
 
-    // Forward declaration of menu2, because it is referenced before definition
-    extern  SerialMenuEntry menu2[];
-    extern  uint8_t menu2Size;
+    // Forward menu declarations; some are is referenced before definition
+    extern  SerialMenuEntry main_menu[];
+    extern  SerialMenuEntry communication_menu[];
+    extern  SerialMenuEntry electrical_menu[];
+    extern  SerialMenuEntry att_determ_menu[];
+    extern  SerialMenuEntry att_control_menu[];
+    extern  SerialMenuEntry remote_sensing_menu[];
 
-    // You can declare menu strings separately (a must for PROGMEM FLASH)
-     char menu1String1[] = "Y - residplay this menu (Text in SRAM)";
-     char menu1String2[] = "Z - second menu (Text in FLASH)";
+extern uint8_t main_menu_size;
+extern uint8_t communication_menu_size;
+extern uint8_t electrical_menu_size;
+extern uint8_t att_determ_menu_size;
+extern uint8_t att_control_menu_size;
+extern uint8_t remote_sensing_menu_size;
+
 
     // Definition of menu1:
     // A menu entry is defined with four fields.
@@ -54,34 +56,57 @@
     // -Text in FLASH via PROGMEM is flagged as true, else flagged as false
     // -Declare the keypress assigned to a menu entry (converts to lowercase)
     // -Declare the callback as a lambda function or use a function pointer
-     SerialMenuEntry menu1[] = {
-     {"X (Text in SRAM)", false, '1', [](){ Serial.println("choice X!"); } },
-     {menu1String1,       false, 'y', [](){ menu.show(); } },
-     {menu1String2,       false,  'z', [](){ menu.load(menu2, menu2Size);
-                                            menu.show(); } }
+
+    SerialMenuEntry main_menu[] = {
+        {"main menu:", false, ' ', [](){ menu.show(); }},
+        {"1: communication", false, '1', [](){ menu.load(communication_menu, communication_menu_size); menu.show(); } },
+        // {"2: electrical",       false, '2', [](){ menu.load(electrical_menu, electrical_menu_size); menu.show(); } },
+        // {"3: attitude determination",       false, 'y', [](){ menu.load(att_determ_menu); menu.show(); } },
+        {"4: attitude control",       false, '4', [](){ menu.load(att_control_menu, att_control_menu_size); menu.show(); } },
+        // {"5: remote sensing",       false, 'y', [](){ menu.load(remote_sensing_menu); menu.show(); } },
+        {" ",       false,  'z', [](){ menu.show(); } }
     };
-    constexpr uint8_t menu1Size = GET_MENU_SIZE(menu1);
+    uint8_t main_menu_size = GET_MENU_SIZE(main_menu);
 
-    // Global variables updated by menu2
-    uint16_t var1, var2;
+    SerialMenuEntry communication_menu[] = {
+    {"communication menu", false, ' ', [](){ menu.show(); } },
+    {"0: return to main menu", false, '0', [](){ menu.load(main_menu,main_menu_size); menu.show(); } },
+    {"1: get RSSI",      false, '1', [](){ get_sat_rssi(); pause_refresh();} },
+    {"2: toggle LED",false, '2', [](){ toggle_LED(); pause_refresh();} },
+    {" ", false, 'z', [](){ menu.show(); } },
+   };
+    uint8_t communication_menu_size = GET_MENU_SIZE(communication_menu);
 
-    // Function called by menu2
-    void foo()
-    {
-       // uint16_t var1  menu.get();
-       Serial.println("Running foo!");
-    }
+    SerialMenuEntry att_control_menu[] = {
+    {"attitude control menu", false, ' ', [](){ menu.show(); } },
+    {"0: return to main menu", false, '0', [](){ menu.load(main_menu,main_menu_size); menu.show(); } },
+    {"1: set manual RW speed",      false, '1', [](){ manual_set_RW_speed(); pause_refresh();} },
+    {"2: stream RW speed",false, '2', [](){ stream_RW_speed(); pause_refresh();} },
+    {"3: run test A",false, '3', [](){ lab7_run_test_A(); pause_refresh();} },
+    {"4: run test B",false, '4', [](){ lab7_run_test_B; pause_refresh();} },
+    {" ", false, 'z', [](){ menu.show(); } },
+   };
+    uint8_t att_control_menu_size = GET_MENU_SIZE(att_control_menu);
 
-    // Definition of menu2:
-    // Notice that:
-    // -Embedded strings can't be declared PROGMEM so we declare "false"
-    // -Using 'B' vs 'b' doesn't matter (lowercase auto-conversion)
-    // -We call the function foo() instead of a lambda function
-    SerialMenuEntry menu2[] = {
-     {"Execute foo()", false, 'e', foo },
-     {"Set var2",      false, 'S', [](){ var2 = menu.getNumber<uint16_t>(); } },
-     {"Redisplay menu",false, 'r', [](){ menu.show(); } },
-     {"Back to menu1", false, 'B', [](){ menu.load(menu1, menu1Size);
-                                         menu.show(); } }
-    };
-    uint8_t menu2Size = GET_MENU_SIZE(menu2);
+
+
+
+// lab6_run_test();
+
+
+
+inline void pause_refresh()
+{
+    Serial.print("Press any key to return to menu");
+
+    // wait for input
+    while (!Serial.available());
+    Serial.read();
+
+    // send clear-screen sequence
+    byte clear_screen[] = {0x1B, 0x5B, 0x32, 0x4A, 0x1B, 0x5B, 0x48 };
+    Serial.write(clear_screen, sizeof(clear_screen));
+
+    // display menu
+    menu.show();
+}

@@ -1,81 +1,4 @@
-/**
- * @file main.cpp
- * @brief Main control program for KestrelSAT attitude determination and control system
- * 
- * @details This is firmware for the USAFA Astro 331 KestrelSAT, implementing:
- * - Lab 6 Attitude Determination capabilities using IMU (gyroscope, magnetometer) and sun sensors
- * - Lab 7 Attitude Control via reaction wheel motor with encoder feedback
- * - Ground station command interface via XBee radio and USB Serial
- * - Battery telemetry monitoring via MAX17048 fuel gauge
- * - Data logging to SD card for Lab 6 and Lab 7 experiments
- * 
- * @author Lt Col Wyatt Harris
- * @date Spring 2026
- * @version 2.0
- * 
- * @section hardware Hardware Requirements
- * - ESP32 microcontroller (SparkFun Thing Plus ESP32-WROOM)
- * - ICM-20948 9-DoF IMU (via I2C at 0x36)
- * - MAX17048 Fuel Gauge (via I2C at 0x36)
- * - Pololu TB9051FTG Motor Driver
- * - DC motor with quadrature encoder
- * - Sun sensor (4-channel analog inputs)
- * - XBee radio module (UART at 9600 baud)
- * - SD card module (SPI)
- * - WS2812 RGB LED and digital status LED
- * 
- * @section dependencies External Libraries
- * - greiman/SdFat@^2.3.1 - SD card file system
- * - sparkfun/SparkFun MAX1704x Fuel Gauge@^1.0.3 - Battery monitoring
- * - sparkfun/SparkFun 9DoF IMU (ICM 20948)@^1.3.2 - IMU sensor interface
- * - meelonusk/TB9051FTGMotorCarrier@^1.0.2 - Motor driver control
- * - madhephaestus/ESP32Encoder@^0.12.0 - Quadrature encoder reading
- * 
- * @section commands Ground Station Commands
- * | Cmd | Function |
- * |-----|----------|
- * | 0   | Stop reaction wheel |
- * | 1   | Display options menu |
- * | 2   | Query XBee RSSI |
- * | 3   | Toggle status LED |
- * | 4   | Get battery telemetry (V, SOC, charge rate) |
- * | 5   | Manually set reaction wheel throttle (-100 to 100%) |
- * | 6   | Run Lab 6 test (Attitude Determination) |
- * | 7   | Run Lab 7 Test A (tabletop static, RW torque measurement) |
- * | 8   | Run Lab 7 Test B (dynamic test with prescribed wheel speed) |
- * | 98  | SD Card: List files (USB Serial only) |
- * | 99  | SD Card: Print file menu (USB Serial only) |
- * 
- * @section testing Test Modes
- * - **Lab 6**: Collects IMU (gyro Z, mag X/Y) and sun sensor data at 50ms intervals
- * - **Lab 7A**: 15-second tabletop test with 100% motor step input from 3-10 seconds
- * - **Lab 7B**: 50-second dynamic test with prescribed motor speed profile (hold, ramp up/down cycles)
- * 
- * @section datalog Data Logging Format
- * All test data is logged to SD card in CSV format with:
- * - MCU timestamp (ms)
- * - Gyroscope Z-axis (deg/s)
- * - Magnetometer X, Y axes (µT)
- * - Sun direction (degrees)
- * - Sun sensor raw values (4 channels)
- * - Reaction wheel commanded and measured speed (RPM)
- * 
- * @section communication Communication
- * - **USB Serial**: 115200 baud for USB debugging/control
- * - **XBee UART**: 9600 baud for wireless ground station link
- * - **I2C**: Sensor communication at standard rate
- * - **SPI**: SD card access
- * 
- * @note Heartbeat signal sent every 2 seconds to indicate program status
- * @note Ground station commands checked every 10ms
- * @note RGB LED provides visual status: Red (startup), Green (idle), Orange (Lab 6), Cyan (Lab 7A), Magenta (Lab 7B)
- * 
- * @warning All test loops use blocking serial reads; may delay program execution if waiting for input
- * @warning Reaction wheel tests should be conducted with appropriate safety precautions
- * 
- * @see definitions.h for hardware pin assignments and constants
- * @see sd_functions.h for SD card utility functions
- */
+
 
 /*---------------------------------------------------------------------------------------------*/
 // Library includes:
@@ -93,7 +16,7 @@
 #include <Adafruit_INA238.h>
 
 
-#include "communication.h"
+// #include "communication.h"
   HardwareSerial Xbee(2);
 #include "main.h"
 
@@ -110,7 +33,7 @@
 FsFile dataFile;   // data file object
 
 // SFE_MAX1704X lipo; // SparkFun Thing Plus ESP32-WROOM onboard fuel gauge (I2C addr 0x36)
-ICM_20948_I2C imu_sensor; // IMU object
+// ICM_20948_I2C imu_sensor; // IMU object
 // Motor Variables/Object
 constexpr uint8_t pwm1Pin{MOTOR_PWM_1_PIN}; // PWM1
 constexpr uint8_t pwm2Pin{MOTOR_PWM_2_PIN}; // PWM2
@@ -122,18 +45,6 @@ uint32_t timeLastCheckForCommand; // time of next Xbee check
 uint32_t interval_CheckForCommand = 10; // time interval between Xbee/Serial checks (ms)
 uint32_t timeLastHeartBeat; // time of last heartbeat (ms)
 uint32_t interval_heartBeat = 500; // interval between heartbeat (ms)
-
-float sun_plusX, sun_minusX, sun_plusY, sun_minusY;
-float sun_X = 0.0, sun_Y = 0.0, sun_direction = 0.0;
-float S_mag;
-int16_t n_sun_sensor_reads = 5; // number of readings to average for sun sensor test point
-
-uint32_t timeNext_testPoint; // time of next test point (ms)
-uint32_t interval_testPoint = 50; // time interval between test points (ms)
-
-// float gyro_Z = 0.0;
-// float mag_X = 0.0;
-// float mag_Y = 0.0;
 
 /*---------------------------------------------------------------------------------------------*/
 // Function Prototypes (see defintiions after loop()):
@@ -161,8 +72,6 @@ void setup() {
 
   Wire.begin(); // Initialize I2C communication
 
-  menu.load(menu1, menu1Size);
-  menu.show();
 
   // Initialize built-in RGB LED (WS2812) and STAT LED
   // #define RGB_BUILTIN  2
@@ -171,7 +80,7 @@ void setup() {
   neopixelWrite(RGB_BUILTIN, 25, 0, 0); // Default to red (R=255, G=0, B=0)
 
   //----------------------------------------------
-  // Initialize Serial link with XBeea
+  // Initialize Serial link with XBee
   //----------------------------------------------
   Xbee.begin(9600,SERIAL_8N1, XBEE_RX, XBEE_TX);  // Begin MCU <> XBee communication
   Xbee.setTimeout(20);
@@ -237,7 +146,12 @@ void setup() {
   Serial.println("[INFO] SETUP COMPLETE.");
   Xbee.println("[INFO] SETUP COMPLETE.SEND '1' FOR OPTIONS.");
   neopixelWrite(RGB_BUILTIN, 0, 25, 0); // Set to green (R=0, G=255, B=0)
-  
+
+
+  menu.load(main_menu,GET_MENU_SIZE(main_menu));
+  menu.show();
+
+
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -259,7 +173,10 @@ void loop() {
   //   timeLastHeartBeat = millis();
   //
   //   // Serial.println("[INFO] Send '1' for Options")
-  //   heartbeat_num = (heartbeat_num + 1) % sizeof(heartbeats);
+  char heartbeats[] = {'|','/','-','\\'};
+  int heartbeat_num = 0;
+  heartbeat_num = (heartbeat_num + 1) % sizeof(heartbeats);
+  Serial.printf("\r%c", heartbeats[heartbeat_num]);
   //   // Serial.printf("count:%lld,dc:%lld,rpm:%.2f\n", (long long)c, (long long)dc, rpm);
   //   // Serial.print("\h")
   //   // Serial.print(heartbeats[heartbeat_num]);
@@ -303,29 +220,7 @@ void loop() {
  *          and may delay program execution if no command is received.
  *
  */
-int get_command_from_ground_station()
-{
-  int received_int = 0; // default to no command
-  if (Xbee.available())
-  {
-    String received_string = Xbee.readStringUntil('\n');
-    received_string.trim();
-    if (received_string.length() == 0) return -1;
-    Serial.print("Received from XBee: ");
-    Serial.println(received_string);
-    received_int = received_string.toInt();
-  }
-  else if (Serial.available())
-  {
-    String received_string = Serial.readStringUntil('\n');
-    received_string.trim();
-    if (received_string.length() == 0) return -1;
-    Serial.print("Received from Serial: ");
-    Serial.println(received_string);
-    received_int = received_string.toInt();
-  }
-  return received_int;
-}
+
 
 /*---------------------------------------------------------------------------------------------*/
 // Process Main Menu:
@@ -355,82 +250,82 @@ int get_command_from_ground_station()
  * @return void
  *
  */
-void process_main_menu() {
-  if (!Xbee.available() && !Serial.available()) return;
-
-  int received_int = get_command_from_ground_station();
-
-  switch (received_int) {
-    case 0:
-      driver.setOutput(0);
-      Xbee.println("Motor Stopped.");
-      Serial.println("Motor Stopped.");
-      break;
-    
-    case 1:
-    serial_print_twice(Xbee, Serial, "0 - Stop reation wheel\n");
-    serial_print_twice(Xbee, Serial, "1 - Print Options Menu\n");
-    serial_print_twice(Xbee, Serial, "2 - Get RSSI\n");
-    serial_print_twice(Xbee, Serial, "3 - Toggle LED\n");
-    serial_print_twice(Xbee, Serial, "4 - Get Battery State (V, SOC, dSOC/dt) \n");
-    serial_print_twice(Xbee, Serial, "5 - Set Motor Throttle Percent (-100...100)\n");
-    serial_print_twice(Xbee, Serial, "6 - Lab 6: Run Test\n");
-    serial_print_twice(Xbee, Serial, "7 - Lab 7: Run Test A\n");
-    serial_print_twice(Xbee, Serial, "8 - Lab 7: Run Test B\n");
-    serial_print_twice(Xbee, Serial, "9 - Stream RW speed\n");
-    serial_print_twice(Xbee, Serial, "98 - SD Card: List Files (USB SERIAL ONLY)\n");
-    serial_print_twice(Xbee, Serial, "99 - SD Card: Print File Menu (USB SERIAL ONLY)\n\n");
-      break;
-
-    case 2:
-      get_sat_rssi();
-      break;
-
-        case 3:
-    digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
-    serial_print_twice(Xbee, Serial, digitalRead(LED_BUILTIN) ? "LED ON" : "LED OFF");
-    break;
-
-    case 4:
-      send_battery_telemetry();
-      break;
-
-    case 5:
-      manual_set_RW_speed();
-      break;
-
-    case 6:
-      lab6_run_test();
-      break;
-
-    case 7:
-      lab7_run_test_A();
-      break;
-
-    case 8:
-      lab7_run_test_B();
-      break;
-
-    case 9:
-      stream_RW_speed();
-      break;
-
-    case 10:
-      IV_data();
-      break;
-
-    case 98:
-      sd_listFiles("/", 0);
-      break;
-
-    case 99:
-      sd_printFileMenu();
-      break;
-
-    default:
-      serial_print_twice(Xbee, Serial, "[CAUTION] Invalid input from ground station, ignoring.");
-      break;
-  }
-  return;
-}//end function process_main_menu()
+// void process_main_menu() {
+//   if (!Xbee.available() && !Serial.available()) return;
+//
+//   // int received_int = get_command_from_ground_station();
+//
+//   switch (received_int) {
+//     case 0:
+//       driver.setOutput(0);
+//       Xbee.println("Motor Stopped.");
+//       Serial.println("Motor Stopped.");
+//       break;
+//
+//     case 1:
+//     serial_print_twice(Xbee, Serial, "0 - Stop reation wheel\n");
+//     serial_print_twice(Xbee, Serial, "1 - Print Options Menu\n");
+//     serial_print_twice(Xbee, Serial, "2 - Get RSSI\n");
+//     serial_print_twice(Xbee, Serial, "3 - Toggle LED\n");
+//     serial_print_twice(Xbee, Serial, "4 - Get Battery State (V, SOC, dSOC/dt) \n");
+//     serial_print_twice(Xbee, Serial, "5 - Set Motor Throttle Percent (-100...100)\n");
+//     serial_print_twice(Xbee, Serial, "6 - Lab 6: Run Test\n");
+//     serial_print_twice(Xbee, Serial, "7 - Lab 7: Run Test A\n");
+//     serial_print_twice(Xbee, Serial, "8 - Lab 7: Run Test B\n");
+//     serial_print_twice(Xbee, Serial, "9 - Stream RW speed\n");
+//     serial_print_twice(Xbee, Serial, "98 - SD Card: List Files (USB SERIAL ONLY)\n");
+//     serial_print_twice(Xbee, Serial, "99 - SD Card: Print File Menu (USB SERIAL ONLY)\n\n");
+//       break;
+//
+//     case 2:
+//       get_sat_rssi();
+//       break;
+//
+//         case 3:
+//     digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
+//     serial_print_twice(Xbee, Serial, digitalRead(LED_BUILTIN) ? "LED ON" : "LED OFF");
+//     break;
+//
+//     case 4:
+//       send_battery_telemetry();
+//       break;
+//
+//     case 5:
+//       manual_set_RW_speed();
+//       break;
+//
+//     case 6:
+//       lab6_run_test();
+//       break;
+//
+//     case 7:
+//       lab7_run_test_A();
+//       break;
+//
+//     case 8:
+//       lab7_run_test_B();
+//       break;
+//
+//     case 9:
+//       stream_RW_speed();
+//       break;
+//
+//     case 10:
+//       IV_data();
+//       break;
+//
+//     case 98:
+//       sd_listFiles("/", 0);
+//       break;
+//
+//     case 99:
+//       sd_printFileMenu();
+//       break;
+//
+//     default:
+//       serial_print_twice(Xbee, Serial, "[CAUTION] Invalid input from ground station, ignoring.");
+//       break;
+//   }
+//   return;
+// }//end function process_main_menu()
 

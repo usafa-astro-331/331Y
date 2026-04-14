@@ -2,7 +2,10 @@
 
 #include "main.h"
 
-// Adafruit_INA238 ina238 = Adafruit_INA238();
+Adafruit_INA238 ina238 = Adafruit_INA238();
+
+SFE_MAX1704X lipo; // SparkFun Thing Plus ESP32-WROOM onboard fuel gauge (I2C addr 0x36)
+
 
 constexpr int num_samples_per_testpoint = 40; // number of samples per testpoint to average over
 

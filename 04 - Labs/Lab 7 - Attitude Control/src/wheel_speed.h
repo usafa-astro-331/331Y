@@ -1,6 +1,33 @@
 #pragma once
 
+int get_command_from_ground_station();
+
 #include "main.h"
+
+extern FsFile dataFile;   // data file object
+extern TB9051FTGMotorCarrier driver;
+
+ESP32Encoder enc;
+
+ICM_20948_I2C imu_sensor; // IMU object
+
+// uint32_t timeLastCheckForCommand; // time of next Xbee check
+// uint32_t interval_CheckForCommand; // time interval between Xbee/Serial checks (ms)
+// uint32_t timeLastHeartBeat; // time of last heartbeat (ms)
+// uint32_t interval_heartBeat; // interval between heartbeat (ms)
+
+float sun_plusX, sun_minusX, sun_plusY, sun_minusY;
+float sun_X = 0.0, sun_Y = 0.0, sun_direction = 0.0;
+float S_mag;
+int16_t n_sun_sensor_reads = 5; // number of readings to average for sun sensor test point
+
+uint32_t timeNext_testPoint; // time of next test point (ms)
+uint32_t interval_testPoint = 50; // time interval between test points (ms)
+
+float gyro_Z = 0.0;
+float mag_X = 0.0;
+float mag_Y = 0.0;
+
 
 // function prototypes
 float set_speed_test_B(uint32_t);
@@ -322,6 +349,8 @@ inline void stream_RW_speed()
 {
   Serial.println("Ready to stream RW Motor speed, send any key to start. Send 'X' to stop.");
   Xbee.println("Ready to stream RW Motor speed, send any key to start. Send 'X' to stop.");
+  Serial.read();
+  delay(100);
   while(!Serial.available() && !Xbee.available()){} // wait for user to send any key to start test
   delay(100); // small delay to ensure serial buffer is fully received
 
@@ -333,10 +362,10 @@ inline void stream_RW_speed()
       c = Serial.read();
       newUserInput = true;
     }
-    if (Xbee.available() > 0) {  // Check for user input from USB
-      c = Xbee.read();
-      newUserInput = true;
-    }
+    // if (Xbee.available() > 0) {  // Check for user input from USB
+    //   c = Xbee.read();
+    //   newUserInput = true;
+    // }
     if(newUserInput){
       newUserInput = false;
       switch (c) {

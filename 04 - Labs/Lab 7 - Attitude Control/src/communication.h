@@ -1,9 +1,4 @@
-//
-// Created by jordan on 4/9/2026.
-//
-
-#ifndef LAB_7_ATTITUDE_CONTROL_COMMUNICATION_H
-#define LAB_7_ATTITUDE_CONTROL_COMMUNICATION_H
+#pragma once
 
 #include "main.h"
 
@@ -35,11 +30,12 @@ inline void get_sat_rssi() {
 
   // put the radio in command mode:
   bool not_done = true;
-  String ok_response = "OK\r";   //The﻿response we expect.
+  String ok_response = "OK\r";   //The response we expect.
   String response = String("");  //Create an empty string
   Serial.println("Starting get_sat_rssi()");
 
   // Read the text of the response into the response variable
+  int xbee_timeout = millis() +2500; // timer to detect unresponsive xbee
   while (not_done) {  // As long as we did not get a response from the XBee
     response = String("");
     delay(1100);
@@ -48,14 +44,20 @@ inline void get_sat_rssi() {
 
     // delay(1100);  // Wait for the XBee to finish
     while (response.length() < ok_response.length()) {
-      if (Xbee.available() > 0) {
-
-        response += (char)Xbee.read();  // Read a single character at a time
+      if (Xbee.available() > 0) {response += (char)Xbee.read(); } // Read a single character at a time
+      if (millis() > xbee_timeout)
+      {
+        Serial.println("XBee unresponsive");
+        return;
       }
     }
     not_done = !response.equals(ok_response);  // Set the not_done flag to the opposite of the result of equality check
+    if (millis() > xbee_timeout)
+    {
+      Serial.println("XBee unresponsive");
+      return;
+    }
   }
-  // Serial.println(response);
 
   // If we got the right response, configure the radio and return true.
   Xbee.print("ATDB\r");  // destination high and destination low addresses set to 0 means all messages will only go
@@ -77,4 +79,8 @@ inline void get_sat_rssi() {
   Serial.println("sat rssi sent");
 } // end function get_rssi()
 
-#endif //LAB_7_ATTITUDE_CONTROL_COMMUNICATION_H
+inline void toggle_LED()
+{
+  digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
+  serial_print_twice(Xbee, Serial, digitalRead(LED_BUILTIN) ? "LED ON\n" : "LED OFF\n");
+}
