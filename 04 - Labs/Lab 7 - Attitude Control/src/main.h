@@ -8,6 +8,7 @@
 #include "communication.h"
 #include "electrical.h"
 #include "wheel_speed.h"
+#include "att_determ.h"
 
 extern HardwareSerial Xbee; // Serial object for communication with XBee
 extern FsFile dataFile;   // data file object

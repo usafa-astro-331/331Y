@@ -4,6 +4,9 @@ int get_command_from_ground_station();
 
 #include "main.h"
 #include <vector>
+#include <cmath>
+#include <variant>
+#include <string>
 
 extern FsFile dataFile;   // data file object
 extern TB9051FTGMotorCarrier driver;
@@ -38,6 +41,7 @@ void manual_set_RW_speed();
 void lab7_run_test_A();
 void lab7_run_test_B();
 void stream_RW_speed();
+float set_wheel_speed(int t_ms, int t0_ms);
 
 /*---------------------------------------------------------------------------------------------*/
 // Lab 7: Run Test B
@@ -90,7 +94,7 @@ inline void lab7_run_test_B()
   while(Serial.available()) Serial.read(); // clear serial buffer
   while(Xbee.available()) Xbee.read(); // clear Xbee buffer
 
-  neopixelWrite(RGB_BUILTIN, 255, 0, 255); // Set to magenta (R=255, G=0, B=255)
+  neopixelWrite(RGB_BUILTIN, 25, 0, 25); // Set to magenta (R=255, G=0, B=255)
   static uint32_t t0;
   t0 = millis();
   timeNext_testPoint = millis();
@@ -135,6 +139,8 @@ inline void lab7_run_test_B()
 
       // Set RW Motor Speed:
       float speed_pwm = set_speed_test_B(t0);
+
+      float speed2 = set_wheel_speed(millis(), t0);
 
       // Collect IMU Test Point:
       imu_sensor.getAGMT();
@@ -185,30 +191,47 @@ inline void lab7_run_test_B()
       lastCount = c;
       timeLastEncMeas = timeNow;
 
-      // Print data to .csv file:
-      dataFile.print(time);
-      dataFile.print(",");
-      dataFile.print(gyro_Z);
-      dataFile.print(",");
-      dataFile.print(mag_X);
-      dataFile.print(",");
-      dataFile.print(mag_Y);
-      dataFile.print(",");
-      dataFile.print(sun_direction);
-      dataFile.print(",");
-      dataFile.print(sun_plusX);
-      dataFile.print(",");
-      dataFile.print(sun_plusY);
-      dataFile.print(",");
-      dataFile.print(sun_minusX);
-      dataFile.print(",");
-      dataFile.print(sun_minusY);
-      dataFile.print(",");
-      dataFile.print(w_RW_cmd);
-      dataFile.print(",");
-      dataFile.println(w_RW_meas);
+      using Cell = std::variant<int, uint32_t, float>;
+      std::vector<Cell> data{
+        time, gyro_Z, mag_X, mag_Y, sun_direction,
+        sun_plusX, sun_plusY, sun_minusX, sun_minusY,
+        w_RW_cmd, speed2, w_RW_meas
+      };
 
-      dataFile.flush();  // save file
+      for (int ii=0; ii<data.size(); ii++)
+      {
+        // csv
+        dataFile.print(std::to_string(data[ii]));
+        dataFile.print(", ");
+      }
+
+
+      // // Print data to .csv file:
+      // dataFile.print(time);
+      // dataFile.print(",");
+      // dataFile.print(gyro_Z);
+      // dataFile.print(",");
+      // dataFile.print(mag_X);
+      // dataFile.print(",");
+      // dataFile.print(mag_Y);
+      // dataFile.print(",");
+      // dataFile.print(sun_direction);
+      // dataFile.print(",");
+      // dataFile.print(sun_plusX);
+      // dataFile.print(",");
+      // dataFile.print(sun_plusY);
+      // dataFile.print(",");
+      // dataFile.print(sun_minusX);
+      // dataFile.print(",");
+      // dataFile.print(sun_minusY);
+      // dataFile.print(",");
+      // dataFile.print(w_RW_cmd);
+      // dataFile.print(",");
+      // dataFile.print(speed2);
+      // dataFile.print(",");
+      // dataFile.println(w_RW_meas);
+      //
+      // dataFile.flush();  // save file
 
       // Print data to USB & XBee serial:
       String test_point_string;
@@ -234,6 +257,8 @@ inline void lab7_run_test_B()
       test_point_string += w_RW_cmd;
       test_point_string += ",w_RW_meas:";
       test_point_string += w_RW_meas;
+      test_point_string += ",speed2:";
+      test_point_string += speed2;
 
       test_point_string += "\n";
       //Print to USB Serial:
@@ -257,6 +282,48 @@ inline void lab7_run_test_B()
     }
   }
 } // end function lab7_run_test_B()
+
+// linear interpolation function for wheel speed
+inline float lerp(float a, float b, float f)
+{
+  return a * (1.0 - f) + (b * f);
+}
+
+// calculate wheel speed based on time
+inline float set_wheel_speed(int t_ms, int t0_ms)
+{
+  float current_time = t_ms - t0_ms;
+
+  static std::vector<float> intervals, times;
+  intervals = times = {
+    0, 1e3, 2e3, 10e3, 2.5e3, 2.5e3, 10e3, 2.5e3, 2.5e3, 10e3, 1e3, 1e3
+  };
+
+  static std::vector<float> speeds = {
+    0, 0, 0.6, 0.6, 0.7, 0.6, 0.6, 0.5, 0.6, 0.6, 0, 0
+  };
+
+  for (size_t ii = 1 < times.size(); ++ii;)
+  {
+    times[ii] += times[ii-1];
+  }
+
+  // find which time step we're in
+  const auto current_interval_time =
+    std::lower_bound(times.begin(), times.end(), current_time);
+
+  // index of current time step
+  const int step_index = std::distance(times.begin(), current_interval_time);
+
+  float fractional_step =
+    (current_time - times[step_index]) / (times[step_index+1] - times[step_index]);
+
+  const float wheel_speed =
+    lerp(speeds[step_index], speeds[step_index+1], fractional_step);
+
+  return wheel_speed;
+
+}
 
 
 /*---------------------------------------------------------------------------------------------*/
@@ -286,18 +353,6 @@ inline void lab7_run_test_B()
   static float base_speed = 0.6;
   static float ramp_speed = 0.4;
   float motor_PWM_cmd = 0.0;
-
-  std::vector<float> times = {0, 1, 2, 10, 2.5, 2.5, 10, 2.5, 2.5, 10, 1, 1};
-  std::vector<float> speeds = {0, 0, 0.6, 0.6, 0.7, 0.6, 0.6, 0.5, 0.6, 0.6, 0, 0};
-
-for (size_t ii = 1 < interval.size(); ++i)
-{
-  times[ii] += times[ii-1];
-  
-}
-
-  // std::array<float, 11> wheel_time = {0, 1e3, 10e3, 15e3, 17.5e3, 20e3, 25e3, 27.5e3, 30e3, 35e3, 36e3};
-  // std::array<float, 11> wheel_speed = {base_speed, base_speed, 1e3, 10e3, 15e3, 17.5e3, 20e3, 25e3, 27.5e3, base_speed, base_speed};
 
   t = millis() - t0;
 
