@@ -102,7 +102,7 @@ extern uint8_t remote_sensing_menu_size;
 	{"1: set manual RW speed",      false, '1', [](){ manual_set_RW_speed(); pause_refresh();} },
 	{"2: stream RW speed",false, '2', [](){ stream_RW_speed(); pause_refresh();} },
 	{"3: run test A",false, '3', [](){ lab7_run_test_A(); pause_refresh();} },
-	{"4: run test B",false, '4', [](){ lab7_run_test_B; pause_refresh();} },
+	{"4: run test B",false, '4', [](){ lab7_run_test_B(); pause_refresh();} },
 	{" ", false, 'z', [](){ menu.show(); } },
    };
 	uint8_t att_control_menu_size = GET_MENU_SIZE(att_control_menu);

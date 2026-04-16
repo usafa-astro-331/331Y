@@ -41,7 +41,7 @@ void manual_set_RW_speed();
 void lab7_run_test_A();
 void lab7_run_test_B();
 void stream_RW_speed();
-float set_wheel_speed(int t_ms, int t0_ms);
+float set_wheel_speed(int t_ms, uint32_t t0_ms);
 
 /*---------------------------------------------------------------------------------------------*/
 // Lab 7: Run Test B
@@ -69,6 +69,26 @@ float set_wheel_speed(int t_ms, int t0_ms);
  * @see IMU sensor getAGMT(), gyrZ(), magX(), magY() methods
  * @see Encoder getCount() method
  */
+
+struct Var
+{
+  const char* label;
+  std::variant<int, uint32_t, float> value;
+};
+
+inline void printVar(const Var& v)
+{
+  Serial.print(v.label);
+  Serial.print(":");
+
+  std::visit([](auto&& val)
+  {
+    Serial.print(val);
+    Serial.print(" ");
+  }, v.value);
+}
+
+
 inline void lab7_run_test_B()
 {
   if(sd_createDataFile(&dataFile, "Lab7_testB")){
@@ -128,8 +148,6 @@ inline void lab7_run_test_B()
       }
     }
 
-
-
     // Record test point:
     int test_point_count = 0;
     if (millis() > timeNext_testPoint) {         // Collect Test Point loop
@@ -137,8 +155,9 @@ inline void lab7_run_test_B()
       test_point_count++;
       uint32_t time = millis() - t0;
 
-      // Set RW Motor Speed:
-      float speed_pwm = set_speed_test_B(t0);
+      // // Set RW Motor Speed:
+      // float speed_pwm = set_speed_test_B(t0);
+      float speed_pwm = 2.0;
 
       float speed2 = set_wheel_speed(millis(), t0);
 
@@ -165,7 +184,7 @@ inline void lab7_run_test_B()
       sun_plusY /= n_sun_sensor_reads;
       sun_minusY /= n_sun_sensor_reads;
 
-      // ////////////* find sun direction *////////////////////////////////////////
+      // ////////////* find sun direction ////////////////////////////////////////
       // // // uncomment sun_plusX & sun_plusY lines to calculate sun direction
       // // // (highlight them, CTRL-/)
       S_mag = sun_plusX + sun_minusX + sun_plusY + sun_minusY;
@@ -191,19 +210,39 @@ inline void lab7_run_test_B()
       lastCount = c;
       timeLastEncMeas = timeNow;
 
-      using Cell = std::variant<int, uint32_t, float>;
-      std::vector<Cell> data{
-        time, gyro_Z, mag_X, mag_Y, sun_direction,
-        sun_plusX, sun_plusY, sun_minusX, sun_minusY,
-        w_RW_cmd, speed2, w_RW_meas
+      // using Cell = std::variant<int, uint32_t, float>;
+      // std::vector<Cell> data{
+      //   time, gyro_Z, mag_X, mag_Y, sun_direction,
+      //   sun_plusX, sun_plusY, sun_minusX, sun_minusY,
+      //   w_RW_cmd, speed2, w_RW_meas
+      // };
+
+
+      Var vars[] = {
+        {"time", time},
+        {"sun_px", sun_plusX},
+        {"RW_speed", w_RW_meas},
       };
 
-      for (int ii=0; ii<data.size(); ii++)
-      {
-        // csv
-        dataFile.print(std::to_string(data[ii]));
-        dataFile.print(", ");
+  static int ii = 0;
+      for (const auto& v : vars){
+      printVar(v);
+        Serial.println(ii);
+        ii++;
       }
+
+      // for (int ii=0; ii<data.size(); ii++)
+      // {
+        // csv
+        // dataFile.print(std::to_string(data[ii]));
+        // std::string temp;
+        // std::visit([](auto&& arg) { temp = arg; }, data[ii]);
+        // auto string_lambda = [](auto&& arg){return arg;};
+        // std::string temp;
+        // temp = std::visit(string_lambda, data[ii]);
+        // dataFile.print(temp);
+        // dataFile.print(", ");
+
 
 
       // // Print data to .csv file:
@@ -262,7 +301,7 @@ inline void lab7_run_test_B()
 
       test_point_string += "\n";
       //Print to USB Serial:
-      Serial.print(test_point_string);
+      // Serial.print(test_point_string);
       //Print to XBee:
       if(test_point_count % 10 == 0){
         dataFile.flush(); // save file every 10 test points
@@ -280,17 +319,19 @@ inline void lab7_run_test_B()
       Xbee.print("[INFO] Test B Complete. File closed.");
       return;
     }
-  }
+
+
+}
+
 } // end function lab7_run_test_B()
 
 // linear interpolation function for wheel speed
-inline float lerp(float a, float b, float f)
-{
+inline float lerp(float a, float b, float f){
   return a * (1.0 - f) + (b * f);
 }
 
 // calculate wheel speed based on time
-inline float set_wheel_speed(int t_ms, int t0_ms)
+inline float set_wheel_speed(int t_ms, uint32_t t0_ms)
 {
   float current_time = t_ms - t0_ms;
 
