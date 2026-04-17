@@ -6,7 +6,8 @@ extern FsFile dataFile;   // data file object
 int get_command_from_ground_station();
 
 uint32_t timeNext_testPoint;        // time of next test point (ms)
-uint32_t interval_testPoint = 50;  // time interval between test points (ms)
+const uint32_t interval_testPoint = 50;  // time interval between test points (ms)
+const uint32_t serial_interval = 250; // time interval between serial-printed test points (ms)
 
 extern float gyro_Z, mag_X, mag_Y;
 extern ICM_20948_I2C imu_sensor;

@@ -15,7 +15,7 @@ extern FsFile dataFile;   // data file object
 
 
 extern uint32_t timeNext_testPoint; // time of next test point (ms)
-extern uint32_t interval_testPoint; // time interval between test points (ms)
+extern const uint32_t interval_testPoint; // time interval between test points (ms)
 
 extern ICM_20948_I2C imu_sensor;
 

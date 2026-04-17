@@ -1,4 +1,5 @@
 #pragma once
+#include "att_determ.h"
 
 int get_command_from_ground_station();
 
@@ -19,15 +20,17 @@ ICM_20948_I2C imu_sensor; // IMU object
 // uint32_t interval_CheckForCommand; // time interval between Xbee/Serial checks (ms)
 // uint32_t timeLastHeartBeat; // time of last heartbeat (ms)
 // uint32_t interval_heartBeat; // interval between heartbeat (ms)
+extern const uint32_t interval_testPoint;
+extern const uint32_t serial_interval;
+extern uint32_t timeNext_testPoint;
+
+uint32_t serial_decimation = interval_testPoint/serial_interval;
 
 int sun_plusX, sun_minusX, sun_plusY, sun_minusY;
 int sun_X, sun_Y;
 float sun_direction = 0.0;
 int S_mag;
 int n_sun_sensor_reads = 5; // number of readings to average for sun sensor test point
-
-extern uint32_t timeNext_testPoint; // time of next test point (ms)
-extern uint32_t interval_testPoint; // time interval between test points (ms)
 
 float gyro_Z = 0.0;
 float mag_X = 0.0;
@@ -76,21 +79,34 @@ struct Var
   std::variant<int, uint32_t, float> value;
 };
 
-inline void printVar(const Var& v)
+
+// C++ requires std::visit to print a struct with mixed int/float values
+inline void printVar_to_serial(const Var& v)
 {
   Serial.print(v.label);
-  Serial.print(":");
 
-  std::visit([](auto&& val)
-  {
+  std::visit([](auto&& val){
     Serial.print(val);
-    Serial.print(" ");
+  }, v.value);
+}
+
+// C++ requires std::visit to print a struct with mixed int/float values
+inline void printVar_to_csv(const Var& v)
+{
+   std::visit([](auto&& val)
+  {
+    dataFile.print(val);
+    dataFile.print(", ");
   }, v.value);
 }
 
 
 inline void lab7_run_test_B()
 {
+
+  static uint32_t serial_decimation_number = 0;
+  serial_decimation_number++;
+
   if(sd_createDataFile(&dataFile, "Lab7_testB")){
     // write header row:
     dataFile.println("mcu time(ms),gyro_Z(deg/s),mag_X(uT),mag_Y(uT),sun_direction(deg),sun_plusX(count),sun_plusY(count),sun_minusX(count),sun_minusY(count),w_RW_cmd(RPM),w_RW_meas(RPM)");
@@ -115,7 +131,7 @@ inline void lab7_run_test_B()
   while(Xbee.available()) Xbee.read(); // clear Xbee buffer
 
   neopixelWrite(RGB_BUILTIN, 25, 0, 25); // Set to magenta (R=255, G=0, B=255)
-  static uint32_t t0;
+  static uint32_t t0; // !! error is here
   t0 = millis();
   timeNext_testPoint = millis();
   while (true) { // test loop
@@ -159,7 +175,7 @@ inline void lab7_run_test_B()
       // float speed_pwm = set_speed_test_B(t0);
       float speed_pwm = 2.0;
 
-      float speed2 = set_wheel_speed(millis(), t0);
+      float speedx = set_wheel_speed(millis(), t0);
 
       // Collect IMU Test Point:
       imu_sensor.getAGMT();
@@ -210,99 +226,48 @@ inline void lab7_run_test_B()
       lastCount = c;
       timeLastEncMeas = timeNow;
 
-      // using Cell = std::variant<int, uint32_t, float>;
-      // std::vector<Cell> data{
-      //   time, gyro_Z, mag_X, mag_Y, sun_direction,
-      //   sun_plusX, sun_plusY, sun_minusX, sun_minusY,
-      //   w_RW_cmd, speed2, w_RW_meas
-      // };
-
 
       Var vars[] = {
-        {"time", time},
-        {"sun_px", sun_plusX},
-        {"RW_speed", w_RW_meas},
+        {" time:", time},
+        {" sun_px:", sun_plusX},
+        {" gyro_Z:", gyro_Z},
+        {" mag_X:", mag_X},
+        {" mag_Y:", mag_Y},
+        {" sun_direction:", sun_direction},
+        {" sun_plusX:", sun_plusX},
+        {" sun_plusY:", sun_plusY},
+        {" sun_minusX:", sun_minusX},
+        {" sun_minusY:", sun_minusY},
+        {" RW_cmd:", w_RW_cmd},
+        {" RW_cmd_2:", speedx}, // still need to multiply by  * 1000.0 * MOTOR_VOLTAGE / 12.0;
+        {" RW_meas:", w_RW_meas},
       };
 
-  static int ii = 0;
+
+  uint8_t ii = 0;
+
+      // print every data point to file
       for (const auto& v : vars){
-      printVar(v);
-        Serial.println(ii);
+        printVar_to_csv(v);
         ii++;
       }
+      dataFile.print("\n");
 
-      // for (int ii=0; ii<data.size(); ii++)
-      // {
-        // csv
-        // dataFile.print(std::to_string(data[ii]));
-        // std::string temp;
-        // std::visit([](auto&& arg) { temp = arg; }, data[ii]);
-        // auto string_lambda = [](auto&& arg){return arg;};
-        // std::string temp;
-        // temp = std::visit(string_lambda, data[ii]);
-        // dataFile.print(temp);
-        // dataFile.print(", ");
+      // only print to serial sometimes
+      // if (serial_decimation_number % serial_decimation == 0) {
+        ii = 0;
+        for (const auto& v : vars){
+          printVar_to_serial(v);
+          ii++;
+        }
+        Serial.print("\n");
+
+        // at the same time ensure data is written to file
+        // dataFile.flush(); // save file every X test points
+      // }
 
 
 
-      // // Print data to .csv file:
-      // dataFile.print(time);
-      // dataFile.print(",");
-      // dataFile.print(gyro_Z);
-      // dataFile.print(",");
-      // dataFile.print(mag_X);
-      // dataFile.print(",");
-      // dataFile.print(mag_Y);
-      // dataFile.print(",");
-      // dataFile.print(sun_direction);
-      // dataFile.print(",");
-      // dataFile.print(sun_plusX);
-      // dataFile.print(",");
-      // dataFile.print(sun_plusY);
-      // dataFile.print(",");
-      // dataFile.print(sun_minusX);
-      // dataFile.print(",");
-      // dataFile.print(sun_minusY);
-      // dataFile.print(",");
-      // dataFile.print(w_RW_cmd);
-      // dataFile.print(",");
-      // dataFile.print(speed2);
-      // dataFile.print(",");
-      // dataFile.println(w_RW_meas);
-      //
-      // dataFile.flush();  // save file
-
-      // Print data to USB & XBee serial:
-      String test_point_string;
-      test_point_string += "t:";
-      test_point_string += time;
-      test_point_string += ",gyro_Z:";
-      test_point_string += gyro_Z;
-      test_point_string += ",mag_X:";
-      test_point_string += mag_X;
-      test_point_string += ",mag_Y:";
-      test_point_string += mag_Y;
-      test_point_string += ",sun_direction:";
-      test_point_string += sun_direction;
-      test_point_string += ",sun_plusX:";
-      test_point_string += sun_plusX;
-      test_point_string += ",sun_plusY:";
-      test_point_string += sun_plusY;
-      test_point_string += ",sun_minusX:";
-      test_point_string += sun_minusX;
-      test_point_string += ",sun_minusY:";
-      test_point_string += sun_minusY;
-      test_point_string += ",w_RW_cmd:";
-      test_point_string += w_RW_cmd;
-      test_point_string += ",w_RW_meas:";
-      test_point_string += w_RW_meas;
-      test_point_string += ",speed2:";
-      test_point_string += speed2;
-
-      test_point_string += "\n";
-      //Print to USB Serial:
-      // Serial.print(test_point_string);
-      //Print to XBee:
       if(test_point_count % 10 == 0){
         dataFile.flush(); // save file every 10 test points
         Xbee.print("tp:");
@@ -326,17 +291,17 @@ inline void lab7_run_test_B()
 } // end function lab7_run_test_B()
 
 // linear interpolation function for wheel speed
-inline float lerp(float a, float b, float f){
-  return a * (1.0 - f) + (b * f);
+inline float lerp(const float start_value, const float end_value, const float fraction){
+  return start_value * (1.0f - fraction) + (end_value * fraction);
 }
 
 // calculate wheel speed based on time
-inline float set_wheel_speed(uint32_t t_ms, uint32_t t0_ms)
+inline float set_wheel_speed(const uint32_t t_ms, const uint32_t t0_ms)
 {
   uint32_t current_time = t_ms - t0_ms;
 
-  static std::vector<uint32_t> intervals, times;
-  intervals = times = {
+  static std::vector<uint32_t> times;
+  times = {
     0, 1000, 2000, 1000, 2500, 2500, 10000, 2500, 2500, 10000, 1000, 1000
   };
 
@@ -344,8 +309,8 @@ inline float set_wheel_speed(uint32_t t_ms, uint32_t t0_ms)
     0, 0, 0.6, 0.6, 0.7, 0.6, 0.6, 0.5, 0.6, 0.6, 0, 0
   };
 
-  for (size_t ii = 1; ii < times.size(); ++ii)
-  {
+  // turn time intervales into a cumulative time vector
+  for (size_t ii = 1; ii < times.size(); ++ii) {
     times[ii] += times[ii-1];
   }
 
@@ -356,12 +321,19 @@ inline float set_wheel_speed(uint32_t t_ms, uint32_t t0_ms)
   // index of current time step
   const int step_index = std::distance(times.begin(), current_interval_time);
 
-  float fractional_step =
-    (float)(current_time - times[step_index]) / (float)(times[step_index+1] - times[step_index]);
+  uint32_t dt = times[step_index+1] - times[step_index];
+  if (dt<=0) {dt=1;}
+
+  const float fractional_step =
+    (float)(current_time - times[step_index]) / (float)dt;
 
   const float wheel_speed =
     lerp(speeds[step_index], speeds[step_index+1], fractional_step);
-
+Serial.print(step_index);
+  Serial.print(", ");
+  Serial.print(speeds[step_index]);
+  Serial.print(", ");
+  Serial.println(fractional_step);
   return wheel_speed;
 
 }
