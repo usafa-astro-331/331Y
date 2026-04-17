@@ -39,11 +39,11 @@ extern SFE_MAX1704X lipo; // SparkFun Thing Plus ESP32-WROOM onboard fuel gauge 
 #include <Adafruit_INA238.h>
 
 inline int get_command_from_ground_station(){
-	Serial.read();
-	delay(100);
+	// Serial.read();
+	// delay(100);
 	int received_int = 0; // default to no command
-	while (received_int==0)
-	{
+	// while (received_int==0)
+	// {
 		// if (Xbee.available())
 		// {
 		// 	String received_string = Xbee.readStringUntil('\n');
@@ -57,12 +57,12 @@ inline int get_command_from_ground_station(){
 		if (Serial.available())
 		{
 			String received_string = Serial.readStringUntil('\n');
-			received_string.trim();
+			// received_string.trim();
 			if (received_string.length() == 0) return -1;
 			Serial.print("Received from Serial: ");
 			Serial.println(received_string);
 			received_int = received_string.toInt();
 		}
-	}
+	// }
 	return received_int;
 }

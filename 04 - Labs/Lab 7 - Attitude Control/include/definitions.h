@@ -17,7 +17,7 @@
 #define SUN_SENSOR_PLUS_Y_PIN   A1
 #define SUN_SENSOR_MINUS_Y_PIN  A3
 
-#define MOTOR_VOLTAGE           5.05
+#define MOTOR_VOLTAGE           5.05f
 #define CPR                     64
 #define MOTOR_PWM_1_PIN         33
 #define MOTOR_PWM_2_PIN         15

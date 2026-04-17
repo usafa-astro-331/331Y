@@ -17,14 +17,15 @@ ESP32Encoder enc;
 ICM_20948_I2C imu_sensor; // IMU object
 
 // uint32_t timeLastCheckForCommand; // time of next Xbee check
-// uint32_t interval_CheckForCommand; // time interval between Xbee/Serial checks (ms)
+// uint32_t interval_CheckForCommand; // time interval between Xbee4/Serial checks (ms)
 // uint32_t timeLastHeartBeat; // time of last heartbeat (ms)
 // uint32_t interval_heartBeat; // interval between heartbeat (ms)
 extern const uint32_t interval_testPoint;
 extern const uint32_t serial_interval;
 extern uint32_t timeNext_testPoint;
 
-uint32_t serial_decimation = interval_testPoint/serial_interval;
+// uint32_t serial_decimation = interval_testPoint/serial_interval;
+uint32_t serial_decimation = 5; // only print every 5th point to serial
 
 int sun_plusX, sun_minusX, sun_plusY, sun_minusY;
 int sun_X, sun_Y;
@@ -44,7 +45,9 @@ void manual_set_RW_speed();
 void lab7_run_test_A();
 void lab7_run_test_B();
 void stream_RW_speed();
-float set_wheel_speed(uint32_t t_ms, uint32_t t0_ms);
+float set_wheel_speed(uint32_t t_ms, uint32_t t0_ms, bool* COMPLETE);
+
+bool TEST_COMPLETE = true;
 
 /*---------------------------------------------------------------------------------------------*/
 // Lab 7: Run Test B
@@ -103,9 +106,12 @@ inline void printVar_to_csv(const Var& v)
 
 inline void lab7_run_test_B()
 {
+  TEST_COMPLETE = false;
 
-  static uint32_t serial_decimation_number = 0;
-  serial_decimation_number++;
+  static uint32_t serial_decimation_iterator = 0;
+  serial_decimation_iterator++;
+
+  const uint32_t t0_ms = millis();
 
   if(sd_createDataFile(&dataFile, "Lab7_testB")){
     // write header row:
@@ -131,8 +137,7 @@ inline void lab7_run_test_B()
   while(Xbee.available()) Xbee.read(); // clear Xbee buffer
 
   neopixelWrite(RGB_BUILTIN, 25, 0, 25); // Set to magenta (R=255, G=0, B=255)
-  static uint32_t t0; // !! error is here
-  t0 = millis();
+
   timeNext_testPoint = millis();
   while (true) { // test loop
 
@@ -165,17 +170,18 @@ inline void lab7_run_test_B()
     }
 
     // Record test point:
-    int test_point_count = 0;
+    static uint32_t test_point_count = 0;
     if (millis() > timeNext_testPoint) {         // Collect Test Point loop
       timeNext_testPoint += interval_testPoint;  // Update time for next Test Point
       test_point_count++;
-      uint32_t time = millis() - t0;
+      uint32_t time = millis() - t0_ms;
 
       // // Set RW Motor Speed:
-      // float speed_pwm = set_speed_test_B(t0);
-      float speed_pwm = 2.0;
+      // float speed_pwm = set_spee#d_test_B(t0);
+      // float speed_pwm = 2.0;
 
-      float speedx = set_wheel_speed(millis(), t0);
+      float speedx = set_wheel_speed(millis(), t0_ms, &TEST_COMPLETE);
+      driver.setOutput(speedx);
 
       // Collect IMU Test Point:
       imu_sensor.getAGMT();
@@ -213,7 +219,7 @@ inline void lab7_run_test_B()
       /////////////////////////////////////////////////////////////////////////////
 
       // Get commanded reaction wheel speed:
-      float w_RW_cmd = -speed_pwm * 1000.0 * MOTOR_VOLTAGE / 12.0;
+      // float w_RW_cmd = -speed_pwm * 1000.0 * MOTOR_VOLTAGE / 12.0;
       // Get measured reaction wheel speed:
       static int64_t lastCount = 0;
       static uint32_t timeLastEncMeas = 0;
@@ -238,14 +244,13 @@ inline void lab7_run_test_B()
         {" sun_plusY:", sun_plusY},
         {" sun_minusX:", sun_minusX},
         {" sun_minusY:", sun_minusY},
-        {" RW_cmd:", w_RW_cmd},
-        {" RW_cmd_2:", speedx}, // still need to multiply by  * 1000.0 * MOTOR_VOLTAGE / 12.0;
+        // {" RW_cmd:", w_RW_cmd},
+        {" RW_cmd_2:", speedx* 1000.0f * MOTOR_VOLTAGE / 12.0f},
         {" RW_meas:", w_RW_meas},
       };
 
 
   uint8_t ii = 0;
-
       // print every data point to file
       for (const auto& v : vars){
         printVar_to_csv(v);
@@ -253,6 +258,9 @@ inline void lab7_run_test_B()
       }
       dataFile.print("\n");
 
+
+      if (test_point_count % serial_decimation == 0){
+      // if (serial_decimation_iterator % serial_decimation == 0){
       // only print to serial sometimes
       // if (serial_decimation_number % serial_decimation == 0) {
         ii = 0;
@@ -262,23 +270,16 @@ inline void lab7_run_test_B()
         }
         Serial.print("\n");
 
+      serial_decimation_iterator = 0;
+
         // at the same time ensure data is written to file
-        // dataFile.flush(); // save file every X test points
-      // }
-
-
-
-      if(test_point_count % 10 == 0){
-        dataFile.flush(); // save file every 10 test points
-        Xbee.print("tp:");
-        Xbee.println(test_point_count);
-        // Xbee.print(test_point_string);
+        dataFile.flush(); // save file every X test points
       }
-      // Serial.println(millis() - time + t0);
+
     }
 
     // End test if complete:
-    if (millis() - t0 > 40e3){
+    if (TEST_COMPLETE){
       dataFile.close();
       Serial.print("[INFO] Test B Complete. File closed.");
       Xbee.print("[INFO] Test B Complete. File closed.");
@@ -296,17 +297,17 @@ inline float lerp(const float start_value, const float end_value, const float fr
 }
 
 // calculate wheel speed based on time
-inline float set_wheel_speed(const uint32_t t_ms, const uint32_t t0_ms)
+inline float set_wheel_speed(const uint32_t t_ms, const uint32_t t0_ms, bool* COMPLETE)
 {
   uint32_t current_time = t_ms - t0_ms;
 
   static std::vector<uint32_t> times;
   times = {
-    0, 1000, 2000, 1000, 2500, 2500, 10000, 2500, 2500, 10000, 1000, 1000
+    0, 1000, 2000, 10000, 2500, 2500, 10000, 2500, 2500, 10000, 1000, 5000
   };
 
   static std::vector<float> speeds = {
-    0, 0, 0.6, 0.6, 0.7, 0.6, 0.6, 0.5, 0.6, 0.6, 0, 0
+    0, 0, 0.6, 0.6, 1.0f, 0.6, 0.6, 0.2, 0.6, 0.6, 0, 0
   };
 
   // turn time intervales into a cumulative time vector
@@ -319,108 +320,21 @@ inline float set_wheel_speed(const uint32_t t_ms, const uint32_t t0_ms)
     std::lower_bound(times.begin(), times.end(), current_time);
 
   // index of current time step
-  const int step_index = std::distance(times.begin(), current_interval_time);
+  const int step_index = std::distance(times.begin(), current_interval_time)-1;
 
-  uint32_t dt = times[step_index+1] - times[step_index];
-  if (dt<=0) {dt=1;}
-
-  const float fractional_step =
-    (float)(current_time - times[step_index]) / (float)dt;
+  uint32_t total_step_time = times[step_index+1] - times[step_index];
+  uint32_t time_into_step = current_time - times[step_index];
+  if (total_step_time<=0) {total_step_time=1;} // prevent /0 in next step
+    const float fractional_step =  (float)(time_into_step) / (float)total_step_time;
 
   const float wheel_speed =
     lerp(speeds[step_index], speeds[step_index+1], fractional_step);
-Serial.print(step_index);
-  Serial.print(", ");
-  Serial.print(speeds[step_index]);
-  Serial.print(", ");
-  Serial.println(fractional_step);
+
+  if (current_time > times.back() ) *COMPLETE = true;
+
   return wheel_speed;
 
 }
-
-
-/*---------------------------------------------------------------------------------------------*/
-// Set Wheel Speed:
-/*---------------------------------------------------------------------------------------------*/
-/**
- * @brief Sets the reaction wheel motor speed according to a prescribed test profile for Lab 7 Test B.
- *
- * Implements a dynamic speed profile over 50 seconds:
- *  - 0-10s: Hold at base speed (0.6)
- *  - 10-15s: Hold at base speed (0.6)
- *  - 15-17.5s: Ramp up to base + ramp speed
- *  - 17.5-20s: Ramp back down to base speed
- *  - 20-25s: Hold at base speed
- *  - 25-27.5s: Ramp down to 0
- *  - 27.5-30s: Ramp back up to base speed
- *  - 30-35s: Hold at base speed
- *  - 35s+: Turn off wheel
- *
- * @return (float) commanded PWM motor speed (0.0 to 1.0)
- */
-
-  inline float set_speed_test_B(uint32_t t0) {
-
-  static uint32_t elapsed;
-  static uint32_t t;
-  static float base_speed = 0.6;
-  static float ramp_speed = 0.4;
-  float motor_PWM_cmd = 0.0;
-
-  t = millis() - t0;
-
-  if (t < 10e3) {  // hold still at half speed (10 sec)
-    motor_PWM_cmd = base_speed;
-    neopixelWrite(RGB_BUILTIN, 255, 255, 0); // Set to yellow (R=255, G=255, B=0)
-  }
-
-  else if (t < 15e3) {  // hold still at half speed (5 sec)
-    motor_PWM_cmd = base_speed;
-    neopixelWrite(RGB_BUILTIN, 0, 0, 255); // Set to blue (R=0, G=0, B=255)
-  }
-
-  else if (t < 17.5e3) {  // ramp up (2.5 sec)
-    elapsed = t - 15e3;
-    motor_PWM_cmd = base_speed + ramp_speed * elapsed / 2.5e3;
-  }
-
-  else if (t < 20e3) {  // ramp back down to half speed (2.5 sec)
-    elapsed = t - 17.5e3;
-    motor_PWM_cmd = base_speed + ramp_speed - (ramp_speed * elapsed / 2.5e3);
-  }
-
-  else if (t < 25e3) {  // hold new position (5 sec)
-    motor_PWM_cmd = base_speed;
-  }
-
-  else if (t < 27.5e3) {  // ramp down (2.5 sec)
-    elapsed = t - 25e3;
-    motor_PWM_cmd = base_speed - (ramp_speed * elapsed / 2.5e3);
-
-  } else if (t < 30e3) {  // ramp back up to half speed  (5 sec)
-    elapsed = t - 27.5e3;
-    motor_PWM_cmd = base_speed - ramp_speed + (ramp_speed * elapsed / 2.5e3);
-  }
-
-  else if (t < 35e3) {  // hold new position (5 sec)
-    motor_PWM_cmd = base_speed;
-    neopixelWrite(RGB_BUILTIN, 255, 0, 255); // Set to magenta (R=255, G=0, B=255)
-
-  }
-
-  else if (t > 35e3) {  // turn off wheel
-    motor_PWM_cmd = 0;
-    driver.setOutput(0);
-    neopixelWrite(RGB_BUILTIN, 255, 255, 255); // Set to white (R=255, G=255, B=255)
-
-  }
-
-  driver.setOutput(motor_PWM_cmd);
-  Serial.println(motor_PWM_cmd);
-
-  return motor_PWM_cmd;
-
-}  // end set_speed()
 
 
 inline void stream_RW_speed()
@@ -577,30 +491,30 @@ inline void lab7_run_test_A() {
       lastCount = c;
       timeLastEncMeas = timeNow;
 
-      // Print data to .csv file:
-      dataFile.print(time);
-      dataFile.print(",");
-      dataFile.print(gyro_Z);
-      dataFile.print(",");
-      dataFile.print(mag_X);
-      dataFile.print(",");
-      dataFile.print(mag_Y);
-      dataFile.print(",");
-      dataFile.print(sun_direction);
-      dataFile.print(",");
-      dataFile.print(sun_plusX);
-      dataFile.print(",");
-      dataFile.print(sun_plusY);
-      dataFile.print(",");
-      dataFile.print(sun_minusX);
-      dataFile.print(",");
-      dataFile.print(sun_minusY);
-      dataFile.print(",");
-      dataFile.print(w_RW_cmd);
-      dataFile.print(",");
-      dataFile.println(w_RW_meas);
+      // // Print data to .csv file:
+      // dataFile.print(time);
+      // dataFile.print(",");
+      // dataFile.print(gyro_Z);
+      // dataFile.print(",");
+      // dataFile.print(mag_X);
+      // dataFile.print(",");
+      // dataFile.print(mag_Y);
+      // dataFile.print(",");
+      // dataFile.print(sun_direction);
+      // dataFile.print(",");
+      // dataFile.print(sun_plusX);
+      // dataFile.print(",");
+      // dataFile.print(sun_plusY);
+      // dataFile.print(",");
+      // dataFile.print(sun_minusX);
+      // dataFile.print(",");
+      // dataFile.print(sun_minusY);
+      // dataFile.print(",");
+      // dataFile.print(w_RW_cmd);
+      // dataFile.print(",");
+      // dataFile.println(w_RW_meas);
 
-      dataFile.flush();  // save file
+      // dataFile.flush();  // save file
 
       // Print data to USB & XBee serial:
       String test_point_string;
@@ -652,7 +566,7 @@ inline void manual_set_RW_speed(){
 
   int rw_speed_int = get_command_from_ground_station();
   if (rw_speed_int>100) rw_speed_int = 100;
-  if (rw_speed_int<-100) rw_speed_int = -100;
+  if (rw_speed_int< -100) rw_speed_int = -100;
   const float rw_speed = float(rw_speed_int) / 100.0;
 
   Serial.println("Setting motor speed to: ");
