@@ -41,7 +41,7 @@ void manual_set_RW_speed();
 void lab7_run_test_A();
 void lab7_run_test_B();
 void stream_RW_speed();
-float set_wheel_speed(int t_ms, uint32_t t0_ms);
+float set_wheel_speed(uint32_t t_ms, uint32_t t0_ms);
 
 /*---------------------------------------------------------------------------------------------*/
 // Lab 7: Run Test B
@@ -331,20 +331,20 @@ inline float lerp(float a, float b, float f){
 }
 
 // calculate wheel speed based on time
-inline float set_wheel_speed(int t_ms, uint32_t t0_ms)
+inline float set_wheel_speed(uint32_t t_ms, uint32_t t0_ms)
 {
-  float current_time = t_ms - t0_ms;
+  uint32_t current_time = t_ms - t0_ms;
 
-  static std::vector<float> intervals, times;
+  static std::vector<uint32_t> intervals, times;
   intervals = times = {
-    0, 1e3, 2e3, 10e3, 2.5e3, 2.5e3, 10e3, 2.5e3, 2.5e3, 10e3, 1e3, 1e3
+    0, 1000, 2000, 1000, 2500, 2500, 10000, 2500, 2500, 10000, 1000, 1000
   };
 
   static std::vector<float> speeds = {
     0, 0, 0.6, 0.6, 0.7, 0.6, 0.6, 0.5, 0.6, 0.6, 0, 0
   };
 
-  for (size_t ii = 1 < times.size(); ++ii;)
+  for (size_t ii = 1; ii < times.size(); ++ii)
   {
     times[ii] += times[ii-1];
   }
@@ -357,7 +357,7 @@ inline float set_wheel_speed(int t_ms, uint32_t t0_ms)
   const int step_index = std::distance(times.begin(), current_interval_time);
 
   float fractional_step =
-    (current_time - times[step_index]) / (times[step_index+1] - times[step_index]);
+    (float)(current_time - times[step_index]) / (float)(times[step_index+1] - times[step_index]);
 
   const float wheel_speed =
     lerp(speeds[step_index], speeds[step_index+1], fractional_step);
