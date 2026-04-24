@@ -1,3 +1,5 @@
+#pragma once
+
 #if SERIALMENU_DISABLE_PROGMEM_SUPPORT != true
 constexpr PROGMEM char SERIAL_MENU_COPYRIGHT[] = 
 #else

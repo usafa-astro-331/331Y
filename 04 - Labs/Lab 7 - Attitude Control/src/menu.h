@@ -5,6 +5,11 @@
 #include "main.h"
 #include "wheel_speed.h"
 #include "electrical.h"
+#include "sd_functions.h"
+#include "zmodem.h"
+
+void folder_ls(const String& param);
+void transfer_file_from_directory(const String& str);
 
 //
 // const SerialMenu& menu = SerialMenu::get();
@@ -32,17 +37,17 @@
 
 void pause_refresh();
 
-
 class SerialMenu;
  SerialMenu& menu = SerialMenu::get();
 
-    // Forward menu declarations; some are is referenced before definition
+    // Forward menu declarations; some are referenced before definition
     extern  SerialMenuEntry main_menu[];
     extern  SerialMenuEntry communication_menu[];
     extern  SerialMenuEntry electrical_menu[];
     extern  SerialMenuEntry att_determ_menu[];
     extern  SerialMenuEntry att_control_menu[];
     extern  SerialMenuEntry remote_sensing_menu[];
+	extern	SerialMenuEntry file_menu[];
 
 extern uint8_t main_menu_size;
 extern uint8_t communication_menu_size;
@@ -50,6 +55,7 @@ extern uint8_t electrical_menu_size;
 extern uint8_t att_determ_menu_size;
 extern uint8_t att_control_menu_size;
 extern uint8_t remote_sensing_menu_size;
+extern uint8_t file_menu_size;
 
 
     // Definition of menu1:
@@ -64,7 +70,9 @@ extern uint8_t remote_sensing_menu_size;
         {"1: communication", false, '1', [](){ menu.load(communication_menu, communication_menu_size); menu.show(); } },
         {"2: electrical", false, '2', [](){ menu.load(electrical_menu, electrical_menu_size); menu.show(); } },
         {"3: attitude determination", false, 'y', [](){ menu.load(att_determ_menu, att_determ_menu_size); menu.show(); } },
-        {"4: attitude control", false, '4', [](){ menu.load(att_control_menu, att_control_menu_size); menu.show(); } },
+		{"4: attitude control", false, '4', [](){ menu.load(att_control_menu, att_control_menu_size); menu.show(); } },
+		{"6: file menu", false, '6', [](){ menu.load(file_menu, file_menu_size); menu.show(); } },
+
         // {"5: remote sensing, false, 'y', [](){ menu.load(remote_sensing_menu); menu.show(); } },
         {" ",       false,  'z', [](){ menu.show(); } }
     };
@@ -108,6 +116,20 @@ extern uint8_t remote_sensing_menu_size;
 	uint8_t att_control_menu_size = GET_MENU_SIZE(att_control_menu);
 
 
+	SerialMenuEntry file_menu[] = {
+	{"file menu", false, ' ', [](){ menu.show(); } },
+	{"0: return to main menu", false, '0', [](){ menu.load(main_menu,main_menu_size); menu.show(); } },
+
+	{"1: communication files",      false, '1', [](){ manual_set_RW_speed(); pause_refresh();} },
+	{"2: electrical files",false, '2', [](){ transfer_file_from_directory("electrical"); pause_refresh();} },
+	{"3: atttitude determination files",false, '3', [](){ lab7_run_test_A(); pause_refresh();} },
+	{"4: attitude control files",false, '4', [](){ lab7_run_test_B(); pause_refresh();} },
+	{"z: manage files",false, '4', [](){ lab7_run_test_B(); pause_refresh();} },
+	{" ", false, 'x', [](){ menu.show(); } },
+   };
+	uint8_t file_menu_size = GET_MENU_SIZE(att_control_menu);
+
+
 inline void pause_refresh()
 {
     Serial.print("Press any key to return to menu");
@@ -123,3 +145,20 @@ inline void pause_refresh()
     // display menu
     menu.show();
 }
+
+inline void folder_ls(const String& param) {
+	change_directory(param);
+	Serial.print(directory_listing());
+	change_directory("/");
+}
+
+inline void transfer_file_from_directory(const String& directory) {
+	change_directory(directory);
+	// Serial.print(directory_listing());
+
+	sd_printFileMenu();
+
+	change_directory("/");
+}
+
+

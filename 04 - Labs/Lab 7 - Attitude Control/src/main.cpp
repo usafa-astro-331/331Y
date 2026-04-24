@@ -31,6 +31,7 @@
 /*---------------------------------------------------------------------------------------------*/
 // Objects:
 FsFile dataFile;   // data file object
+// SdFile fout;
 
 // SFE_MAX1704X lipo; // SparkFun Thing Plus ESP32-WROOM onboard fuel gauge (I2C addr 0x36)
 // ICM_20948_I2C imu_sensor; // IMU object
