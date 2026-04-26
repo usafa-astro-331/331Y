@@ -7,9 +7,18 @@
 #include "electrical.h"
 #include "sd_functions.h"
 #include "zmodem.h"
+#include "../lib/zmodem/zmodem.h"
 
-void folder_ls(const String& param);
-void transfer_file_from_directory(const String& str);
+// inline char* cmd = oneKbuf;
+
+// static String cmd;
+
+
+void folder_ls(const String& directory);
+void transfer_file_from_directory(const String& directory_name);
+
+inline char menu_buf[256];
+extern char cmd;
 
 //
 // const SerialMenu& menu = SerialMenu::get();
@@ -65,7 +74,7 @@ extern uint8_t file_menu_size;
     // -Declare the keypress assigned to a menu entry (converts to lowercase)
     // -Declare the callback as a lambda function or use a function pointer
 
-    SerialMenuEntry main_menu[] = {
+inline SerialMenuEntry main_menu[] = {
         {"main menu:", false, ' ', [](){ menu.show(); }},
         {"1: communication", false, '1', [](){ menu.load(communication_menu, communication_menu_size); menu.show(); } },
         {"2: electrical", false, '2', [](){ menu.load(electrical_menu, electrical_menu_size); menu.show(); } },
@@ -76,16 +85,16 @@ extern uint8_t file_menu_size;
         // {"5: remote sensing, false, 'y', [](){ menu.load(remote_sensing_menu); menu.show(); } },
         {" ",       false,  'z', [](){ menu.show(); } }
     };
-    uint8_t main_menu_size = GET_MENU_SIZE(main_menu);
+inline uint8_t main_menu_size = GET_MENU_SIZE(main_menu);
 
-    SerialMenuEntry electrical_menu[] = {
+inline SerialMenuEntry electrical_menu[] = {
 	{"electrical menu", false, ' ', [](){ menu.show(); } },
 	{"0: return to main menu", false, '0', [](){ menu.load(main_menu,main_menu_size); menu.show(); } },
 	{"1: IV data", false, '1', [](){ IV_data(); pause_refresh();} },
 	{"2: battery telemetry",false, '2', [](){ send_battery_telemetry(); pause_refresh();} },
 	{" ", false, 'z', [](){ menu.show(); } },
    };
-    uint8_t electrical_menu_size = GET_MENU_SIZE(electrical_menu);
+inline uint8_t electrical_menu_size = GET_MENU_SIZE(electrical_menu);
 
     SerialMenuEntry communication_menu[] = {
     {"communication menu", false, ' ', [](){ menu.show(); } },
@@ -94,17 +103,17 @@ extern uint8_t file_menu_size;
     {"2: toggle LED",false, '2', [](){ toggle_LED(); pause_refresh();} },
     {" ", false, 'z', [](){ menu.show(); } },
    };
-    uint8_t communication_menu_size = GET_MENU_SIZE(communication_menu);
+inline uint8_t communication_menu_size = GET_MENU_SIZE(communication_menu);
 
-	SerialMenuEntry att_determ_menu[] = {
+inline SerialMenuEntry att_determ_menu[] = {
 	{"attitude determination menu", false, ' ', [](){ menu.show(); } },
 	{"0: return to main menu", false, '0', [](){ menu.load(main_menu,main_menu_size); menu.show(); } },
 	{"1: run test",false, '1', [](){ lab6_run_test(); pause_refresh();} },
 	{" ", false, 'z', [](){ menu.show(); } },
    };
-	uint8_t att_determ_menu_size = GET_MENU_SIZE(att_determ_menu);
+inline uint8_t att_determ_menu_size = GET_MENU_SIZE(att_determ_menu);
 
-	SerialMenuEntry att_control_menu[] = {
+inline SerialMenuEntry att_control_menu[] = {
 	{"attitude control menu", false, ' ', [](){ menu.show(); } },
 	{"0: return to main menu", false, '0', [](){ menu.load(main_menu,main_menu_size); menu.show(); } },
 	{"1: set manual RW speed",      false, '1', [](){ manual_set_RW_speed(); pause_refresh();} },
@@ -113,21 +122,21 @@ extern uint8_t file_menu_size;
 	{"4: run test B",false, '4', [](){ lab7_run_test_B(); pause_refresh();} },
 	{" ", false, 'z', [](){ menu.show(); } },
    };
-	uint8_t att_control_menu_size = GET_MENU_SIZE(att_control_menu);
+inline uint8_t att_control_menu_size = GET_MENU_SIZE(att_control_menu);
 
 
-	SerialMenuEntry file_menu[] = {
+inline SerialMenuEntry file_menu[] = {
 	{"file menu", false, ' ', [](){ menu.show(); } },
 	{"0: return to main menu", false, '0', [](){ menu.load(main_menu,main_menu_size); menu.show(); } },
 
 	{"1: communication files",      false, '1', [](){ manual_set_RW_speed(); pause_refresh();} },
 	{"2: electrical files",false, '2', [](){ transfer_file_from_directory("electrical"); pause_refresh();} },
-	{"3: atttitude determination files",false, '3', [](){ lab7_run_test_A(); pause_refresh();} },
+	{"3: attitude determination files",false, '3', [](){ lab7_run_test_A(); pause_refresh();} },
 	{"4: attitude control files",false, '4', [](){ lab7_run_test_B(); pause_refresh();} },
 	{"z: manage files",false, '4', [](){ lab7_run_test_B(); pause_refresh();} },
 	{" ", false, 'x', [](){ menu.show(); } },
    };
-	uint8_t file_menu_size = GET_MENU_SIZE(att_control_menu);
+inline uint8_t file_menu_size = GET_MENU_SIZE(att_control_menu);
 
 
 inline void pause_refresh()
@@ -146,17 +155,73 @@ inline void pause_refresh()
     menu.show();
 }
 
-inline void folder_ls(const String& param) {
-	change_directory(param);
-	Serial.print(directory_listing());
+inline void folder_ls(const String& directory) {
+	change_directory(directory);
+	directory_listing();
 	change_directory("/");
 }
 
-inline void transfer_file_from_directory(const String& directory) {
-	change_directory(directory);
-	// Serial.print(directory_listing());
+inline void transfer_file_from_directory(const String& directory_name) {
+	change_directory(directory_name);
 
-	sd_printFileMenu();
+	directory_listing();
+
+//
+//   if (fileCount > 0) {
+	// Clear any existing serial input buffer
+	    while (Serial.available()) {
+	      Serial.read();
+	    }
+     Serial.println("[REQUEST] Enter the file number to print.");
+//
+//
+     // Wait for user input with timeout
+     unsigned long timeout = millis() + 15000; // 15 second timeout
+     while (!Serial.available() && millis() < timeout) {
+       delay(10);
+     }
+//
+     if (millis() >= timeout) {
+       Serial.println("[CAUTION] Input timeout, returning to Menu.");
+       return;
+     }
+//
+     int choice = Serial.parseInt();   // read number user typed
+
+     // Clear remaining characters in buffer
+     while (Serial.available()) {
+       Serial.read();
+     }
+//
+     // if (choice > 0 && choice <= fileCount) {
+       Serial.print("[INFO] You picked file #");  Serial.println(choice);
+
+	FsFile dirsz;
+
+	dirsz.openCwd();
+	dirsz.rewindDirectory();
+
+	int filenum = 1;
+	while (fout.openNext(&dirsz)) {
+		if (filenum < choice) {
+			filenum++;
+			fout.close();
+		}
+		else {
+			fout.getName(zfile_name, 256);
+			wcs(zfile_name);
+			break;
+		}
+	}
+	dirsz.close();
+	saybibi();
+	Serial.println("transfer complete");
+
+
+       // if (!fout.open(zfile_name, O_READ)) {
+       //   Serial.print("file open failed");
+
+
 
 	change_directory("/");
 }

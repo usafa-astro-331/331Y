@@ -3,6 +3,7 @@
 
 #include "zmodem_config.h"
 #include "zmodem_fixes.h"
+#include "zmodem_zm.h"
 #include <SdFat.h>
 
 /*
@@ -171,7 +172,7 @@ _PROTOTYPE(void bibi , (int n ));
 _PROTOTYPE(int wcs , (const char *oname));
 _PROTOTYPE(void saybibi, (void));
 
-int wctxpn(char *name,SdFile *file);
+int wctxpn(char *name,SdFile *zfile_pointer);
 int wcrx();
 
 /* Ward Christensen / CP/M parameters - Don't change these! */
@@ -193,24 +194,24 @@ int wcrx();
 #define Rx_RETRYMAX 5
 
 int count_files(int *file_count, long *byte_count);
-String directory_listing();
-String print_working_directory();
-String change_directory(String param);
-String remove_file(char* param);
-String mkdir(char* param);
-String remove_directory(char* param);
-String zmodem_send_file(char* param);
-String zmodem_receive_file();
-String help();
+void directory_listing();
+void print_working_directory();
+void change_directory(const String& param);
+void remove_file(String param);
+void mkdir(String param);
+void remove_directory(String param);
+void zmodem_send_file(String param);
+void zmodem_receive_file();
+void help(void);
 
 
 // Dylan (monte_carlo_ecm, bitflipper, etc.) - The way I made this sketch in any way operate on
 // a board with only 2K of RAM is to borrow the SZ/RZ buffer for the buffers needed by the main
 // loop(), in particular the file name parameter and the SdFat directory entry.  This is very
 // unorthodox, but now it works on an\\\ Uno.  Please see notes in zmodem_config.h for limitations
-#define file_name (&oneKbuf[512])
-#define dir ((FsFile *)&oneKbuf[256])
-#define file ((FsFile*)&oneKbuf[768])
+#define zfile_name (&oneKbuf[512])
+#define zdir ((FsFile *)&oneKbuf[256])
+#define zfile_pointer ((FsFile*)&oneKbuf[768])
 
 extern int Filesleft;
 extern long Totalleft;

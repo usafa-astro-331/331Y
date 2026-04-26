@@ -355,9 +355,9 @@ void sd_printFileMenu(const String& path) {
  * @return void
  */
 void sd_printFile(const char *filename) {
-  FsFile filex = sd.open(filename);
+  FsFile file = sd.open(filename);
 
-  if (!filex) {
+  if (!file) {
     Serial.print("[ERROR] Error opening file: ");
     Serial.println(filename);
     return;
@@ -379,8 +379,8 @@ void sd_printFile(const char *filename) {
 
   // Print file contents with periodic yield for system stability
   uint32_t bytesRead = 0;
-  while (filex.available()) {
-    Serial.write(filex.read());
+  while (file.available()) {
+    Serial.write(file.read());
     bytesRead++;
     
     // Yield to system every 100 bytes to prevent watchdog issues
@@ -389,7 +389,7 @@ void sd_printFile(const char *filename) {
     }
   }
 
-  filex.close();
+  file.close();
   Serial.println("\n[INFO] ---- End of file ----");
 }
 

@@ -70,7 +70,7 @@ int lastsent;           /* Last char we sent */
 uint8_t Not8bit;            /* Seven bits seen on header */
 //char Lzmanag;           /* Local ZMODEM file management request */
 //int Restricted = 0;       /* restricted; no /.. or ../ in filenames */
-//int Quiet=0;            /* overrides logic that would otherwise set verbose */
+// int Quiet=0;            /* overrides logic that would otherwise set verbose */
 uint8_t Eofseen;            /* EOF seen on input set by zfilbuf */
 
 

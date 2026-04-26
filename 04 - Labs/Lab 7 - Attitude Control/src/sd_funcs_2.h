@@ -31,7 +31,7 @@ static SdFat sd;
  * @param csPin The chip select pin for the SD card.
  * @return true if initialization was successful.
  */
-bool sd_init(uint8_t csPin)
+inline bool sd_init(uint8_t csPin)
 {
     pinMode(SD_CS_PIN, OUTPUT);
     if (!sd.begin(SD_CS_PIN, SD_SCK_MHZ(25))) {
@@ -51,7 +51,7 @@ bool sd_init(uint8_t csPin)
  * @return true        If the file was successfully created and opened.
  * @return false       If file creation/opening failed.
  */
-bool sd_createDataFile(FsFile *dataFile, const char *preamble) {
+inline bool sd_createDataFile(FsFile *dataFile, const char *preamble) {
 
   char filename[40];
   int fileNumber = 1;
@@ -110,7 +110,7 @@ bool sd_createDataFile(FsFile *dataFile, const char *preamble) {
  * @return void
  */
 
-void sd_listFiles(String dirName, int depth)
+inline void sd_listFiles(String dirName, int depth)
 {
   Serial.print("[INFO] Listing contents of: ");
   Serial.println(dirName);
@@ -173,7 +173,7 @@ void sd_listFiles(String dirName, int depth)
  *
  * @return void
  */
-void sd_printFileMenu() {
+inline void sd_printFileMenu() {
   FsFile root = sd.open("/");
 
   if (!root) {
@@ -262,7 +262,7 @@ void sd_printFileMenu() {
  * @param filename Name of the file to print.
  * @return void
  */
-void sd_printFile(const char *filename) {
+inline void sd_printFile(const char *filename) {
   FsFile file = sd.open(filename);
 
   if (!file) {
