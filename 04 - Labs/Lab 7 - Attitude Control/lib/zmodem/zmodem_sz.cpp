@@ -27,7 +27,7 @@
 #include "zmodem_crc16.cpp"
 
 #include <stdio.h>
-
+#define Verbose 0
 #define PATHLEN 64
 
 #define HOWMANY 2
@@ -152,8 +152,7 @@ FILE *fout;
 extern SdFile fout;
 #endif
 
-int wcs(const char *oname)
-{
+int wcs(const char *oname) {
 //  char name[PATHLEN];
 
 //  strcpy(name, oname);

@@ -63,7 +63,7 @@ inline void xsendline(int c) {
 void bttyout(int c);
 
 #define Zmodem 1           /* ZMODEM protocol requested */
-extern uint8_t Verbose;
+// extern uint8_t Verbose;
 extern char zconv;             /* ZMODEM file conversion request */
 extern char zmanag;            /* ZMODEM file management request */
 extern char ztrans;            /* ZMODEM file transport request */

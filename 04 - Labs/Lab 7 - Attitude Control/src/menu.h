@@ -185,7 +185,7 @@ inline void transfer_file_from_directory(const String& directory_name) {
        Serial.println("[CAUTION] Input timeout, returning to Menu.");
        return;
      }
-//
+
      int choice = Serial.parseInt();   // read number user typed
 
      // Clear remaining characters in buffer
@@ -209,21 +209,26 @@ inline void transfer_file_from_directory(const String& directory_name) {
 		}
 		else {
 			fout.getName(zfile_name, 256);
+			ZSERIAL.print(F("rz\n"));
+			ZSERIAL.flush();
+			sendzrqinit();
+			delay(200);
 			wcs(zfile_name);
+			fout.close();
 			break;
 		}
 	}
 	dirsz.close();
 	saybibi();
 	Serial.println("transfer complete");
-
-
-       // if (!fout.open(zfile_name, O_READ)) {
-       //   Serial.print("file open failed");
-
-
-
+//
+//
+//        // if (!fout.open(zfile_name, O_READ)) {
+//        //   Serial.print("file open failed");
+//
+//
+//
 	change_directory("/");
-}
+} // end function transfer files from directory()
 
 
