@@ -75,12 +75,12 @@ extern uint8_t file_menu_size;
     // -Declare the callback as a lambda function or use a function pointer
 
 inline SerialMenuEntry main_menu[] = {
-        {"main menu:", false, ' ', [](){ menu.show(); }},
+        {"\nmain menu:", false, ' ', [](){ menu.show(); }},
         {"1: communication", false, '1', [](){ menu.load(communication_menu, communication_menu_size); menu.show(); } },
         {"2: electrical", false, '2', [](){ menu.load(electrical_menu, electrical_menu_size); menu.show(); } },
-        {"3: attitude determination", false, 'y', [](){ menu.load(att_determ_menu, att_determ_menu_size); menu.show(); } },
+        {"3: attitude determination", false, '3', [](){ menu.load(att_determ_menu, att_determ_menu_size); menu.show(); } },
 		{"4: attitude control", false, '4', [](){ menu.load(att_control_menu, att_control_menu_size); menu.show(); } },
-		{"6: file menu", false, '6', [](){ menu.load(file_menu, file_menu_size); menu.show(); } },
+		{"6: retrieve files", false, '6', [](){ menu.load(file_menu, file_menu_size); menu.show(); } },
 
         // {"5: remote sensing, false, 'y', [](){ menu.load(remote_sensing_menu); menu.show(); } },
         {" ",       false,  'z', [](){ menu.show(); } }
@@ -88,53 +88,52 @@ inline SerialMenuEntry main_menu[] = {
 inline uint8_t main_menu_size = GET_MENU_SIZE(main_menu);
 
 inline SerialMenuEntry electrical_menu[] = {
-	{"electrical menu", false, ' ', [](){ menu.show(); } },
-	{"0: return to main menu", false, '0', [](){ menu.load(main_menu,main_menu_size); menu.show(); } },
+	{"\nelectrical menu", false, ' ', [](){ menu.show(); } },
 	{"1: IV data", false, '1', [](){ IV_data(); pause_refresh();} },
 	{"2: battery telemetry",false, '2', [](){ send_battery_telemetry(); pause_refresh();} },
+	{"0: return to main menu", false, '0', [](){ menu.load(main_menu,main_menu_size); menu.show(); } },
 	{" ", false, 'z', [](){ menu.show(); } },
    };
 inline uint8_t electrical_menu_size = GET_MENU_SIZE(electrical_menu);
 
-    SerialMenuEntry communication_menu[] = {
-    {"communication menu", false, ' ', [](){ menu.show(); } },
-    {"0: return to main menu", false, '0', [](){ menu.load(main_menu,main_menu_size); menu.show(); } },
+inline SerialMenuEntry communication_menu[] = {
+    {"\ncommunication menu", false, ' ', [](){ menu.show(); } },
     {"1: get RSSI",      false, '1', [](){ get_sat_rssi(); pause_refresh();} },
     {"2: toggle LED",false, '2', [](){ toggle_LED(); pause_refresh();} },
+    {"0: return to main menu", false, '0', [](){ menu.load(main_menu,main_menu_size); menu.show(); } },
     {" ", false, 'z', [](){ menu.show(); } },
    };
 inline uint8_t communication_menu_size = GET_MENU_SIZE(communication_menu);
 
 inline SerialMenuEntry att_determ_menu[] = {
-	{"attitude determination menu", false, ' ', [](){ menu.show(); } },
-	{"0: return to main menu", false, '0', [](){ menu.load(main_menu,main_menu_size); menu.show(); } },
+	{"\nattitude determination menu", false, ' ', [](){ menu.show(); } },
 	{"1: run test",false, '1', [](){ lab6_run_test(); pause_refresh();} },
+	{"0: return to main menu", false, '0', [](){ menu.load(main_menu,main_menu_size); menu.show(); } },
 	{" ", false, 'z', [](){ menu.show(); } },
    };
 inline uint8_t att_determ_menu_size = GET_MENU_SIZE(att_determ_menu);
 
 inline SerialMenuEntry att_control_menu[] = {
-	{"attitude control menu", false, ' ', [](){ menu.show(); } },
-	{"0: return to main menu", false, '0', [](){ menu.load(main_menu,main_menu_size); menu.show(); } },
+	{"\nattitude control menu", false, ' ', [](){ menu.show(); } },
 	{"1: set manual RW speed",      false, '1', [](){ manual_set_RW_speed(); pause_refresh();} },
 	{"2: stream RW speed",false, '2', [](){ stream_RW_speed(); pause_refresh();} },
 	{"3: run test A",false, '3', [](){ lab7_run_test_A(); pause_refresh();} },
 	{"4: run test B",false, '4', [](){ lab7_run_test_B(); pause_refresh();} },
+	{"0: return to main menu", false, '0', [](){ menu.load(main_menu,main_menu_size); menu.show(); } },
 	{" ", false, 'z', [](){ menu.show(); } },
    };
 inline uint8_t att_control_menu_size = GET_MENU_SIZE(att_control_menu);
 
 
 inline SerialMenuEntry file_menu[] = {
-	{"file menu", false, ' ', [](){ menu.show(); } },
-	{"0: return to main menu", false, '0', [](){ menu.load(main_menu,main_menu_size); menu.show(); } },
-
-	{"1: communication files",      false, '1', [](){ manual_set_RW_speed(); pause_refresh();} },
+	{"\nfile menu", false, ' ', [](){ menu.show(); } },
+	{"1: communication files",      false, '1', [](){ transfer_file_from_directory("communication"); pause_refresh();} },
 	{"2: electrical files",false, '2', [](){ transfer_file_from_directory("electrical"); pause_refresh();} },
-	{"3: attitude determination files",false, '3', [](){ lab7_run_test_A(); pause_refresh();} },
-	{"4: attitude control files",false, '4', [](){ lab7_run_test_B(); pause_refresh();} },
-	{"z: manage files",false, '4', [](){ lab7_run_test_B(); pause_refresh();} },
-	{" ", false, 'x', [](){ menu.show(); } },
+	{"3: attitude determination files",false, '3', [](){ transfer_file_from_directory("att_determ"); pause_refresh();} },
+	{"4: attitude control files",false, '4', [](){ transfer_file_from_directory("att_control"); pause_refresh();} },
+	// {"z: manage files",false, '4', [](){ lab7_run_test_B(); pause_refresh();} },
+	{"0: return to main menu", false, '0', [](){ menu.load(main_menu,main_menu_size); menu.show(); } },
+{" ", false, 'x', [](){ menu.show(); } },
    };
 inline uint8_t file_menu_size = GET_MENU_SIZE(att_control_menu);
 
@@ -221,13 +220,7 @@ inline void transfer_file_from_directory(const String& directory_name) {
 	dirsz.close();
 	saybibi();
 	Serial.println("transfer complete");
-//
-//
-//        // if (!fout.open(zfile_name, O_READ)) {
-//        //   Serial.print("file open failed");
-//
-//
-//
+
 	change_directory("/");
 } // end function transfer files from directory()
 

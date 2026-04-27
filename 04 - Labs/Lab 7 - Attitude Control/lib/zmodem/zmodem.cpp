@@ -46,6 +46,7 @@ int count_files(int *file_count, long *byte_count)
   return 0;
 }
 
+/// @brief lists the contents of the current directory
 void directory_listing() {
   ASERIAL.println("\nfilename / filesize / (number)");
 
@@ -60,11 +61,11 @@ void directory_listing() {
     zfile_pointer->getName(zfile_name, 64);
 
     ASERIAL.print(zfile_name); ASERIAL.flush();
-    for (uint8_t i = 0; i < 54 - strlen(zfile_name); ++i) ASERIAL.print(F(" "));
+    for (uint8_t i = 0; i < 50 - strlen(zfile_name); ++i) ASERIAL.print(F(" "));
     if (!(zfile_pointer->isDir())) {
       // ugh, this section uses 'zfile_name' to store the file size
       ultoa(zfile_pointer->fileSize(), zfile_name, 10);
-      ASERIAL.println(zfile_name);
+      ASERIAL.print(zfile_name);
 
       ASERIAL.print("    ("); ASERIAL.print(filenum); ASERIAL.print(") \n");
       ASERIAL.flush();
@@ -78,6 +79,7 @@ void directory_listing() {
   ASERIAL.println(F("End of Directory"));
 }
 
+/// @brief prints location of current directory
 void print_working_directory() {
   zdir->openCwd();
   zdir->getName(zfile_name, 256);
@@ -86,6 +88,8 @@ void print_working_directory() {
   ASERIAL.flush(); ASERIAL.println(zfile_name); ASERIAL.flush();
 } // end function print_working_directory()
 
+/// @brief change directory
+/// @param param name of directory to change to
 void change_directory(const String& param) {
   if(!sd.chdir(param)) {
     ASERIAL.print(F("Directory "));
@@ -97,6 +101,8 @@ void change_directory(const String& param) {
   }
 } // end function change_directory()
 
+/// @brief remove single file
+/// @param param name of file to be deleted
 void remove_file(String param) {
   if (!sd.remove(param)) {
     ASERIAL.print(F("Failed to delete file "));
@@ -108,6 +114,8 @@ void remove_file(String param) {
   }
 } // end function remove_file()
 
+/// @brief make directory
+/// @param param name of new directory
 void mkdir(String param) {
   if (!sd.mkdir(param, true)) {
     ASERIAL.print(F("Failed to create directory "));
@@ -119,6 +127,8 @@ void mkdir(String param) {
   }
 } // end function mkdir()
 
+/// @brief remove directory
+/// @param param name of directory to be removed
 void remove_directory(String param) {
   if (!sd.rmdir(param)) {
     ASERIAL.print(F("Failed to remove directory "));
@@ -130,65 +140,65 @@ void remove_directory(String param) {
   }
 } // end function remove_directory()
 
-// void zmodem_send_files(String param) {
-//   if (!strcmp_P(param, PSTR("*"))) {
-//     count_files(&Filesleft, &Totalleft);
-//     strcmp(param, PSTR("*"))
-//     if (Filesleft > 0) {
-//       ZSERIAL.print(F("rz\n"));
-//       ZSERIAL.flush();
-//
-//       sendzrqinit();
-//       delay(200);
-//
-//       // Cannot use the "shared 1K memory" block with the latest SDFat because the file transfer will corrupt the directory object.
-//       FsFile dirsz;
-//
-//       dirsz.openCwd();
-//       dirsz.rewindDirectory();
-//
-//       while (fout.openNext(&dirsz)) {
-//         // read next directory entry in current working directory
-//
-//         // open file
-//         fout.getName(zfile_name, 256);
-//         //if (!fout.open(zfile_name, O_READ)) error(F("file.open failed"));
-//
-//         //else
-//         if (!fout.isDir()) {
-//
-//           if (wcs(zfile_name) == ERROR) {
-//             delay(500);
-//             fout.close();
-//             break;
-//           }
-//           else delay(500);
-//         }
-//         fout.close();
-//
-//       }
-//
-//       dirsz.close();
-//
-//       saybibi();
-//     } else {
-//       ASERIAL.println(F("No files found to send"));
-//     }
-//   } else if (!fout.open(param, O_READ)) {
-//     ASERIAL.println(F("file.open failed"));
-//   } else {
-//     // Start the ZMODEM transfer
-//     Filesleft = 1;
-//     Totalleft = fout.fileSize();
-//     ZSERIAL.print(F("rz\n"));
-//     ZSERIAL.flush();
-//     sendzrqinit();
-//     delay(200);
-//     wcs(param);
-//     saybibi();
-//     fout.close();
-//   }
-// } // end zmodem_send_file()
+void zmodem_send_file(char * param) {
+  if (!strcmp_P(param, PSTR("*"))) {
+    count_files(&Filesleft, &Totalleft);
+    strcmp(param, PSTR("*"));
+    if (Filesleft > 0) {
+      ZSERIAL.print(F("rz\n"));
+      ZSERIAL.flush();
+
+      sendzrqinit();
+      delay(200);
+
+      // Cannot use the "shared 1K memory" block with the latest SDFat because the file transfer will corrupt the directory object.
+      FsFile dirsz;
+
+      dirsz.openCwd();
+      dirsz.rewindDirectory();
+
+      while (fout.openNext(&dirsz)) {
+        // read next directory entry in current working directory
+
+        // open file
+        fout.getName(zfile_name, 256);
+        //if (!fout.open(zfile_name, O_READ)) error(F("file.open failed"));
+
+        //else
+        if (!fout.isDir()) {
+
+          if (wcs(zfile_name) == ERROR) {
+            delay(500);
+            fout.close();
+            break;
+          }
+          else delay(500);
+        }
+        fout.close();
+
+      }
+
+      dirsz.close();
+
+      saybibi();
+    } else {
+      ASERIAL.println(F("No files found to send"));
+    }
+  } else if (!fout.open(param, O_READ)) {
+    ASERIAL.println(F("file.open failed"));
+  } else {
+    // Start the ZMODEM transfer
+    Filesleft = 1;
+    Totalleft = fout.fileSize();
+    ZSERIAL.print(F("rz\n"));
+    ZSERIAL.flush();
+    sendzrqinit();
+    delay(200);
+    wcs(param);
+    saybibi();
+    fout.close();
+  }
+} // end zmodem_send_file()
 
 void zmodem_receive_file() {
   ASERIAL.println(F("Receiving file..."));

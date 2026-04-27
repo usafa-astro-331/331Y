@@ -38,7 +38,7 @@ extern float sun_direction;
 inline void lab6_run_test() {
 
   char file_name[40];
-  if(sd_createDataFile(&dataFile, "Lab6_test")){
+  if(sd_createDataFile(&dataFile, "att_determ/Lab6_test")){
     // write header row:
     dataFile.println("mcu time (ms),gyro Z (dps),mag X (uT),mag Y (uT),sun direction (deg),sun_plusX,sun_plusY,sun_minusX,sun_minusY");
     dataFile.flush();

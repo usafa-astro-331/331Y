@@ -200,7 +200,7 @@ void change_directory(const String& param);
 void remove_file(String param);
 void mkdir(String param);
 void remove_directory(String param);
-void zmodem_send_file(String param);
+void zmodem_send_file(char* param);
 void zmodem_receive_file();
 void help(void);
 
