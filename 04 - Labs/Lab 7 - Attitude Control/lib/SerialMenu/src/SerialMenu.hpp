@@ -1,3 +1,5 @@
+#pragma once
+
 #if SERIALMENU_DISABLE_PROGMEM_SUPPORT != true
 constexpr PROGMEM char SERIAL_MENU_COPYRIGHT[] = 
 #else
@@ -439,6 +441,9 @@ class SerialMenu
     // Returns false if there was no menu input, true if there was
     bool run(const uint16_t loopDelayMs)
     {
+      static char heartbeats[] = {'|','/','-','\\'};
+      static uint8_t heartbeat_num = 0;
+
       const bool userInputAvailable = Serial.available();
 
       // Code block to display a heartbeat as a dot on the Serial console and
@@ -453,26 +458,30 @@ class SerialMenu
         if (!userInputAvailable)
         {
           ++waiting;
+
+
           // After waiting for 10s, heartbeat blink the LED every second.
           if (waiting >= loopsPerTick && waiting % loopsPerBlink == 0)
           {
-            digitalWrite(LED_BUILTIN, ((waiting / loopsPerBlink) & 0x01) ? HIGH : LOW);
+            // digitalWrite(LED_BUILTIN, ((waiting / loopsPerBlink) & 0x01) ? HIGH : LOW);
          }
           // Print heartbeat every 10s on console.
           if (waiting % loopsPerTick == 0)
           {
-            Serial.print(".");
+            heartbeat_num++;
+            Serial.print("\r");
+            Serial.print(heartbeats[heartbeat_num % 4]);
           }
         }
-        else
-        {
-          // New input: Clear to a new line if we printed ticks.
-          if (waiting >= loopsPerTick)
-          {
-            Serial.println("");
-            waiting = 0;
-          }
-        }
+        // else
+        // {
+        //   // New input: Clear to a new line if we printed ticks.
+        //   if (waiting >= loopsPerTick)
+        //   {
+        //     Serial.println("");
+        //     waiting = 0;
+        //   }
+        // }
       }
       #endif
 

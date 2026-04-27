@@ -1,9 +1,12 @@
 
 #include "definitions.h"     // Project definitions (this directory)
 #include "sd_functions.h"
+#include "zmodem.h"
 
 // File-scope objects (NOT in the header)
-static SdFat sd;
+// static SdFat sd;
+SdFs sd;
+SdFile fout;
 
 /*---------------------------------------------------------------------------------------------*/
 // Function Definitions:
@@ -46,7 +49,7 @@ bool sd_createDataFile(FsFile *dataFile, const char *preamble) {
   }
 
   // Optional: enforce a max preamble length for FAT compatibility
-  const size_t MAX_PREAMBLE_LEN = 12;
+  const size_t MAX_PREAMBLE_LEN = 24;
 
   char safePreamble[MAX_PREAMBLE_LEN + 1];
   strncpy(safePreamble, preamble, MAX_PREAMBLE_LEN);
@@ -102,7 +105,7 @@ void sd_listFiles(String dirName, int depth)
   if (!dir) {
     Serial.println("[ERROR] Could not open directory.");
     return;
-  }
+  } // end if
   
   while (true)
   {
@@ -147,7 +150,7 @@ void sd_listFiles(String dirName, int depth)
     entry.close();
   }
   dir.close();
-}
+} // end function sd_listFiles()
 
 /**
  * @brief Lists files on the SD card with numbers and prompts user to choose one to print.
@@ -157,11 +160,11 @@ void sd_listFiles(String dirName, int depth)
  * 
  * @return void
  */
-void sd_printFileMenu() {
-  FsFile root = sd.open("/");
+void sd_printFileMenu(const String& path) {
+  FsFile directory = sd.open(path);
   
-  if (!root) {
-    Serial.println("[ERROR] Could not open root directory.");
+  if (!directory) {
+    Serial.println("[ERROR] Could not open directory.");
     return;
   }
   
@@ -171,7 +174,7 @@ void sd_printFileMenu() {
   Serial.println("[INFO] Files on SD card:");
   
   while (true) {
-    FsFile entry = root.openNextFile();
+    FsFile entry = directory.openNextFile();
     if (!entry) break;  // no more files
 
     if (!entry.isDirectory() && fileCount < MAX_FILES) {
@@ -198,7 +201,7 @@ void sd_printFileMenu() {
     entry.close();
   }
 
-  root.close();
+  directory.close();
 
   if (fileCount > 0) {
     Serial.println("[REQUEST] Enter the file number to print.");
@@ -220,6 +223,8 @@ void sd_printFileMenu() {
     }
     
     int choice = Serial.parseInt();   // read number user typed
+
+
     
     // Clear remaining characters in buffer
     while (Serial.available()) {
@@ -285,39 +290,3 @@ void sd_printFile(const char *filename) {
   Serial.println("\n[INFO] ---- End of file ----");
 }
 
-// /**
-//  * @brief Creates a new data file on the SD card.
-//  * 
-//  * @param dataFile  Pointer to a File object that will be opened.
-//  * @return true     If the file was successfully created and opened.
-//  * @return false    If file creation/opening failed.
-//  */
-// bool sd_createDataFile(FsFile *dataFile) {
-
-//   // Generate unique filename
-//   char filename[40];
-//   int fileNumber = 1;
-
-//   // Find next available file number
-//   do {
-//     snprintf(filename, sizeof(filename), "lab_data%03d.csv", fileNumber);
-//     fileNumber++;
-//   } while (sd.exists(filename) && fileNumber <= 999);
-
-//   // Check if we exceeded the limit
-//   if (fileNumber > 999) {
-//     Serial.println("[ERROR] Maximum file number exceeded (999).");
-//     return false;
-//   }
-
-//   Serial.print("[INFO] Creating file: ");
-//   Serial.println(filename);
-
-//   *dataFile = sd.open(filename, FILE_WRITE);
-//   if (!*dataFile) {
-//     Serial.println("[ERROR] could not create file.");
-//     return false;
-//   }
-
-//   return true;
-// }

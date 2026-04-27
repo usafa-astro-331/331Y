@@ -31,6 +31,8 @@
 /*---------------------------------------------------------------------------------------------*/
 // Objects:
 FsFile dataFile;   // data file object
+// SdFile fout;
+
 
 // SFE_MAX1704X lipo; // SparkFun Thing Plus ESP32-WROOM onboard fuel gauge (I2C addr 0x36)
 // ICM_20948_I2C imu_sensor; // IMU object
@@ -46,19 +48,6 @@ uint32_t interval_CheckForCommand = 10; // time interval between Xbee/Serial che
 uint32_t timeLastHeartBeat; // time of last heartbeat (ms)
 uint32_t interval_heartBeat = 500; // interval between heartbeat (ms)
 
-/*---------------------------------------------------------------------------------------------*/
-// Function Prototypes (see defintiions after loop()):
-/*---------------------------------------------------------------------------------------------*/
-// int get_command_from_ground_station();
-void process_main_menu();
-// void get_sat_rssi();
-// void send_battery_telemetry();
-// void manual_set_RW_speed();
-// void lab6_run_test();
-// void lab7_run_test_A();
-// void lab7_run_test_B();
-// float set_speed_test_B(uint32_t t0);
-// void stream_RWspeed();
 
 void initINA238();
 
@@ -71,7 +60,6 @@ void setup() {
   Serial.println("[INFO] Hello World!");
 
   Wire.begin(); // Initialize I2C communication
-
 
   // Initialize built-in RGB LED (WS2812) and STAT LED
   // #define RGB_BUILTIN  2
@@ -151,181 +139,15 @@ void setup() {
   menu.load(main_menu,GET_MENU_SIZE(main_menu));
   menu.show();
 
+} // end setup()
 
-}
-/////////////////////////////////////////////////////////////////////////////////////////////////
-
-char heartbeats[] = {'|','/','-','\\'};
-int heartbeat_num = 0;
 /////////////////////////////////////////////////////////////////////////////////////////////////
 // MAIN LOOP:
 /////////////////////////////////////////////////////////////////////////////////////////////////
 void loop() {
-  //----------------------------------------------
-  // Check for data from ground station
-  // ----------------------------------------------
-  // if (timeLastCheckForCommand + interval_CheckForCommand < millis()) { // periodic Xbee send
-  //   timeLastCheckForCommand = millis();
-  //   process_main_menu();
-  // }
-  //
-  // if (timeLastHeartBeat + interval_heartBeat < millis()) { // periodic heartbeat to indicate program is alive
-  //   timeLastHeartBeat = millis();
-  //
-  //   // Serial.println("[INFO] Send '1' for Options")
-  char heartbeats[] = {'|','/','-','\\'};
-  int heartbeat_num = 0;
-  heartbeat_num = (heartbeat_num + 1) % sizeof(heartbeats);
-  Serial.printf("\r%c", heartbeats[heartbeat_num]);
-  //   // Serial.printf("count:%lld,dc:%lld,rpm:%.2f\n", (long long)c, (long long)dc, rpm);
-  //   // Serial.print("\h")
-  //   // Serial.print(heartbeats[heartbeat_num]);
-  //   Serial.printf("\r%c", heartbeats[heartbeat_num]);
-  //
-  //   // Xbee.println("*");
-  //   // neopixelWrite(RGB_BUILTIN, 0, 25, 0); // Set to green (R=0, G=255, B=0)
-  //   // // serial_print_twice(Xbee, Serial);
-  //   // serial_print_twice(Xbee, Serial, "test");
-  //
-  // }
 
   menu.run(100);
   delay(100);
-
-
-}
-/////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-/////////////////////////////////////////////////////////////////////////////////////////////////
-// FUNCITON DEFINITIONS:
-/////////////////////////////////////////////////////////////////////////////////////////////////
-
-/*---------------------------------------------------------------------------------------------*/
-// Get Command from Ground Station:
-/*---------------------------------------------------------------------------------------------*/
-/**
- * @brief Gets command received from the ground station (USB or XBee).
- *
- * Reads a command string from USB or XBee and parses the command into 
- * an integer.
- *
- * @note Command strings are trimmed of leading/trailing whitespace before
- *       parsing. Commands are expected to be integers at the start of the
- *       string. Unrecognized commands are ignored.
- * 
- * @returns int of command received
- *
- * @warning This function uses blocking serial reads (readStringUntil())
- *          and may delay program execution if no command is received.
- *
- */
-
-
-/*---------------------------------------------------------------------------------------------*/
-// Process Main Menu:
-/*---------------------------------------------------------------------------------------------*/
-/**
- * @brief Process and execute commands received from the ground station.
- *
- * Reads a command integer from the ground station (USB Serial or XBee),
- * parses it, and executes the corresponding action. Supported commands:
- *
- * - 0: Stop reaction wheel motor
- * - 1: Print options menu
- * - 2: Get satellite RSSI
- * - 3: Toggle LED
- * - 4: Get battery telemetry (voltage, SOC, charge rate)
- * - 5: Manually set reaction wheel speed (throttle %)
- * - 6: Run Lab 6 - Attitude Determination test
- * - 7: Run Lab 7 - Test A (tabletop static test)
- * - 8: Run Lab 7 - Test B
- * - 98: SD Card - List files (USB Serial only)
- * - 99: SD Card - Print file menu (USB Serial only)
- *
- * @note Command strings are trimmed of leading/trailing whitespace before
- *       parsing. Commands are expected to be integers. Unrecognized commands
- *       are ignored with a caution message.
- *
- * @return void
- *
- */
-// void process_main_menu() {
-//   if (!Xbee.available() && !Serial.available()) return;
-//
-//   // int received_int = get_command_from_ground_station();
-//
-//   switch (received_int) {
-//     case 0:
-//       driver.setOutput(0);
-//       Xbee.println("Motor Stopped.");
-//       Serial.println("Motor Stopped.");
-//       break;
-//
-//     case 1:
-//     serial_print_twice(Xbee, Serial, "0 - Stop reation wheel\n");
-//     serial_print_twice(Xbee, Serial, "1 - Print Options Menu\n");
-//     serial_print_twice(Xbee, Serial, "2 - Get RSSI\n");
-//     serial_print_twice(Xbee, Serial, "3 - Toggle LED\n");
-//     serial_print_twice(Xbee, Serial, "4 - Get Battery State (V, SOC, dSOC/dt) \n");
-//     serial_print_twice(Xbee, Serial, "5 - Set Motor Throttle Percent (-100...100)\n");
-//     serial_print_twice(Xbee, Serial, "6 - Lab 6: Run Test\n");
-//     serial_print_twice(Xbee, Serial, "7 - Lab 7: Run Test A\n");
-//     serial_print_twice(Xbee, Serial, "8 - Lab 7: Run Test B\n");
-//     serial_print_twice(Xbee, Serial, "9 - Stream RW speed\n");
-//     serial_print_twice(Xbee, Serial, "98 - SD Card: List Files (USB SERIAL ONLY)\n");
-//     serial_print_twice(Xbee, Serial, "99 - SD Card: Print File Menu (USB SERIAL ONLY)\n\n");
-//       break;
-//
-//     case 2:
-//       get_sat_rssi();
-//       break;
-//
-//         case 3:
-//     digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
-//     serial_print_twice(Xbee, Serial, digitalRead(LED_BUILTIN) ? "LED ON" : "LED OFF");
-//     break;
-//
-//     case 4:
-//       send_battery_telemetry();
-//       break;
-//
-//     case 5:
-//       manual_set_RW_speed();
-//       break;
-//
-//     case 6:
-//       lab6_run_test();
-//       break;
-//
-//     case 7:
-//       lab7_run_test_A();
-//       break;
-//
-//     case 8:
-//       lab7_run_test_B();
-//       break;
-//
-//     case 9:
-//       stream_RW_speed();
-//       break;
-//
-//     case 10:
-//       IV_data();
-//       break;
-//
-//     case 98:
-//       sd_listFiles("/", 0);
-//       break;
-//
-//     case 99:
-//       sd_printFileMenu();
-//       break;
-//
-//     default:
-//       serial_print_twice(Xbee, Serial, "[CAUTION] Invalid input from ground station, ignoring.");
-//       break;
-//   }
-//   return;
-// }//end function process_main_menu()
+  
+} // end loop()
 

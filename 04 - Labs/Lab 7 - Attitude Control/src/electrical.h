@@ -61,7 +61,7 @@ inline void IV_data(){
     Serial.println("ivtest");
   neopixelWrite(RGB_BUILTIN, 0, 0, 25); // Set to blue (R=0, G=0, B=255)
 
-  sd_createDataFile(&dataFile, "Lab3_IV_curve"); // create data file on SD card
+  sd_createDataFile(&dataFile, "electrical/IV_curve_"); // create data file on SD card
 
   while(Serial.available()>0) Serial.read(); // clear any characters in buffer
   Serial.println("[INFO] Send any key to start. ***Send 'X' to stop test.***");

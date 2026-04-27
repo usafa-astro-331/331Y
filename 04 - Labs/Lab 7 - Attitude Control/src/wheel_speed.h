@@ -113,7 +113,7 @@ inline void lab7_run_test_B()
 
   const uint32_t t0_ms = millis();
 
-  if(sd_createDataFile(&dataFile, "Lab7_testB")){
+  if(sd_createDataFile(&dataFile, "att_control/Lab7_testB")){
     // write header row:
     dataFile.println("mcu time(ms),gyro_Z(deg/s),mag_X(uT),mag_Y(uT),sun_direction(deg),sun_plusX(count),sun_plusY(count),sun_minusX(count),sun_minusY(count),w_RW_cmd(RPM),w_RW_meas(RPM)");
     dataFile.flush();
@@ -406,7 +406,7 @@ inline void stream_RW_speed()
  */
 inline void lab7_run_test_A() {
 
-  if(sd_createDataFile(&dataFile, "Lab7_testA")){
+  if(sd_createDataFile(&dataFile, "att_control/Lab7_testA")){
     // write header row:
     dataFile.println("mcu time(ms),gyro_Z(deg/s),mag_X(uT),mag_Y(uT),sun_direction(deg),sun_plusX(count),sun_plusY(count),sun_minusX(count),sun_minusY(count),w_RW_cmd(RPM),w_RW_meas(RPM)");
     dataFile.flush();
