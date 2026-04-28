@@ -4,6 +4,8 @@ From: http://stackoverflow.com/questions/2607853/why-prototype-is-used-header-fi
 */
 
 #pragma once
+#include <HardwareSerial.h>
+extern HardwareSerial Xbee;
 
 #define SERIAL_TX_BUFFER_SIZE 128
 

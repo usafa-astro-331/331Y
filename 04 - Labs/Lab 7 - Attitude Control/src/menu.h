@@ -30,7 +30,7 @@ extern char cmd;
 //     {"1: communication", false, '1',
 //         [](){menu.load(communication_menu, communication_menu_size);
 //             menu.show(); } },
-//     {"2: electrical", false, '2', Serial.println("electrical")},
+//     {"2: electrical", false, '2', Xbee.println("electrical")},
 // };
 // constexpr uint8_t main_menu_size = GET_MENU_SIZE(main_menu);
 //
@@ -38,7 +38,7 @@ extern char cmd;
 //     {"0: return to main menu", false, '0',
 //         [](){menu.load(main_menu, main_menu_size);
 //             menu.show(); } },
-//     {"1: do lab A", false, '2', Serial.println("do lab A")},
+//     {"1: do lab A", false, '2', Xbee.println("do lab A")},
 // };
 // constexpr uint8_t communication_menu_size = GET_MENU_SIZE(communication_menu);
 //
@@ -140,15 +140,15 @@ inline uint8_t file_menu_size = GET_MENU_SIZE(att_control_menu);
 
 inline void pause_refresh()
 {
-    Serial.print("Press any key to return to menu");
+    Xbee.print("Press any key to return to menu");
 
     // wait for input
-    while (!Serial.available());
-    Serial.read();
+    while (!Xbee.available());
+    Xbee.read();
 
     // send clear-screen sequence
     byte clear_screen[] = {0x1B, 0x5B, 0x32, 0x4A, 0x1B, 0x5B, 0x48, 0x0D};
-    Serial.write(clear_screen, sizeof(clear_screen));
+    Xbee.write(clear_screen, sizeof(clear_screen));
 
     // display menu
     menu.show();
@@ -168,32 +168,32 @@ inline void transfer_file_from_directory(const String& directory_name) {
 //
 //   if (fileCount > 0) {
 	// Clear any existing serial input buffer
-	    while (Serial.available()) {
-	      Serial.read();
+	    while (Xbee.available()) {
+	      Xbee.read();
 	    }
-     Serial.println("[REQUEST] Enter the file number to print.");
+     Xbee.println("[REQUEST] Enter the file number to print.");
 //
 //
      // Wait for user input with timeout
      unsigned long timeout = millis() + 15000; // 15 second timeout
-     while (!Serial.available() && millis() < timeout) {
+     while (!Xbee.available() && millis() < timeout) {
        delay(10);
      }
 //
      if (millis() >= timeout) {
-       Serial.println("[CAUTION] Input timeout, returning to Menu.");
+       Xbee.println("[CAUTION] Input timeout, returning to Menu.");
        return;
      }
 
-     int choice = Serial.parseInt();   // read number user typed
+     int choice = Xbee.parseInt();   // read number user typed
 
      // Clear remaining characters in buffer
-     while (Serial.available()) {
-       Serial.read();
+     while (Xbee.available()) {
+       Xbee.read();
      }
 //
      // if (choice > 0 && choice <= fileCount) {
-       Serial.print("[INFO] You picked file #");  Serial.println(choice);
+       Xbee.print("[INFO] You picked file #");  Xbee.println(choice);
 
 	FsFile dirsz;
 
@@ -219,7 +219,7 @@ inline void transfer_file_from_directory(const String& directory_name) {
 	}
 	dirsz.close();
 	saybibi();
-	Serial.println("transfer complete");
+	Xbee.println("transfer complete");
 
 	change_directory("/");
 } // end function transfer files from directory()

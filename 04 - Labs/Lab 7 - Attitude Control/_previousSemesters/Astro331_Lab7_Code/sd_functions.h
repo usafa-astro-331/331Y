@@ -33,15 +33,15 @@ bool sd_createDataFile(RTC_PCF8523 rtc, File *dataFile) {
            now.year(), now.month(), now.day(),
            now.hour(), now.minute(), now.second());
 
-  Serial.print("[INFO] Creating file: ");
-  Serial.print(filename);
+  Xbee.print("[INFO] Creating file: ");
+  Xbee.print(filename);
 
   *dataFile = SD.open(filename, FILE_WRITE);
   if (!*dataFile) {
-    Serial.println("[ERROR] could not create file.");
+    Xbee.println("[ERROR] could not create file.");
     return false;
   } else {
-    Serial.println(" --> Created file.");
+    Xbee.println(" --> Created file.");
   }
 
   // Optional: write header row
@@ -72,18 +72,18 @@ void sd_listFiles(File dir, int depth) {
 
     // indent for clarity
     for (int i = 0; i < depth; i++) {
-      Serial.print("  ");
+      Xbee.print("  ");
     }
 
-    Serial.print(entry.name());
+    Xbee.print(entry.name());
     if (entry.isDirectory()) {
-      Serial.println("/");
+      Xbee.println("/");
       sd_listFiles(entry, depth + 1);  // recurse into subdirectory
     } else {
       // files have sizes, directories do not
-      Serial.print("\t\t");
-      Serial.print(entry.size(), DEC);
-      Serial.println(" bytes");
+      Xbee.print("\t\t");
+      Xbee.print(entry.size(), DEC);
+      Xbee.println(" bytes");
     }
     entry.close();
   }
@@ -102,7 +102,7 @@ void sd_printFileMenu() {
   int MAX_FILES = 1000;        // max number of files to handle
   String fileList[MAX_FILES];      // store filenames
   int fileCount = 0;
-  Serial.println("[INFO] Files on SD card:");
+  Xbee.println("[INFO] Files on SD card:");
   
   while (true) {
     File entry = root.openNextFile();
@@ -110,10 +110,10 @@ void sd_printFileMenu() {
 
     if (!entry.isDirectory() && fileCount < MAX_FILES) {
       fileList[fileCount] = entry.name();
-      Serial.print("(");
-      Serial.print(fileCount + 1);
-      Serial.print("): ");
-      Serial.println(fileList[fileCount]);
+      Xbee.print("(");
+      Xbee.print(fileCount + 1);
+      Xbee.print("): ");
+      Xbee.println(fileList[fileCount]);
       fileCount++;
     }
     entry.close();

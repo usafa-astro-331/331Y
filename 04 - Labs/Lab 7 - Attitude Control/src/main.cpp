@@ -17,7 +17,9 @@
 
 
 // #include "communication.h"
-  HardwareSerial Xbee(2);
+HardwareSerial Xbee(2);
+HardwareSerial SerialX(3); // empty serial port, exists to prevent code errors from calls to Serial2
+
 #include "main.h"
 
 #include "wheel_speed.h"
@@ -57,7 +59,7 @@ void initINA238();
 void setup() {
   Serial.begin(115200); // Begin Serial communication with computer
   while (!Serial) {delay(10);} // Wait for user to open Serial monitor before proceeding
-  Serial.println("[INFO] Hello World!");
+  Xbee.println("[INFO] Hello World!");
 
   Wire.begin(); // Initialize I2C communication
 
@@ -86,10 +88,10 @@ void setup() {
   //----------------------------------------------
   if (!lipo.begin(Wire)) // Uses I2C address 0x36)
   {
-    Serial.println("[WARN] MAX17048 not detected on I2C (0x36). Battery telemetry (cmd 4) will be unavailable.");
+    Xbee.println("[WARN] MAX17048 not detected on I2C (0x36). Battery telemetry (cmd 4) will be unavailable.");
   } else {
     lipo.quickStart();    // Improves initial SOC accuracy after boot. Returns 0 on success.
-    Serial.println("[INFO] MAX17048 online.");
+    Xbee.println("[INFO] MAX17048 online.");
   }
   //----------------------------------------------
 
@@ -97,7 +99,7 @@ void setup() {
   // Initialize ICM20948
   //----------------------------------------------
   if (imu_sensor.begin(Wire, 1) != ICM_20948_Stat_Ok) {
-    Serial.println("[CAUTION] IMU not found.");
+    Xbee.println("[CAUTION] IMU not found.");
     while (1);
   } else{
     // // 1. Set to Continuous Mode for consistent sampling
@@ -108,7 +110,7 @@ void setup() {
     // mySmplrt.g = 1; // Gyro divider 1: 1125 / (1+1) = ~562.5 Hz
     // imu_sensor.setSampleRate(ICM_20948_Internal_Acc, mySmplrt);
     // imu_sensor.setSampleRate(ICM_20948_Internal_Gyr, mySmplrt);    
-    Serial.println("[INFO] IMU Initialized.");
+    Xbee.println("[INFO] IMU Initialized.");
   }
   //----------------------------------------------
 
@@ -131,8 +133,8 @@ void setup() {
   enc.clearCount();
   //----------------------------------------------
 
-  Serial.println("[INFO] SETUP COMPLETE.");
-  Xbee.println("[INFO] SETUP COMPLETE.SEND '1' FOR OPTIONS.");
+  Xbee.println("[INFO] SETUP COMPLETE.");
+  SerialX.println("[INFO] SETUP COMPLETE.SEND '1' FOR OPTIONS.");
   neopixelWrite(RGB_BUILTIN, 0, 25, 0); // Set to green (R=0, G=255, B=0)
 
 

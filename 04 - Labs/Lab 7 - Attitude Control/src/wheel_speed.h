@@ -9,6 +9,12 @@ int get_command_from_ground_station();
 #include <variant>
 #include <string>
 
+#include <HardwareSerial.h>
+
+extern HardwareSerial SerialX;
+extern HardwareSerial Xbee;
+
+
 extern FsFile dataFile;   // data file object
 extern TB9051FTGMotorCarrier driver;
 
@@ -86,10 +92,10 @@ struct Var
 // C++ requires std::visit to print a struct with mixed int/float values
 inline void printVar_to_serial(const Var& v)
 {
-  Serial.print(v.label);
+  Xbee.print(v.label);
 
   std::visit([](auto&& val){
-    Serial.print(val);
+    Xbee.print(val);
   }, v.value);
 }
 
@@ -119,22 +125,22 @@ inline void lab7_run_test_B()
     dataFile.flush();
     char file_name[40];
     dataFile.getName(file_name, sizeof(file_name));
+    SerialX.print("[INFO] Data file created successfully: ");
+    SerialX.println(file_name);
     Xbee.print("[INFO] Data file created successfully: ");
     Xbee.println(file_name);
-    Serial.print("[INFO] Data file created successfully: ");
-    Serial.println(file_name);
   } else {
+    SerialX.println("[ERROR] Failed to create data file. Aborting test.");
     Xbee.println("[ERROR] Failed to create data file. Aborting test.");
-    Serial.println("[ERROR] Failed to create data file. Aborting test.");
     return;
   }
-  Serial.println("[INFO] Ready to start Lab 7 test B, send any key to begin (wait for test to complete or send 'X' to abort)...");
   Xbee.println("[INFO] Ready to start Lab 7 test B, send any key to begin (wait for test to complete or send 'X' to abort)...");
+  SerialX.println("[INFO] Ready to start Lab 7 test B, send any key to begin (wait for test to complete or send 'X' to abort)...");
 
-  while(!Serial.available() && !Xbee.available()){} // wait for user to send any key to start test
+  while(!Xbee.available() && !SerialX.available()){} // wait for user to send any key to start test
   delay(100); // small delay to ensure serial buffer is fully received
-  while(Serial.available()) Serial.read(); // clear serial buffer
-  while(Xbee.available()) Xbee.read(); // clear Xbee buffer
+  while(Xbee.available()) Xbee.read(); // clear serial buffer
+  while(SerialX.available()) SerialX.read(); // clear Xbee buffer
 
   neopixelWrite(RGB_BUILTIN, 25, 0, 25); // Set to magenta (R=255, G=0, B=255)
 
@@ -144,12 +150,12 @@ inline void lab7_run_test_B()
     // Check for User Input:
     char c;
     bool newUserInput = false;
-    if (Serial.available() > 0) {  // Check for user input from USB
-      c = Serial.read();
-      newUserInput = true;
-    }
     if (Xbee.available() > 0) {  // Check for user input from USB
       c = Xbee.read();
+      newUserInput = true;
+    }
+    if (SerialX.available() > 0) {  // Check for user input from USB
+      c = SerialX.read();
       newUserInput = true;
     }
     if(newUserInput){
@@ -158,13 +164,13 @@ inline void lab7_run_test_B()
         case 'X':
         case 'x':
           dataFile.close();
-          Serial.print("[CAUTION] Test Canceled Early. File closed.");
           Xbee.print("[CAUTION] Test Canceled Early. File closed.");
+          SerialX.print("[CAUTION] Test Canceled Early. File closed.");
           driver.setOutput(0);
           return;
         default:
-          Serial.println("[CAUTION] Invalid Input, continuing test...");
           Xbee.println("[CAUTION] Invalid Input, continuing test...");
+          SerialX.println("[CAUTION] Invalid Input, continuing test...");
           break;
       }
     }
@@ -268,7 +274,7 @@ inline void lab7_run_test_B()
           printVar_to_serial(v);
           ii++;
         }
-        Serial.print("\n");
+        Xbee.print("\n");
 
       serial_decimation_iterator = 0;
 
@@ -281,8 +287,8 @@ inline void lab7_run_test_B()
     // End test if complete:
     if (TEST_COMPLETE){
       dataFile.close();
-      Serial.print("[INFO] Test B Complete. File closed.");
       Xbee.print("[INFO] Test B Complete. File closed.");
+      SerialX.print("[INFO] Test B Complete. File closed.");
       return;
     }
 
@@ -339,23 +345,23 @@ inline float set_wheel_speed(const uint32_t t_ms, const uint32_t t0_ms, bool* CO
 
 inline void stream_RW_speed()
 {
-  Serial.println("Ready to stream RW Motor speed, send any key to start. Send 'X' to stop.");
   Xbee.println("Ready to stream RW Motor speed, send any key to start. Send 'X' to stop.");
-  Serial.read();
+  SerialX.println("Ready to stream RW Motor speed, send any key to start. Send 'X' to stop.");
+  Xbee.read();
   delay(100);
-  while(!Serial.available() && !Xbee.available()){} // wait for user to send any key to start test
+  while(!Xbee.available() && !SerialX.available()){} // wait for user to send any key to start test
   delay(100); // small delay to ensure serial buffer is fully received
 
   while(true){
     // Check for User Input:
     char c;
     bool newUserInput = false;
-    if (Serial.available() > 0) {  // Check for user input from USB
-      c = Serial.read();
+    if (Xbee.available() > 0) {  // Check for user input from USB
+      c = Xbee.read();
       newUserInput = true;
     }
-    // if (Xbee.available() > 0) {  // Check for user input from USB
-    //   c = Xbee.read();
+    // if (SerialX.available() > 0) {  // Check for user input from USB
+    //   c = SerialX.read();
     //   newUserInput = true;
     // }
     if(newUserInput){
@@ -382,8 +388,8 @@ inline void stream_RW_speed()
       float rev = (float)dc / ((float)CPR * 10.0);
       float rpm = (rev / dt_s) * 60.0f;
 
-      Serial.printf("count:%lld,dc:%lld,rpm:%.2f\n", (long long)c, (long long)dc, rpm);
       Xbee.printf("count:%lld,dc:%lld,rpm:%.2f\n", (long long)c, (long long)dc, rpm);
+      SerialX.printf("count:%lld,dc:%lld,rpm:%.2f\n", (long long)c, (long long)dc, rpm);
 
       lastCount = c;
       timeLastEncMeas = now;
@@ -412,22 +418,22 @@ inline void lab7_run_test_A() {
     dataFile.flush();
     char file_name[40];
     dataFile.getName(file_name, sizeof(file_name));
+    SerialX.print("[INFO] Data file created successfully: ");
+    SerialX.println(file_name);
     Xbee.print("[INFO] Data file created successfully: ");
     Xbee.println(file_name);
-    Serial.print("[INFO] Data file created successfully: ");
-    Serial.println(file_name);
   } else {
+    SerialX.println("[ERROR] Failed to create data file. Aborting test.");
     Xbee.println("[ERROR] Failed to create data file. Aborting test.");
-    Serial.println("[ERROR] Failed to create data file. Aborting test.");
     return;
   }
-  Serial.println("[INFO] Ready to start Lab 7 test A, send any key to begin (wait for test to complete or send 'X' to abort)...");
   Xbee.println("[INFO] Ready to start Lab 7 test A, send any key to begin (wait for test to complete or send 'X' to abort)...");
+  SerialX.println("[INFO] Ready to start Lab 7 test A, send any key to begin (wait for test to complete or send 'X' to abort)...");
 
-  while(!Serial.available() && !Xbee.available()){} // wait for user to send any key to start test
+  while(!Xbee.available() && !SerialX.available()){} // wait for user to send any key to start test
   delay(100); // small delay to ensure serial buffer is fully received
-  while(Serial.available()) Serial.read(); // clear serial buffer
-  while(Xbee.available()) Xbee.read(); // clear Xbee buffer
+  while(Xbee.available()) Xbee.read(); // clear serial buffer
+  while(SerialX.available()) SerialX.read(); // clear Xbee buffer
 
   timeNext_testPoint = millis();
   bool newUserInput = false;
@@ -438,12 +444,12 @@ inline void lab7_run_test_A() {
 
     // Check for User Input:
     char c;
-    if (Serial.available() > 0) {  // Check for user input from USB
-      c = Serial.read();
-      newUserInput = true;
-    }
     if (Xbee.available() > 0) {  // Check for user input from USB
       c = Xbee.read();
+      newUserInput = true;
+    }
+    if (SerialX.available() > 0) {  // Check for user input from USB
+      c = SerialX.read();
       newUserInput = true;
     }
     if(newUserInput){
@@ -452,13 +458,13 @@ inline void lab7_run_test_A() {
         case 'X':
         case 'x':
           dataFile.close();
-          Serial.print("[CAUTION] Test Canceled Early. File closed.");
           Xbee.print("[CAUTION] Test Canceled Early. File closed.");
+          SerialX.print("[CAUTION] Test Canceled Early. File closed.");
           driver.setOutput(0);
           return;
         default:
-          Serial.println("[CAUTION] Invalid Input, continuing test...");
           Xbee.println("[CAUTION] Invalid Input, continuing test...");
+          SerialX.println("[CAUTION] Invalid Input, continuing test...");
           break;
       }
     }
@@ -527,18 +533,18 @@ inline void lab7_run_test_A() {
 
       test_point_string += "\n";
       //Print to USB Serial:
-      Serial.print(test_point_string);
+      Xbee.print(test_point_string);
       //Print to XBee:
-      // Xbee.print(test_point_string);
+      // SerialX.print(test_point_string);
 
-      // Serial.println(millis() - time + t0);
+      // Xbee.println(millis() - time + t0);
     }
 
     // End test if complete:
     if (millis() - t0 > 15000){
       dataFile.close();
-      Serial.print("[INFO] Test A Complete. File closed.");
       Xbee.print("[INFO] Test A Complete. File closed.");
+      SerialX.print("[INFO] Test A Complete. File closed.");
       return;
     }
   }
@@ -559,9 +565,9 @@ inline void lab7_run_test_A() {
  * @return none
  */
 inline void manual_set_RW_speed(){
-  Serial.println("Enter RW Motor Throttle Percent (-100 to 100):");
   Xbee.println("Enter RW Motor Throttle Percent (-100 to 100):");
-  while(!Serial.available() && !Xbee.available()){} // wait for user to send any key to start test
+  SerialX.println("Enter RW Motor Throttle Percent (-100 to 100):");
+  while(!Xbee.available() && !SerialX.available()){} // wait for user to send any key to start test
   delay(100); // small delay to ensure serial buffer is fully received
 
   int rw_speed_int = get_command_from_ground_station();
@@ -569,15 +575,15 @@ inline void manual_set_RW_speed(){
   if (rw_speed_int< -100) rw_speed_int = -100;
   const float rw_speed = float(rw_speed_int) / 100.0;
 
-  Serial.println("Setting motor speed to: ");
-  Serial.println(rw_speed);
   Xbee.println("Setting motor speed to: ");
   Xbee.println(rw_speed);
+  SerialX.println("Setting motor speed to: ");
+  SerialX.println(rw_speed);
 
   delay(500);
 
   driver.setOutput(rw_speed);
 
-  while(Serial.available()) Serial.read(); // clear serial buffer
-  while(Xbee.available()) Xbee.read(); // clear Xbee buffer
+  while(Xbee.available()) Xbee.read(); // clear serial buffer
+  while(SerialX.available()) SerialX.read(); // clear Xbee buffer
 }

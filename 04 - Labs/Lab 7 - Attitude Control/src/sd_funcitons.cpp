@@ -2,6 +2,9 @@
 #include "definitions.h"     // Project definitions (this directory)
 #include "sd_functions.h"
 #include "zmodem.h"
+#include <HardwareSerial.h>
+
+extern HardwareSerial Xbee;
 
 // File-scope objects (NOT in the header)
 // static SdFat sd;
@@ -22,8 +25,8 @@ bool sd_init(uint8_t csPin)
 {
     pinMode(SD_CS_PIN, OUTPUT);
     if (!sd.begin(SD_CS_PIN, SD_SCK_MHZ(25))) {
-        while (1) { Serial.println("[ERROR] SD card initialization failed. Card present?"); delay(2000); }
-    } else {Serial.println("[INFO] SD Card Initialized.");}
+        while (1) { Xbee.println("[ERROR] SD card initialization failed. Card present?"); delay(2000); }
+    } else {Xbee.println("[INFO] SD Card Initialized.");}
     return true;
 }
 
@@ -66,17 +69,17 @@ bool sd_createDataFile(FsFile *dataFile, const char *preamble) {
   } while (sd.exists(filename) && fileNumber <= 999);
 
   if (fileNumber > 999) {
-    Serial.println("[ERROR] Maximum file number exceeded (999).");
+    Xbee.println("[ERROR] Maximum file number exceeded (999).");
     return false;
   }
 
-  Serial.print("[INFO] Creating file: ");
-  Serial.println(filename);
+  Xbee.print("[INFO] Creating file: ");
+  Xbee.println(filename);
 
   *dataFile = sd.open(filename, FILE_WRITE);
 
   if (!*dataFile) {
-    Serial.println("[ERROR] could not create file.");
+    Xbee.println("[ERROR] could not create file.");
     return false;
   }
 
@@ -99,11 +102,11 @@ bool sd_createDataFile(FsFile *dataFile, const char *preamble) {
 
 void sd_listFiles(String dirName, int depth)
 {
-  Serial.print("[INFO] Listing contents of: ");
-  Serial.println(dirName);
+  Xbee.print("[INFO] Listing contents of: ");
+  Xbee.println(dirName);
   FsFile dir = sd.open(dirName.c_str());
   if (!dir) {
-    Serial.println("[ERROR] Could not open directory.");
+    Xbee.println("[ERROR] Could not open directory.");
     return;
   } // end if
   
@@ -114,7 +117,7 @@ void sd_listFiles(String dirName, int depth)
     {
       // no more files
       if (depth == 0) {
-        Serial.println("[INFO] Listing SD contents complete.");
+        Xbee.println("[INFO] Listing SD contents complete.");
       }
       break;
     }
@@ -122,16 +125,16 @@ void sd_listFiles(String dirName, int depth)
     // indent for clarity
     for (int i = 0; i < depth; i++)
     {
-      Serial.print("  ");
+      Xbee.print("  ");
     }
 
     char tempName[40];
     entry.getName(tempName, sizeof(tempName));
-    Serial.print(tempName);
+    Xbee.print(tempName);
     
     if (entry.isDirectory())
     {
-      Serial.println("/");
+      Xbee.println("/");
       // Build full path for subdirectory
       String fullPath = dirName;
       if (!dirName.endsWith("/")) {
@@ -143,9 +146,9 @@ void sd_listFiles(String dirName, int depth)
     else
     {
       // files have sizes, directories do not
-      Serial.print("\t\t");
-      Serial.print(entry.size(), DEC);
-      Serial.println(" bytes");
+      Xbee.print("\t\t");
+      Xbee.print(entry.size(), DEC);
+      Xbee.println(" bytes");
     }
     entry.close();
   }
@@ -164,14 +167,14 @@ void sd_printFileMenu(const String& path) {
   FsFile directory = sd.open(path);
   
   if (!directory) {
-    Serial.println("[ERROR] Could not open directory.");
+    Xbee.println("[ERROR] Could not open directory.");
     return;
   }
   
   const int MAX_FILES = 50;        // Reduced for better memory management
   String fileList[MAX_FILES];      // store filenames
   int fileCount = 0;
-  Serial.println("[INFO] Files on SD card:");
+  Xbee.println("[INFO] Files on SD card:");
   
   while (true) {
     FsFile entry = directory.openNextFile();
@@ -185,16 +188,16 @@ void sd_printFileMenu(const String& path) {
       tempName[sizeof(tempName) - 1] = '\0';
       
       fileList[fileCount] = String(tempName);
-      Serial.print("(");
-      Serial.print(fileCount + 1);
-      Serial.print("): ");
-      Serial.print(fileList[fileCount]);
-      Serial.print(" (");
-      Serial.print(entry.size());
-      Serial.println(" bytes)");
+      Xbee.print("(");
+      Xbee.print(fileCount + 1);
+      Xbee.print("): ");
+      Xbee.print(fileList[fileCount]);
+      Xbee.print(" (");
+      Xbee.print(entry.size());
+      Xbee.println(" bytes)");
       fileCount++;
     } else if (!entry.isDirectory() && fileCount >= MAX_FILES) {
-      Serial.println("[CAUTION] More files exist but only showing first 50.");
+      Xbee.println("[CAUTION] More files exist but only showing first 50.");
       entry.close();
       break;
     }
@@ -204,49 +207,49 @@ void sd_printFileMenu(const String& path) {
   directory.close();
 
   if (fileCount > 0) {
-    Serial.println("[REQUEST] Enter the file number to print.");
+    Xbee.println("[REQUEST] Enter the file number to print.");
     
     // Clear any existing serial input buffer
-    while (Serial.available()) {
-      Serial.read();
+    while (Xbee.available()) {
+      Xbee.read();
     }
     
     // Wait for user input with timeout
     unsigned long timeout = millis() + 30000; // 30 second timeout
-    while (!Serial.available() && millis() < timeout) {
+    while (!Xbee.available() && millis() < timeout) {
       delay(10);
     }
     
     if (millis() >= timeout) {
-      Serial.println("[CAUTION] Input timeout, returning to Menu.");
+      Xbee.println("[CAUTION] Input timeout, returning to Menu.");
       return;
     }
     
-    int choice = Serial.parseInt();   // read number user typed
+    int choice = Xbee.parseInt();   // read number user typed
 
 
     
     // Clear remaining characters in buffer
-    while (Serial.available()) {
-      Serial.read();
+    while (Xbee.available()) {
+      Xbee.read();
     }
     
     if (choice > 0 && choice <= fileCount) {
-      Serial.print("[INFO] You picked file #");
-      Serial.println(choice);
+      Xbee.print("[INFO] You picked file #");
+      Xbee.println(choice);
       sd_printFile(fileList[choice - 1].c_str());
     } else {
-      Serial.println("[INFO] Invalid choice, returning to Menu.");
+      Xbee.println("[INFO] Invalid choice, returning to Menu.");
     }
   } else {
-    Serial.println("[CAUTION] No files found on SD card.");
+    Xbee.println("[CAUTION] No files found on SD card.");
   }
 }
 
 /**
- * @brief Prints the contents of a selected file to Serial.
+ * @brief Prints the contents of a selected file to Xbee.
  * 
- * Opens the file in read mode and sends its contents over Serial.
+ * Opens the file in read mode and sends its contents over Xbee.
  * 
  * @param filename Name of the file to print.
  * @return void
@@ -255,29 +258,29 @@ void sd_printFile(const char *filename) {
   FsFile file = sd.open(filename);
 
   if (!file) {
-    Serial.print("[ERROR] Error opening file: ");
-    Serial.println(filename);
+    Xbee.print("[ERROR] Error opening file: ");
+    Xbee.println(filename);
     return;
   }
 
   // Check file size - warn if very large
   uint32_t fileSize = file.size();
   if (fileSize > 10000) { // 10KB threshold
-    Serial.print("[CAUTION] File is large (");
-    Serial.print(fileSize);
-    Serial.println(" bytes). This may take a while to print.");
+    Xbee.print("[CAUTION] File is large (");
+    Xbee.print(fileSize);
+    Xbee.println(" bytes). This may take a while to print.");
   }
 
-  Serial.print("[INFO] ---- Contents of ");
-  Serial.print(filename);
-  Serial.print(" (");
-  Serial.print(fileSize);
-  Serial.println(" bytes) ----\n");
+  Xbee.print("[INFO] ---- Contents of ");
+  Xbee.print(filename);
+  Xbee.print(" (");
+  Xbee.print(fileSize);
+  Xbee.println(" bytes) ----\n");
 
   // Print file contents with periodic yield for system stability
   uint32_t bytesRead = 0;
   while (file.available()) {
-    Serial.write(file.read());
+    Xbee.write(file.read());
     bytesRead++;
     
     // Yield to system every 100 bytes to prevent watchdog issues
@@ -287,6 +290,6 @@ void sd_printFile(const char *filename) {
   }
 
   file.close();
-  Serial.println("\n[INFO] ---- End of file ----");
+  Xbee.println("\n[INFO] ---- End of file ----");
 }
 

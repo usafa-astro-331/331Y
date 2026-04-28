@@ -1,13 +1,16 @@
 #pragma once
 
-#if SERIALMENU_DISABLE_PROGMEM_SUPPORT != true
-constexpr PROGMEM char SERIAL_MENU_COPYRIGHT[] = 
-#else
-constexpr char SERIAL_MENU_COPYRIGHT[] = 
-#endif
+#include <HardwareSerial.h>
+extern HardwareSerial Xbee;
+
+// #if SERIALMENU_DISABLE_PROGMEM_SUPPORT != true
+// constexpr PROGMEM char SERIAL_MENU_COPYRIGHT[] =
+// #else
+// constexpr char SERIAL_MENU_COPYRIGHT[] =
+// #endif
 ///////////////////////////////////////////////////////////////////////////////
 // SerialMenu - An Efficient Menu Library for Arduino Serial Console
-"SerialMenu - Copyright (c) 2019 Dan Truong";
+// "SerialMenu - Copyright (c) 2019 Dan Truong";
 ///////////////////////////////////////////////////////////////////////////////
 //
 // This library allows you to easily create menus on the Arduino Serial console
@@ -146,14 +149,13 @@ constexpr char SERIAL_MENU_COPYRIGHT[] =
 ///////////////////////////////////////////////////////////////////////////////
 
 // #include <avr/pgmspace.h>
-#include <HardwareSerial.h>
 
 ///////////////////////////////////////////////////////////////////////////////
 // If user doesn't specify disabling PROGMEM support, support is on by default.
 // To disable set SERIALMENU_DISABLE_PROGMEM_SUPPORT explicitly to true.
 // This is safe to do if none of the menu entries are stored in FLASH memory.
 ///////////////////////////////////////////////////////////////////////////////
-//#define SERIALMENU_DISABLE_PROGMEM_SUPPORT true
+#define SERIALMENU_DISABLE_PROGMEM_SUPPORT true
 
 ///////////////////////////////////////////////////////////////////////////////
 // The menu prints dots every 10s, and blinks the status LED after 10s to show
@@ -277,8 +279,8 @@ class SerialMenu
     // Initializes with an empty menu, prepares serial console and staus LED.
     SerialMenu()
     {
-      Serial.begin(9600);
-      while (!Serial){};
+      // Serial.begin(9600);
+      // while (!Serial){};
 
       // #if SERIALMENU_MINIMAL_FOOTPRINT != true
       //   #if SERIALMENU_DISABLE_PROGMEM_SUPPORT != true
@@ -328,36 +330,11 @@ class SerialMenu
     // Display the current menu on the Serial console
     void show() const
     {
-      // #if SERIALMENU_MINIMAL_FOOTPRINT != true
-      // Serial.println("\nMenu:");
-      // #endif
 
       for (uint8_t i = 0; i < size; ++i)
       {
-      // #if SERIALMENU_DISABLE_PROGMEM_SUPPORT != true
-      //   if (menu[i].isProgMem())
-      //   {
-      //     // String in PROGMEM Flash, move it via a SRAM buffer to print it
-      //     char buffer[PROGMEM_BUF_SIZE];
-      //     const char * progMemPt = menu[i].getMenu();
-      //     uint8_t len = strlcpy_P(buffer, progMemPt, PROGMEM_BUF_SIZE);
-      //     Serial.print(buffer);
-      //     while (len >= PROGMEM_BUF_SIZE)
-      //     {
-      //       len -= PROGMEM_BUF_SIZE - 1;
-      //       progMemPt += PROGMEM_BUF_SIZE - 1;
-      //       // @todo replace strlcpy_P() and buffer with moving a uint32?
-      //       len = strlcpy_P(buffer, progMemPt, PROGMEM_BUF_SIZE);
-      //       Serial.print(buffer);
-      //     }
-      //     Serial.println("");
-      //   }
-      //   else
-      // #endif
-        {
-          // String in data SRAM, print directly
-          Serial.println(menu[i].getMenu());
-        }
+        // String in data SRAM, print directly
+        Xbee.println(menu[i].getMenu());
       }
     }
 
@@ -365,8 +342,8 @@ class SerialMenu
     // Note: this routine is blocking execution until a number is input
     inline char getChar()
     {
-      while (!Serial.available());
-      return Serial.read();
+      while (!Xbee.available());
+      return Xbee.read();
     }
 
     // return a number input read form the serial console.
@@ -380,24 +357,24 @@ class SerialMenu
       
       if (message)
       {
-        Serial.print(message);
+        Xbee.print(message);
       }
       char c = '0';
       
       // Skip the first invalid carriage return
-      while (!Serial.available());
-      c = Serial.read();
+      while (!Xbee.available());
+      c = Xbee.read();
       if (c == 0x0A)
       {
-        while (!Serial.available());
-        c = Serial.read();
+        while (!Xbee.available());
+        c = Xbee.read();
       }
 
       if (c == '-')
       {
         isNegative = true;
-        while (!Serial.available());
-        c = Serial.read();
+        while (!Xbee.available());
+        c = Xbee.read();
       }
       
       while ((c >= '0' and c <= '9') || c == '.')
@@ -413,8 +390,8 @@ class SerialMenu
           decimals = 1;
         }
 
-        while (!Serial.available());
-        c = Serial.read();
+        while (!Xbee.available());
+        c = Xbee.read();
       }
       
       if (isNegative)
@@ -429,7 +406,7 @@ class SerialMenu
       
       if (message)
       {
-        Serial.println(value);
+        Xbee.println(value);
       }
       return value;
     }
@@ -444,7 +421,7 @@ class SerialMenu
       static char heartbeats[] = {'|','/','-','\\'};
       static uint8_t heartbeat_num = 0;
 
-      const bool userInputAvailable = Serial.available();
+      const bool userInputAvailable = Xbee.available();
 
       // Code block to display a heartbeat as a dot on the Serial console and
       // also by blinking the status LED on the board.
@@ -469,8 +446,8 @@ class SerialMenu
           if (waiting % loopsPerTick == 0)
           {
             heartbeat_num++;
-            Serial.print("\r");
-            Serial.print(heartbeats[heartbeat_num % 4]);
+            Xbee.print("\r");
+            Xbee.print(heartbeats[heartbeat_num % 4]);
           }
         }
         // else
@@ -493,7 +470,7 @@ class SerialMenu
       else
       {
         // Read one character from the Serial console as a menu choice.
-        char menuChoice = Serial.read();
+        char menuChoice = Xbee.read();
         
         // Carriage return is not a menu choice
         if (menuChoice == 0x0A)
@@ -512,8 +489,8 @@ class SerialMenu
         }
         if (i == size)
         {
-          Serial.print(menuChoice);
-          Serial.println(": Invalid menu choice.");
+          Xbee.print(menuChoice);
+          Xbee.println(": Invalid menu choice.");
         }
         return true;
       }

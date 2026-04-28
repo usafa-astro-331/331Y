@@ -34,6 +34,9 @@
 #endif
 #endif
 
+#include <HardwareSerial.h>
+extern HardwareSerial Xbee;
+
 // Shared globals
 long Bytesleft; // from rz - Shared with sz bytcnt
 long rxbytes;   // from rz - Shared with sz Lrxpos

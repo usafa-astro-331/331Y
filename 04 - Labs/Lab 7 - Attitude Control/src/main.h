@@ -44,9 +44,9 @@ inline int get_command_from_ground_station(){
 	int received_int = 0; // default to no command
 	// while (received_int==0)
 	// {
-		// if (Xbee.available())
+		// if (SerialX.available())
 		// {
-		// 	String received_string = Xbee.readStringUntil('\n');
+		// 	String received_string = SerialX.readStringUntil('\n');
 		// 	received_string.trim();
 		// 	if (received_string.length() == 0) return -1;
 		// 	Serial.print("Received from XBee: ");
@@ -54,13 +54,14 @@ inline int get_command_from_ground_station(){
 		// 	received_int = received_string.toInt();
 		// }
 		// else
-		if (Serial.available())
+		if (Xbee.available())
 		{
-			String received_string = Serial.readStringUntil('\n');
+			String received_string = Xbee.readStringUntil('\n');
 			// received_string.trim();
+			delay(10);
 			if (received_string.length() == 0) return -1;
-			Serial.print("Received from Serial: ");
-			Serial.println(received_string);
+			Xbee.print("Received from Serial: ");
+			Xbee.println(received_string);
 			received_int = received_string.toInt();
 		}
 	// }

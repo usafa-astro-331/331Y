@@ -32,43 +32,35 @@ inline void get_sat_rssi() {
   bool not_done = true;
   String ok_response = "OK\r";   //The response we expect.
   String response = String("");  //Create an empty string
-  Serial.println("Starting get_sat_rssi()");
+  Xbee.println("Starting get_sat_rssi()");
 
   // Read the text of the response into the response variable
   int xbee_timeout = millis() +2500; // timer to detect unresponsive xbee
-  while (not_done) {  // As long as we did not get a response from the XBee
+  while (not_done) {  // As long as we did not get a response from the Xbee
     response = String("");
     delay(1100);
-    Xbee.print("+++");  // Put the XBee 3 into 'Command Mode'
-    // Serial.print("+++");   // Put the XBee 3 into 'Command Mode'
+    Xbee.print("+++");  // Put the Xbee 3 into 'Command Mode'
+    // Xbee.print("+++");   // Put the Xbee 3 into 'Command Mode'
 
-    // delay(1100);  // Wait for the XBee to finish
+    // delay(1100);  // Wait for the Xbee to finish
     while (response.length() < ok_response.length()) {
+      // if (millis() > xbee_timeout)  {Xbee.println("Xbee unresponsive");  return;  }
       if (Xbee.available() > 0) {response += (char)Xbee.read(); } // Read a single character at a time
-      if (millis() > xbee_timeout)
-      {
-        Serial.println("XBee unresponsive");
-        return;
       }
-    }
     not_done = !response.equals(ok_response);  // Set the not_done flag to the opposite of the result of equality check
-    if (millis() > xbee_timeout)
-    {
-      Serial.println("XBee unresponsive");
-      return;
-    }
+    if (millis() > xbee_timeout)  {Xbee.println("Xbee unresponsive");  return;   }
   }
 
   // If we got the right response, configure the radio and return true.
   Xbee.print("ATDB\r");  // destination high and destination low addresses set to 0 means all messages will only go
-  delay(100);               // Wait for the XBee
+  delay(100);               // Wait for the Xbee
   response = String("");
   while (Xbee.available() > 0) {
     response += (char)Xbee.read();  //Read a single character at a time
-
   }
-  Serial.println(response);
+  Xbee.println(response);
   Xbee.print("ATCN\r");  // Switch back to data mode
+  delay(5); Xbee.readStringUntil('\r');
 
   String response2 = response;
   uint32_t dec_response = strtoul(response2.c_str(), NULL, 16);
@@ -76,7 +68,8 @@ inline void get_sat_rssi() {
   Xbee.print("RSSI: -");
   Xbee.print(dec_response);
   Xbee.println(" dBm");
-  Serial.println("sat rssi sent");
+  Xbee.println("");
+
 } // end function get_rssi()
 
 inline void toggle_LED()

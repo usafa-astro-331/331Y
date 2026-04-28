@@ -35,8 +35,8 @@ inline bool sd_init(uint8_t csPin)
 {
     pinMode(SD_CS_PIN, OUTPUT);
     if (!sd.begin(SD_CS_PIN, SD_SCK_MHZ(25))) {
-        while (1) { Serial.println("[ERROR] SD card initialization failed. Card present?"); delay(2000); }
-    } else {Serial.println("[INFO] SD Card Initialized.");}
+        while (1) { Xbee.println("[ERROR] SD card initialization failed. Card present?"); delay(2000); }
+    } else {Xbee.println("[INFO] SD Card Initialized.");}
     return true;
 }
 
@@ -79,17 +79,17 @@ inline bool sd_createDataFile(FsFile *dataFile, const char *preamble) {
   } while (sd.exists(filename) && fileNumber <= 999);
 
   if (fileNumber > 999) {
-    Serial.println("[ERROR] Maximum file number exceeded (999).");
+    Xbee.println("[ERROR] Maximum file number exceeded (999).");
     return false;
   }
 
-  Serial.print("[INFO] Creating file: ");
-  Serial.println(filename);
+  Xbee.print("[INFO] Creating file: ");
+  Xbee.println(filename);
 
   *dataFile = sd.open(filename, FILE_WRITE);
 
   if (!*dataFile) {
-    Serial.println("[ERROR] could not create file.");
+    Xbee.println("[ERROR] could not create file.");
     return false;
   }
 
@@ -112,11 +112,11 @@ inline bool sd_createDataFile(FsFile *dataFile, const char *preamble) {
 
 inline void sd_listFiles(String dirName, int depth)
 {
-  Serial.print("[INFO] Listing contents of: ");
-  Serial.println(dirName);
+  Xbee.print("[INFO] Listing contents of: ");
+  Xbee.println(dirName);
   FsFile dir = sd.open(dirName.c_str());
   if (!dir) {
-    Serial.println("[ERROR] Could not open directory.");
+    Xbee.println("[ERROR] Could not open directory.");
     return;
   }
 
@@ -127,7 +127,7 @@ inline void sd_listFiles(String dirName, int depth)
     {
       // no more files
       if (depth == 0) {
-        Serial.println("[INFO] Listing SD contents complete.");
+        Xbee.println("[INFO] Listing SD contents complete.");
       }
       break;
     }
@@ -135,16 +135,16 @@ inline void sd_listFiles(String dirName, int depth)
     // indent for clarity
     for (int i = 0; i < depth; i++)
     {
-      Serial.print("  ");
+      Xbee.print("  ");
     }
 
     char tempName[40];
     entry.getName(tempName, sizeof(tempName));
-    Serial.print(tempName);
+    Xbee.print(tempName);
 
     if (entry.isDirectory())
     {
-      Serial.println("/");
+      Xbee.println("/");
       // Build full path for subdirectory
       String fullPath = dirName;
       if (!dirName.endsWith("/")) {
@@ -156,8 +156,8 @@ inline void sd_listFiles(String dirName, int depth)
     else
     {
       // files have sizes, directories do not
-      Serial.print("\t\t");
-      Serial.print(entry.size(), DEC);
+      Xbee.print("\t\t");
+      Xbee.print(entry.size(), DEC);
       Serial.println(" bytes");
     }
     entry.close();
