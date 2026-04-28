@@ -11,6 +11,7 @@
 
 #define XBEE_RX 16  // ESP32 RX <- XBee DOUT
 #define XBEE_TX 17  // ESP32 TX -> XBee DIN
+#define XBEE_SPEED 57600
 
 #define SUN_SENSOR_PLUS_X_PIN   A0
 #define SUN_SENSOR_MINUS_X_PIN  A2

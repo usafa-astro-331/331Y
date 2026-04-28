@@ -2,11 +2,11 @@
 // Created by jordan on 2026-04-06.
 //
 
-#ifndef LAB_7_ATTITUDE_CONTROL_DUAL_SERIAL_H
-#define LAB_7_ATTITUDE_CONTROL_DUAL_SERIAL_H
+# pragma once
+
 #include <HardwareSerial.h>
 
-#endif //LAB_7_ATTITUDE_CONTROL_DUAL_SERIAL_H
+// #endif //LAB_7_ATTITUDE_CONTROL_DUAL_SERIAL_H
 
 // void print_both(const HardwareSerial& xbee, const HardwareSerial& serial);
 inline void serial_print_twice(HardwareSerial& a, HardwareSerial& b, String message)

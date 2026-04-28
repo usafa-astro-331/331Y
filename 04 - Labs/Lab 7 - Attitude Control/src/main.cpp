@@ -70,7 +70,7 @@ void setup() {
   //----------------------------------------------
   // Initialize Serial link with XBee
   //----------------------------------------------
-  Xbee.begin(9600,SERIAL_8N1, XBEE_RX, XBEE_TX);  // Begin MCU <> XBee communication
+  Xbee.begin(XBEE_SPEED,SERIAL_8N1, XBEE_RX, XBEE_TX);  // Begin MCU <> XBee communication
   Xbee.setTimeout(20);
   Xbee.print("[INFO] KestrelSAT online \npress 1 for options\n\n");
   // ----------------------------------------------
