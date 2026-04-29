@@ -1,21 +1,25 @@
 #pragma once
 
-#include "dual_serial.h"
+// #include "dual_serial.h"
 #include <Adafruit_INA238.h>
 // auto  ina238 = Adafruit_INA238();
 
-#include "menu.h"
-#include "communication.h"
-#include "electrical.h"
-#include "wheel_speed.h"
-#include "att_determ.h"
+// #include "menu.h"
+// #include "communication.h"
+// #include "electrical.h"
+// #include "wheel_speed.h"
+// #include "att_determ.h"
+#include <variant>
+#include <vector>
 
 extern HardwareSerial Xbee; // Serial object for communication with XBee
 extern FsFile dataFile;   // data file object
 
+// class TelemetryLogger;
 
-extern uint32_t timeNext_testPoint; // time of next test point (ms)
-extern const uint32_t interval_testPoint; // time interval between test points (ms)
+
+// extern uint32_t timeNext_testPoint; // time of next test point (ms)
+// extern const uint32_t interval_testPoint; // time interval between test points (ms)
 
 extern ICM_20948_I2C imu_sensor;
 
@@ -67,3 +71,54 @@ inline int get_command_from_ground_station(){
 	// }
 	return received_int;
 }
+
+class TelemetryLogger {
+public:
+	// Define the variant type for easier reading
+	using TeleValue = std::variant<int, uint32_t, float>;
+
+	struct Entry {
+		const char* label;
+		TeleValue value;
+	};
+
+	// Add a data point to the current frame
+	void add(const char* label, TeleValue value) {
+		entries.push_back({label, value});
+	}
+
+	// Clear the entries (usually called at the start of a loop)
+	void clear() {
+		entries.clear();
+	}
+
+	// Print to Serial/Xbee with labels
+	void logToSerial(Print& printer) const {
+		for (const auto& e : entries) {
+			printer.print(e.label);
+			std::visit([&printer](auto&& val) {
+				printer.print(val);
+			}, e.value);
+		}
+		printer.println();
+	}
+
+	// Print to File/SD as CSV (values only)
+	void logToCSV(Print& printer) {
+		for (size_t i = 0; i < entries.size(); ++i) {
+			std::visit([&printer](auto&& val) {
+				printer.print(val);
+			}, entries[i].value);
+
+			if (i < entries.size() - 1) {
+				printer.print(", ");
+			}
+		}
+		printer.println();
+	}
+
+private:
+	std::vector<Entry> entries;
+};
+
+// inline TelemetryLogger logger;

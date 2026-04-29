@@ -1,19 +1,19 @@
 #pragma once
 #include "att_determ.h"
 
-int get_command_from_ground_station();
+// int get_command_from_ground_station();
 
 #include "main.h"
 #include <vector>
 #include <cmath>
 #include <variant>
-#include <string>
 
 #include <HardwareSerial.h>
 
 extern HardwareSerial SerialX;
 extern HardwareSerial Xbee;
 
+extern TelemetryLogger logger;
 
 extern FsFile dataFile;   // data file object
 extern TB9051FTGMotorCarrier driver;
@@ -22,16 +22,12 @@ ESP32Encoder enc;
 
 ICM_20948_I2C imu_sensor; // IMU object
 
-// uint32_t timeLastCheckForCommand; // time of next Xbee check
-// uint32_t interval_CheckForCommand; // time interval between Xbee4/Serial checks (ms)
-// uint32_t timeLastHeartBeat; // time of last heartbeat (ms)
-// uint32_t interval_heartBeat; // interval between heartbeat (ms)
 extern const uint32_t interval_testPoint;
 extern const uint32_t serial_interval;
 extern uint32_t timeNext_testPoint;
 
 // uint32_t serial_decimation = interval_testPoint/serial_interval;
-uint32_t serial_decimation = 5; // only print every 5th point to serial
+extern uint32_t serial_decimation; // only print every 5th point to serial
 
 int sun_plusX, sun_minusX, sun_plusY, sun_minusY;
 int sun_X, sun_Y;
@@ -42,7 +38,6 @@ int n_sun_sensor_reads = 5; // number of readings to average for sun sensor test
 float gyro_Z = 0.0;
 float mag_X = 0.0;
 float mag_Y = 0.0;
-
 
 // function prototypes
 float set_speed_test_B(uint32_t);
@@ -81,47 +76,15 @@ bool TEST_COMPLETE = true;
  * @see IMU sensor getAGMT(), gyrZ(), magX(), magY() methods
  * @see Encoder getCount() method
  */
-
-struct Var
-{
-  const char* label;
-  std::variant<int, uint32_t, float> value;
-};
-
-
-// C++ requires std::visit to print a struct with mixed int/float values
-inline void printVar_to_serial(const Var& v)
-{
-  Xbee.print(v.label);
-
-  std::visit([](auto&& val){
-    Xbee.print(val);
-  }, v.value);
-}
-
-// C++ requires std::visit to print a struct with mixed int/float values
-inline void printVar_to_csv(const Var& v)
-{
-   std::visit([](auto&& val)
-  {
-    dataFile.print(val);
-    dataFile.print(", ");
-  }, v.value);
-}
-
-
 inline void lab7_run_test_B()
 {
   TEST_COMPLETE = false;
-
-  static uint32_t serial_decimation_iterator = 0;
-  serial_decimation_iterator++;
 
   const uint32_t t0_ms = millis();
 
   if(sd_createDataFile(&dataFile, "att_control/Lab7_testB")){
     // write header row:
-    dataFile.println("mcu time(ms),gyro_Z(deg/s),mag_X(uT),mag_Y(uT),sun_direction(deg),sun_plusX(count),sun_plusY(count),sun_minusX(count),sun_minusY(count),w_RW_cmd(RPM),w_RW_meas(RPM)");
+    dataFile.println("mcu_time(ms),gyro_Z(deg/s),mag_X(uT),mag_Y(uT),sun_direction(deg),sun_plusX(count),sun_plusY(count),sun_minusX(count),sun_minusY(count),w_RW_cmd(RPM),w_RW_meas(RPM)");
     dataFile.flush();
     char file_name[40];
     dataFile.getName(file_name, sizeof(file_name));
@@ -182,10 +145,6 @@ inline void lab7_run_test_B()
       test_point_count++;
       uint32_t time = millis() - t0_ms;
 
-      // // Set RW Motor Speed:
-      // float speed_pwm = set_spee#d_test_B(t0);
-      // float speed_pwm = 2.0;
-
       float speedx = set_wheel_speed(millis(), t0_ms, &TEST_COMPLETE);
       driver.setOutput(speedx);
 
@@ -238,50 +197,34 @@ inline void lab7_run_test_B()
       lastCount = c;
       timeLastEncMeas = timeNow;
 
+      logger.clear();
 
-      Var vars[] = {
-        {" time:", time},
-        {" sun_px:", sun_plusX},
-        {" gyro_Z:", gyro_Z},
-        {" mag_X:", mag_X},
-        {" mag_Y:", mag_Y},
-        {" sun_direction:", sun_direction},
-        {" sun_plusX:", sun_plusX},
-        {" sun_plusY:", sun_plusY},
-        {" sun_minusX:", sun_minusX},
-        {" sun_minusY:", sun_minusY},
-        // {" RW_cmd:", w_RW_cmd},
-        {" RW_cmd_2:", speedx* 1000.0f * MOTOR_VOLTAGE / 12.0f},
-        {" RW_meas:", w_RW_meas},
-      };
+      logger.add(" time", time);
+      logger.add(" sun_px:", sun_plusX);
+      logger.add(" gyro_Z:", gyro_Z);
+      logger.add(" mag_X:", mag_X);
+      logger.add(" mag_Y:", mag_Y);
+      logger.add(" sun_direction:", sun_direction);
+      logger.add(" sun_plusX:", sun_plusX);
+      logger.add(" sun_plusY:", sun_plusY);
+      logger.add(" sun_minusX:", sun_minusX);
+      logger.add(" sun_minusY:", sun_minusY);
+      // logger.add(" RW_cmd:", w_RW_cmd);
+      logger.add(" RW_cmd_2:", speedx* 1000.0f * MOTOR_VOLTAGE / 12.0f);
+      logger.add(" RW_meas:", w_RW_meas);
 
 
   uint8_t ii = 0;
-      // print every data point to file
-      for (const auto& v : vars){
-        printVar_to_csv(v);
-        ii++;
-      }
-      dataFile.print("\n");
-
-
-      if (test_point_count % serial_decimation == 0){
-      // if (serial_decimation_iterator % serial_decimation == 0){
-      // only print to serial sometimes
-      // if (serial_decimation_number % serial_decimation == 0) {
-        ii = 0;
-        for (const auto& v : vars){
-          printVar_to_serial(v);
-          ii++;
+      if (dataFile) {
+        logger.logToCSV(dataFile);
+        if (!(test_point_count % serial_decimation)) {
+          logger.logToSerial(Xbee);
+          dataFile.flush();
+        } // print to serial sometimes
+        else {
+          Xbee.println("file error");
         }
-        Xbee.print("\n");
-
-      serial_decimation_iterator = 0;
-
-        // at the same time ensure data is written to file
-        dataFile.flush(); // save file every X test points
       }
-
     }
 
     // End test if complete:
@@ -291,8 +234,6 @@ inline void lab7_run_test_B()
       SerialX.print("[INFO] Test B Complete. File closed.");
       return;
     }
-
-
 }
 
 } // end function lab7_run_test_B()
@@ -308,13 +249,10 @@ inline float set_wheel_speed(const uint32_t t_ms, const uint32_t t0_ms, bool* CO
   uint32_t current_time = t_ms - t0_ms;
 
   static std::vector<uint32_t> times;
-  times = {
-    0, 1000, 2000, 10000, 2500, 2500, 10000, 2500, 2500, 10000, 1000, 5000
-  };
-
-  static std::vector<float> speeds = {
-    0, 0, 0.6, 0.6, 1.0f, 0.6, 0.6, 0.2, 0.6, 0.6, 0, 0
-  };
+  static std::vector<float> speeds;
+  times = {  0, 1000, 2000,   10000,  2500,  2500, 10000, 2500,   2500, 10000, 1000, 5000 };
+  speeds = { 0,   0,   0.6,    0.6,   1.0f,   0.6,  0.6,   0.2,   0.6,   0.6,  0,    0 };
+  //                 _/--------------/¯¯¯¯¯¯¯\------------\______/------------\
 
   // turn time intervales into a cumulative time vector
   for (size_t ii = 1; ii < times.size(); ++ii) {
@@ -360,10 +298,7 @@ inline void stream_RW_speed()
       c = Xbee.read();
       newUserInput = true;
     }
-    // if (SerialX.available() > 0) {  // Check for user input from USB
-    //   c = SerialX.read();
-    //   newUserInput = true;
-    // }
+
     if(newUserInput){
       newUserInput = false;
       switch (c) {
@@ -411,6 +346,7 @@ inline void stream_RW_speed()
  * @return void
  */
 inline void lab7_run_test_A() {
+  int test_point_count = 0;
 
   if(sd_createDataFile(&dataFile, "att_control/Lab7_testA")){
     // write header row:
@@ -497,48 +433,27 @@ inline void lab7_run_test_A() {
       lastCount = c;
       timeLastEncMeas = timeNow;
 
-      // // Print data to .csv file:
-      // dataFile.print(time);
-      // dataFile.print(",");
-      // dataFile.print(gyro_Z);
-      // dataFile.print(",");
-      // dataFile.print(mag_X);
-      // dataFile.print(",");
-      // dataFile.print(mag_Y);
-      // dataFile.print(",");
-      // dataFile.print(sun_direction);
-      // dataFile.print(",");
-      // dataFile.print(sun_plusX);
-      // dataFile.print(",");
-      // dataFile.print(sun_plusY);
-      // dataFile.print(",");
-      // dataFile.print(sun_minusX);
-      // dataFile.print(",");
-      // dataFile.print(sun_minusY);
-      // dataFile.print(",");
-      // dataFile.print(w_RW_cmd);
-      // dataFile.print(",");
-      // dataFile.println(w_RW_meas);
+      // Print data to SD & XBee serial:
+      logger.clear();
 
-      // dataFile.flush();  // save file
+      logger.add(" time:", time);
+      logger.add(" w_RW_cmd:", w_RW_cmd);
+      logger.add(" w_RW_meas:", w_RW_meas);
 
-      // Print data to USB & XBee serial:
-      String test_point_string;
-      test_point_string += "t:";
-      test_point_string += time;
-      test_point_string += ",w_RW_cmd:";
-      test_point_string += w_RW_cmd;
-      test_point_string += ",w_RW_meas:";
-      test_point_string += w_RW_meas;
+      uint8_t ii = 0;
+      if (dataFile) {
+        logger.logToCSV(dataFile);
+        if (!(test_point_count % serial_decimation)) {
+          logger.logToSerial(Xbee);
+          dataFile.flush();
+        } // print to serial sometimes
+        else {
+          Xbee.println("file error");
+        }
+      }
+      test_point_count++;
 
-      test_point_string += "\n";
-      //Print to USB Serial:
-      Xbee.print(test_point_string);
-      //Print to XBee:
-      // SerialX.print(test_point_string);
-
-      // Xbee.println(millis() - time + t0);
-    }
+    } // end if (millis() > timeNext_testPoint)
 
     // End test if complete:
     if (millis() - t0 > 15000){
@@ -546,8 +461,9 @@ inline void lab7_run_test_A() {
       Xbee.print("[INFO] Test A Complete. File closed.");
       SerialX.print("[INFO] Test A Complete. File closed.");
       return;
-    }
-  }
+    } // end if test is complete
+
+    } // end while (true)
 }  // end function lab7_run_test_A()
 
 

@@ -1,15 +1,18 @@
 #pragma once
 
 #include "main.h"
-#include "wheel_speed.h"
+// #include "wheel_speed.h"
 #include <HardwareSerial.h>
 
 extern HardwareSerial SerialX;
 extern HardwareSerial Xbee;
 
+extern TelemetryLogger logger;
+inline uint32_t serial_decimation = 5; // only print every 5th point to serial
+
 
 extern FsFile dataFile;   // data file object
-int get_command_from_ground_station();
+// int get_command_from_ground_station();
 
 uint32_t timeNext_testPoint;        // time of next test point (ms)
 const uint32_t interval_testPoint = 50;  // time interval between test points (ms)
@@ -136,56 +139,33 @@ inline void lab6_run_test() {
       }
       /////////////////////////////////////////////////////////////////////////////
 
-      // Print data to .csv file:
-      dataFile.print(timeNow);
-      dataFile.print(",");
-      dataFile.print(gyro_Z,4);
-      dataFile.print(",");
-      dataFile.print(mag_X,4);
-      dataFile.print(",");
-      dataFile.print(mag_Y,4);
-      dataFile.print(",");
-      dataFile.print(sun_direction,4);
-      dataFile.print(",");
-      dataFile.print(sun_plusX);
-      dataFile.print(",");
-      dataFile.print(sun_plusY);
-      dataFile.print(",");
-      dataFile.print(sun_minusX);
-      dataFile.print(",");
-      dataFile.println(sun_minusY);
-
+      logger.clear();
       // Print data to USB & XBee serial:
-      String test_point_string;
-      test_point_string += "t:";
-      test_point_string += timeNow;
-      test_point_string += ",gZ:";
-      test_point_string += gyro_Z;
-      test_point_string += ",mX:";
-      test_point_string += mag_X;
-      test_point_string += ",mY:";
-      test_point_string += mag_Y;
-      test_point_string += ",sDir:";
-      test_point_string += sun_direction;
-      test_point_string += ",s+X:";
-      test_point_string += sun_plusX;
-      test_point_string += ",s+Y:";
-      test_point_string += sun_plusY;
-      test_point_string += ",s-X:";
-      test_point_string += sun_minusX;
-      test_point_string += ",s-Y:";
-      test_point_string += sun_minusY;
-      test_point_string += "\n";
 
-      //Print to USB Serial:
-      Xbee.print(test_point_string);
-      //Print to XBee:
-      if(test_point_count % 10 == 0){
-        dataFile.flush(); // save file every 10 test points
-        SerialX.print("tp:");
-        SerialX.println(test_point_count);
-        // SerialX.print(test_point_string);
-      }
-    }
-  }
-}
+       logger.add(" time:", timeNow);
+       logger.add( ",gZ:",     gyro_Z);
+       logger.add( ",mX:",     mag_X);
+       logger.add( ",mY:",     mag_Y);
+       logger.add( ",sDir:",   sun_direction);
+       logger.add( ",s+X:",    sun_plusX);
+       logger.add( ",s+Y:",    sun_plusY);
+       logger.add( ",s-X:",    sun_minusX);
+       logger.add( ",s-Y:",    sun_minusY);
+
+
+      uint8_t ii = 0;
+      if (dataFile) {
+        logger.logToCSV(dataFile);
+        if (!(test_point_count % serial_decimation)) {
+          logger.logToSerial(Xbee);
+          dataFile.flush();
+        } // print to serial sometimes
+        else {
+          Xbee.println("file error");
+        }
+      } // end if (dataFile)
+    } // end if (timeNow>timeNext_testPoint)
+
+    } // end of while(true)
+  } // end of lab6
+

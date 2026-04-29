@@ -22,6 +22,8 @@ HardwareSerial SerialX(3); // empty serial port, exists to prevent code errors f
 
 #include "main.h"
 
+TelemetryLogger logger;
+
 #include "wheel_speed.h"
 #include "att_determ.h"
 #include "electrical.h"
@@ -34,6 +36,8 @@ HardwareSerial SerialX(3); // empty serial port, exists to prevent code errors f
 // Objects:
 FsFile dataFile;   // data file object
 // SdFile fout;
+
+
 
 
 // SFE_MAX1704X lipo; // SparkFun Thing Plus ESP32-WROOM onboard fuel gauge (I2C addr 0x36)
