@@ -63,7 +63,6 @@ void initINA238();
 void setup() {
   Serial.begin(115200); // Begin Serial communication with computer
   while (!Serial) {delay(10);} // Wait for user to open Serial monitor before proceeding
-  Xbee.println("[INFO] Hello World!");
 
   Wire.begin(); // Initialize I2C communication
 

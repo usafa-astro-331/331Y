@@ -13,11 +13,6 @@
 #define XBEE_TX 17  // ESP32 TX -> XBee DIN
 #define XBEE_SPEED 57600
 
-#define SUN_SENSOR_PLUS_X_PIN   A0
-#define SUN_SENSOR_MINUS_X_PIN  A2
-#define SUN_SENSOR_PLUS_Y_PIN   A1
-#define SUN_SENSOR_MINUS_Y_PIN  A3
-
 #define MOTOR_VOLTAGE           5.05f
 #define CPR                     64
 #define MOTOR_PWM_1_PIN         33

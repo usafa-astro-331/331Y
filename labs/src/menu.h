@@ -2,17 +2,11 @@
 #include "att_determ.h"
 #include "../lib/SerialMenu/src/SerialMenu.hpp"
 #include "communication.h"
-#include "main.h"
+// #include "main.h"
 #include "wheel_speed.h"
 #include "electrical.h"
-#include "sd_functions.h"
+// #include "sd_functions.h"
 #include "zmodem.h"
-#include "../lib/zmodem/zmodem.h"
-
-// inline char* cmd = oneKbuf;
-
-// static String cmd;
-
 
 void folder_ls(const String& directory);
 void transfer_file_from_directory(const String& directory_name);
@@ -20,7 +14,6 @@ void transfer_file_from_directory(const String& directory_name);
 inline char menu_buf[256];
 extern char cmd;
 
-//
 // const SerialMenu& menu = SerialMenu::get();
 //
 // const SerialMenuEntry communication_menu[];
@@ -41,8 +34,6 @@ extern char cmd;
 //     {"1: do lab A", false, '2', Xbee.println("do lab A")},
 // };
 // constexpr uint8_t communication_menu_size = GET_MENU_SIZE(communication_menu);
-//
-//
 
 void pause_refresh();
 

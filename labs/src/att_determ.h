@@ -1,5 +1,38 @@
 #pragma once
 
+/* ATTITUDE DETERMINATION
+ *
+ * CONNECTIONS:
+ * sparkfun 9DOF IMU via QWIIC/I2C
+ *    black: GND
+ *    red: 3.3V
+ *    blue: SDA
+ *    yellow: SCL
+ *
+ * 4x phototransistor sun sensors via voltage divider*/
+    #define SUN_SENSOR_PLUS_X_PIN   A0
+    #define SUN_SENSOR_MINUS_X_PIN  A2
+    #define SUN_SENSOR_PLUS_Y_PIN   A1
+    #define SUN_SENSOR_MINUS_Y_PIN  A3
+/*    ------ 3V3
+ *    |
+ *    |
+ *    phototransistor
+ *    |
+ *    |
+ *    |----- sensor pin
+ *    |
+ *    |
+ *    1kΩ resistor
+ *    |
+ *    |
+ *    GND
+ *
+ *
+ **/
+
+
+
 #include "main.h"
 // #include "wheel_speed.h"
 #include <HardwareSerial.h>
