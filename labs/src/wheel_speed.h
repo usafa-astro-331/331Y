@@ -238,10 +238,6 @@ inline void lab7_run_test_B()
 
 } // end function lab7_run_test_B()
 
-// linear interpolation function for wheel speed
-inline float lerp(const float start_value, const float end_value, const float fraction){
-  return start_value * (1.0f - fraction) + (end_value * fraction);
-}
 
 // calculate wheel speed based on time
 inline float set_wheel_speed(const uint32_t t_ms, const uint32_t t0_ms, bool* COMPLETE)
@@ -272,7 +268,7 @@ inline float set_wheel_speed(const uint32_t t_ms, const uint32_t t0_ms, bool* CO
     const float fractional_step =  (float)(time_into_step) / (float)total_step_time;
 
   const float wheel_speed =
-    lerp(speeds[step_index], speeds[step_index+1], fractional_step);
+    std::lerp(speeds[step_index], speeds[step_index+1], fractional_step);
 
   if (current_time > times.back() ) *COMPLETE = true;
 
