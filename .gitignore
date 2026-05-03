@@ -2,3 +2,6 @@
 04 - Labs/Lab 5 - Remote Sensing/Astro331_Lab5_Code/.pio
 04 - Labs/Lab 6 - Attitude Determination/Astro331_Lab6_Code/.pio
 04 - Labs/Lab 7 - Attitude Control/.pio
+
+.idea/
+.vscode/
