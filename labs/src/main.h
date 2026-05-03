@@ -1,7 +1,7 @@
 #pragma once
 
 // #include "dual_serial.h"
-#include <Adafruit_INA238.h>
+// #include <Adafruit_INA238.h>
 // auto  ina238 = Adafruit_INA238();
 
 // #include "menu.h"
@@ -40,7 +40,7 @@ extern ESP32Encoder enc;
 extern SFE_MAX1704X lipo; // SparkFun Thing Plus ESP32-WROOM onboard fuel gauge (I2C addr 0x36)
 
 
-#include <Adafruit_INA238.h>
+// #include <Adafruit_INA238.h>
 
 inline int get_command_from_ground_station(){
 	// Serial.read();
@@ -79,12 +79,13 @@ public:
 
 	struct Entry {
 		const char* label;
+		const char* unit;
 		TeleValue value;
 	};
 
 	// Add a data point to the current frame
-	void add(const char* label, TeleValue value) {
-		entries.push_back({label, value});
+	void add(const char* label, const char* unit, TeleValue value) {
+		entries.push_back({label, unit, value});
 	}
 
 	// Clear the entries (usually called at the start of a loop)
@@ -93,11 +94,11 @@ public:
 	}
 
 	// Print to Serial/Xbee with labels
-	void logToSerial(Print& printer) const {
+	void logToSerial(Print& printer) {
 		for (const auto& e : entries) {
-			printer.print(e.label);
+			printer.print(e.label); printer.print(":");
 			std::visit([&printer](auto&& val) {
-				printer.print(val);
+				printer.print(val); printer.print(", ");
 			}, e.value);
 		}
 		printer.println();
@@ -105,20 +106,26 @@ public:
 
 	// Print to File/SD as CSV (values only)
 	void logToCSV(Print& printer) {
-		for (size_t i = 0; i < entries.size(); ++i) {
-			std::visit([&printer](auto&& val) {
-				printer.print(val);
-			}, entries[i].value);
+		for  (const auto& e : entries) {
+			std::visit([&printer](auto&& val){
+				printer.print(val); printer.print(", ");
+			// }, entries[ii].value);
+			}, e.value);
+		}
+		printer.println();
+	}
 
-			if (i < entries.size() - 1) {
+	// Print to File/SD as CSV (values only)
+	void create_CSV_header(Print& printer) {
+		for (const auto& e : entries) {
+				printer.print(e.label);
+				printer.print("_");
+				printer.print(e.unit);
 				printer.print(", ");
 			}
-		}
 		printer.println();
 	}
 
 private:
 	std::vector<Entry> entries;
 };
-
-// inline TelemetryLogger logger;

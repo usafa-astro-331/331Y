@@ -14,21 +14,12 @@
     #define SUN_SENSOR_MINUS_X_PIN  A2
     #define SUN_SENSOR_PLUS_Y_PIN   A1
     #define SUN_SENSOR_MINUS_Y_PIN  A3
-/*    ------ 3V3
+/*
+ *   3V3     (* is phototransistor)
  *    |
- *    |
- *    phototransistor
- *    |
- *    |
- *    |----- sensor pin
- *    |
- *    |
- *    1kΩ resistor
- *    |
- *    |
- *    GND
- *
- *
+ *    └-----(*)-----┬-----<1kΩ>-----┐
+ *              sensor pin          |
+ *                                 GND
  **/
 
 
@@ -172,18 +163,18 @@ inline void lab6_run_test() {
       }
       /////////////////////////////////////////////////////////////////////////////
 
-      logger.clear();
       // Print data to USB & XBee serial:
+      logger.clear();
 
-       logger.add(" time:", timeNow);
-       logger.add( ",gZ:",     gyro_Z);
-       logger.add( ",mX:",     mag_X);
-       logger.add( ",mY:",     mag_Y);
-       logger.add( ",sDir:",   sun_direction);
-       logger.add( ",s+X:",    sun_plusX);
-       logger.add( ",s+Y:",    sun_plusY);
-       logger.add( ",s-X:",    sun_minusX);
-       logger.add( ",s-Y:",    sun_minusY);
+       logger.add("time", "ms", timeNow);
+       logger.add( "gZ",  "dps",   gyro_Z);
+       logger.add( "mX", "uT",    mag_X);
+       logger.add( "mY",  "uT",   mag_Y);
+       logger.add( "sDir", "count",  sun_direction);
+       logger.add( "spX", "count",   sun_plusX);
+       logger.add( "spY", "count",   sun_plusY);
+       logger.add( "snX", "count",   sun_minusX);
+       logger.add( "snY", "count",   sun_minusY);
 
 
       uint8_t ii = 0;

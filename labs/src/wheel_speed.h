@@ -7,6 +7,8 @@
 #include <vector>
 #include <cmath>
 #include <variant>
+#include <numeric>
+#include <iterator>
 
 #include <HardwareSerial.h>
 
@@ -183,8 +185,6 @@ inline void lab7_run_test_B()
       }
       /////////////////////////////////////////////////////////////////////////////
 
-      // Get commanded reaction wheel speed:
-      // float w_RW_cmd = -speed_pwm * 1000.0 * MOTOR_VOLTAGE / 12.0;
       // Get measured reaction wheel speed:
       static int64_t lastCount = 0;
       static uint32_t timeLastEncMeas = 0;
@@ -199,19 +199,16 @@ inline void lab7_run_test_B()
 
       logger.clear();
 
-      logger.add(" time", time);
-      logger.add(" sun_px:", sun_plusX);
-      logger.add(" gyro_Z:", gyro_Z);
-      logger.add(" mag_X:", mag_X);
-      logger.add(" mag_Y:", mag_Y);
-      logger.add(" sun_direction:", sun_direction);
-      logger.add(" sun_plusX:", sun_plusX);
-      logger.add(" sun_plusY:", sun_plusY);
-      logger.add(" sun_minusX:", sun_minusX);
-      logger.add(" sun_minusY:", sun_minusY);
-      // logger.add(" RW_cmd:", w_RW_cmd);
-      logger.add(" RW_cmd_2:", speedx* 1000.0f * MOTOR_VOLTAGE / 12.0f);
-      logger.add(" RW_meas:", w_RW_meas);
+      logger.add("time", "ms", time);
+      logger.add("gyro_Z", "dps", gyro_Z);
+      logger.add("mag_X", "uT", mag_X);
+      logger.add("mag_Y", "uT", mag_Y);
+      logger.add("spX", "count", sun_plusX);
+      logger.add("spY", "count", sun_plusY);
+      logger.add("snX", "count", sun_minusX);
+      logger.add("snY", "count", sun_minusY);
+      logger.add("RW_cmd", "RPM", speedx* 1000.0f * MOTOR_VOLTAGE / 12.0f);
+      logger.add("RW_meas", "RPM", w_RW_meas);
 
 
   uint8_t ii = 0;
@@ -239,7 +236,7 @@ inline void lab7_run_test_B()
 } // end function lab7_run_test_B()
 
 // linear interpolation function for wheel speed
-inline float lerp(const float start_value, const float end_value, const float fraction){
+inline float lerp(float start_value, float end_value, float fraction){
   return start_value * (1.0f - fraction) + (end_value * fraction);
 }
 
@@ -248,16 +245,14 @@ inline float set_wheel_speed(const uint32_t t_ms, const uint32_t t0_ms, bool* CO
 {
   uint32_t current_time = t_ms - t0_ms;
 
-  static std::vector<uint32_t> times;
-  static std::vector<float> speeds;
-  times = {  0, 1000, 2000,   10000,  2500,  2500, 10000, 2500,   2500, 10000, 1000, 5000 };
+  std::vector<int> dtimes;
+  std::vector<float> speeds;
+  dtimes = { 0, 1000, 2000,   10000,  2500,  2500, 10000, 2500,   2500, 10000, 1000, 5000 };
   speeds = { 0,   0,   0.6,    0.6,   1.0f,   0.6,  0.6,   0.2,   0.6,   0.6,  0,    0 };
-  //                 _/--------------/¯¯¯¯¯¯¯\------------\______/------------\
+  //         ________/-----------------/\------------------\/-----------------\_______
 
-  // turn time intervales into a cumulative time vector
-  for (size_t ii = 1; ii < times.size(); ++ii) {
-    times[ii] += times[ii-1];
-  }
+  std::vector<uint32_t> times(dtimes.size());
+  std::partial_sum(dtimes.begin(), dtimes.end(), times.begin());
 
   // find which time step we're in
   const auto current_interval_time =
@@ -269,10 +264,10 @@ inline float set_wheel_speed(const uint32_t t_ms, const uint32_t t0_ms, bool* CO
   uint32_t total_step_time = times[step_index+1] - times[step_index];
   uint32_t time_into_step = current_time - times[step_index];
   if (total_step_time<=0) {total_step_time=1;} // prevent /0 in next step
-    const float fractional_step =  (float)(time_into_step) / (float)total_step_time;
+    float fractional_step =  (float)(time_into_step) / (float)total_step_time;
 
   const float wheel_speed =
-    lerp(speeds[step_index], speeds[step_index+1], fractional_step);
+    lerp((float)speeds[step_index], (float)speeds[step_index+1], fractional_step);
 
   if (current_time > times.back() ) *COMPLETE = true;
 
@@ -348,21 +343,26 @@ inline void stream_RW_speed()
 inline void lab7_run_test_A() {
   int test_point_count = 0;
 
-  if(sd_createDataFile(&dataFile, "att_control/Lab7_testA")){
-    // write header row:
-    dataFile.println("mcu time(ms),gyro_Z(deg/s),mag_X(uT),mag_Y(uT),sun_direction(deg),sun_plusX(count),sun_plusY(count),sun_minusX(count),sun_minusY(count),w_RW_cmd(RPM),w_RW_meas(RPM)");
-    dataFile.flush();
-    char file_name[40];
-    dataFile.getName(file_name, sizeof(file_name));
-    SerialX.print("[INFO] Data file created successfully: ");
-    SerialX.println(file_name);
-    Xbee.print("[INFO] Data file created successfully: ");
-    Xbee.println(file_name);
-  } else {
+  if (!sd_createDataFile(&dataFile, "att_control/Lab7_testA")){
     SerialX.println("[ERROR] Failed to create data file. Aborting test.");
     Xbee.println("[ERROR] Failed to create data file. Aborting test.");
     return;
   }
+
+bool CSV_header_complete = false;
+  // // write header row:
+  // dataFile.println("mcu time(ms),gyro_Z(deg/s),mag_X(uT),mag_Y(uT),sun_direction(deg),sun_plusX(count),sun_plusY(count),sun_minusX(count),sun_minusY(count),w_RW_cmd(RPM),w_RW_meas(RPM)");
+  // dataFile.flush();
+  char file_name[40];
+  dataFile.getName(file_name, sizeof(file_name));
+  SerialX.print("[INFO] Data file created successfully: ");
+  SerialX.println(file_name);
+  Xbee.print("[INFO] Data file created successfully: ");
+  Xbee.println(file_name);
+
+
+
+
   Xbee.println("[INFO] Ready to start Lab 7 test A, send any key to begin (wait for test to complete or send 'X' to abort)...");
   SerialX.println("[INFO] Ready to start Lab 7 test A, send any key to begin (wait for test to complete or send 'X' to abort)...");
 
@@ -436,12 +436,13 @@ inline void lab7_run_test_A() {
       // Print data to SD & XBee serial:
       logger.clear();
 
-      logger.add(" time:", time);
-      logger.add(" w_RW_cmd:", w_RW_cmd);
-      logger.add(" w_RW_meas:", w_RW_meas);
+      logger.add("time", "ms", time);
+      logger.add("w_RW_cmd", "RPM", w_RW_cmd);
+      logger.add("w_RW_meas", "RPM", w_RW_meas);
 
       uint8_t ii = 0;
       if (dataFile) {
+        if (!CSV_header_complete){logger.create_CSV_header(dataFile); CSV_header_complete = true;}
         logger.logToCSV(dataFile);
         if (!(test_point_count % serial_decimation)) {
           logger.logToSerial(Xbee);
