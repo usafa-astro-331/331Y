@@ -200,7 +200,7 @@ public:
 ///
 /// @brief test to exit function early
 inline bool user_has_typed_x() {
-	switch (tolower(Xbee.peek()) ) {
+	switch (tolower((unsigned char) Xbee.peek()) ) {
 
 	case 'x': // stop if user types 'X' or 'x'
 		Xbee.read();
