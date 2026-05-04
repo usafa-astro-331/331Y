@@ -15,12 +15,15 @@
 #include <ESP32Encoder.h>                                 // Motor encoder library to measure wheel speed
 #include <Adafruit_INA238.h>
 
+FsFile dataFile;   // data file object
 
 // #include "communication.h"
-HardwareSerial Xbee(2);
-HardwareSerial SerialX(3); // empty serial port, exists to prevent code errors from calls to Serial2
 
 #include "main.h"
+
+HardwareSerial Xbee(2);
+HardwareSerial SerialX(3); // empty serial port, exists to prevent code errors from calls to Serial2
+DualSerial Serials(Serial, Xbee);
 
 TelemetryLogger logger;
 
@@ -28,15 +31,14 @@ TelemetryLogger logger;
 #include "att_determ.h"
 #include "electrical.h"
 
-#include "menu.h"
 
 /*---------------------------------------------------------------------------------------------*/
 // Globals:
 /*---------------------------------------------------------------------------------------------*/
 // Objects:
-FsFile dataFile;   // data file object
 // SdFile fout;
 
+#include "menu.h"
 
 
 
@@ -61,9 +63,6 @@ void initINA238();
 // SETUP:
 /////////////////////////////////////////////////////////////////////////////////////////////////
 void setup() {
-  Serial.begin(115200); // Begin Serial communication with computer
-  while (!Serial) {delay(10);} // Wait for user to open Serial monitor before proceeding
-
   Wire.begin(); // Initialize I2C communication
 
   // Initialize built-in RGB LED (WS2812) and STAT LED
@@ -72,12 +71,18 @@ void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   neopixelWrite(RGB_BUILTIN, 25, 0, 0); // Default to red (R=255, G=0, B=0)
 
+
+
+
   //----------------------------------------------
-  // Initialize Serial link with XBee
+  // Initialize Serial links
   //----------------------------------------------
   Xbee.begin(XBEE_SPEED,SERIAL_8N1, XBEE_RX, XBEE_TX);  // Begin MCU <> XBee communication
   Xbee.setTimeout(20);
-  Xbee.print("[INFO] KestrelSAT online \npress 1 for options\n\n");
+  Serial.begin(115200); // Begin Serial communication with computer
+  // while (!Serial) {delay(10);} // Wait for user to open Serial monitor before proceeding
+
+  Serials.print("[INFO] KestrelSAT online \npress 1 for options\n\n");
   // ----------------------------------------------
 
   //----------------------------------------------
@@ -91,10 +96,10 @@ void setup() {
   //----------------------------------------------
   if (!lipo.begin(Wire)) // Uses I2C address 0x36)
   {
-    Xbee.println("[WARN] MAX17048 not detected on I2C (0x36). Battery telemetry (cmd 4) will be unavailable.");
+    Serials.println("[WARN] MAX17048 not detected on I2C (0x36). Battery telemetry (cmd 4) will be unavailable.");
   } else {
     lipo.quickStart();    // Improves initial SOC accuracy after boot. Returns 0 on success.
-    Xbee.println("[INFO] MAX17048 online.");
+    Serials.println("[INFO] MAX17048 online.");
   }
   //----------------------------------------------
 
@@ -136,7 +141,7 @@ void setup() {
   enc.clearCount();
   //----------------------------------------------
 
-  Xbee.println("[INFO] SETUP COMPLETE.");
+  Serials.println("[INFO] SETUP COMPLETE.");
   SerialX.println("[INFO] SETUP COMPLETE.SEND '1' FOR OPTIONS.");
   neopixelWrite(RGB_BUILTIN, 0, 25, 0); // Set to green (R=0, G=255, B=0)
 

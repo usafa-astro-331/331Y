@@ -13,9 +13,6 @@
 #include <HardwareSerial.h>
 
 extern HardwareSerial SerialX;
-extern HardwareSerial Xbee;
-
-extern TelemetryLogger logger;
 
 extern FsFile dataFile;   // data file object
 extern TB9051FTGMotorCarrier driver;
@@ -78,8 +75,7 @@ bool TEST_COMPLETE = true;
  * @see IMU sensor getAGMT(), gyrZ(), magX(), magY() methods
  * @see Encoder getCount() method
  */
-inline void lab7_run_test_B()
-{
+inline void lab7_run_test_B() {
   TEST_COMPLETE = false;
 
   const uint32_t t0_ms = millis();
@@ -90,17 +86,13 @@ inline void lab7_run_test_B()
     dataFile.flush();
     char file_name[40];
     dataFile.getName(file_name, sizeof(file_name));
-    SerialX.print("[INFO] Data file created successfully: ");
-    SerialX.println(file_name);
-    Xbee.print("[INFO] Data file created successfully: ");
-    Xbee.println(file_name);
+    Serials.print("[INFO] Data file created successfully: ");
+    Serials.println(file_name);
   } else {
-    SerialX.println("[ERROR] Failed to create data file. Aborting test.");
-    Xbee.println("[ERROR] Failed to create data file. Aborting test.");
+    Serials.println("[ERROR] Failed to create data file. Aborting test.");
     return;
   }
-  Xbee.println("[INFO] Ready to start Lab 7 test B, send any key to begin (wait for test to complete or send 'X' to abort)...");
-  SerialX.println("[INFO] Ready to start Lab 7 test B, send any key to begin (wait for test to complete or send 'X' to abort)...");
+  Serials.println("[INFO] Ready to start Lab 7 test B, send any key to begin (wait for test to complete or send 'X' to abort)...");
 
   while(!Xbee.available() && !SerialX.available()){} // wait for user to send any key to start test
   delay(100); // small delay to ensure serial buffer is fully received
@@ -129,13 +121,11 @@ inline void lab7_run_test_B()
         case 'X':
         case 'x':
           dataFile.close();
-          Xbee.print("[CAUTION] Test Canceled Early. File closed.");
-          SerialX.print("[CAUTION] Test Canceled Early. File closed.");
+          Serials.print("[CAUTION] Test Canceled Early. File closed.");
           driver.setOutput(0);
           return;
         default:
-          Xbee.println("[CAUTION] Invalid Input, continuing test...");
-          SerialX.println("[CAUTION] Invalid Input, continuing test...");
+          Serials.println("[CAUTION] Invalid Input, continuing test...");
           break;
       }
     }
@@ -210,29 +200,27 @@ inline void lab7_run_test_B()
       logger.add("RW_cmd", "RPM", speedx* 1000.0f * MOTOR_VOLTAGE / 12.0f);
       logger.add("RW_meas", "RPM", w_RW_meas);
 
-
   uint8_t ii = 0;
       if (dataFile) {
         logger.logToCSV(dataFile);
         if (!(test_point_count % serial_decimation)) {
-          logger.logToSerial(Xbee);
+          // print to serial sometimes
+          logger.logToSerial(Serials);
           dataFile.flush();
-        } // print to serial sometimes
-        else {
-          Xbee.println("file error");
         }
       }
+        else {
+          Serials.println("file error");
+        }
     }
 
     // End test if complete:
     if (TEST_COMPLETE){
       dataFile.close();
-      Xbee.print("[INFO] Test B Complete. File closed.");
-      SerialX.print("[INFO] Test B Complete. File closed.");
+      Serials.print("[INFO] Test B Complete. File closed.");
       return;
     }
 }
-
 } // end function lab7_run_test_B()
 
 // linear interpolation function for wheel speed
@@ -278,8 +266,7 @@ inline float set_wheel_speed(const uint32_t t_ms, const uint32_t t0_ms, bool* CO
 
 inline void stream_RW_speed()
 {
-  Xbee.println("Ready to stream RW Motor speed, send any key to start. Send 'X' to stop.");
-  SerialX.println("Ready to stream RW Motor speed, send any key to start. Send 'X' to stop.");
+  Serials.println("Ready to stream RW Motor speed, send any key to start. Send 'X' to stop.");
   Xbee.read();
   delay(100);
   while(!Xbee.available() && !SerialX.available()){} // wait for user to send any key to start test
@@ -318,8 +305,7 @@ inline void stream_RW_speed()
       float rev = (float)dc / ((float)CPR * 10.0);
       float rpm = (rev / dt_s) * 60.0f;
 
-      Xbee.printf("count:%lld,dc:%lld,rpm:%.2f\n", (long long)c, (long long)dc, rpm);
-      SerialX.printf("count:%lld,dc:%lld,rpm:%.2f\n", (long long)c, (long long)dc, rpm);
+      Serials.printf("count:%lld,dc:%lld,rpm:%.2f\n", (long long)c, (long long)dc, rpm);
 
       lastCount = c;
       timeLastEncMeas = now;
@@ -342,29 +328,25 @@ inline void stream_RW_speed()
  */
 inline void lab7_run_test_A() {
   int test_point_count = 0;
+  bool CSV_header_complete = false;
 
   if (!sd_createDataFile(&dataFile, "att_control/Lab7_testA")){
-    SerialX.println("[ERROR] Failed to create data file. Aborting test.");
-    Xbee.println("[ERROR] Failed to create data file. Aborting test.");
+    Serials.println("[ERROR] Failed to create data file. Aborting test.");
     return;
   }
 
-bool CSV_header_complete = false;
   // // write header row:
   // dataFile.println("mcu time(ms),gyro_Z(deg/s),mag_X(uT),mag_Y(uT),sun_direction(deg),sun_plusX(count),sun_plusY(count),sun_minusX(count),sun_minusY(count),w_RW_cmd(RPM),w_RW_meas(RPM)");
   // dataFile.flush();
   char file_name[40];
   dataFile.getName(file_name, sizeof(file_name));
-  SerialX.print("[INFO] Data file created successfully: ");
-  SerialX.println(file_name);
-  Xbee.print("[INFO] Data file created successfully: ");
-  Xbee.println(file_name);
+  Serials.print("[INFO] Data file created successfully: ");
+  Serials.println(file_name);
 
 
 
 
-  Xbee.println("[INFO] Ready to start Lab 7 test A, send any key to begin (wait for test to complete or send 'X' to abort)...");
-  SerialX.println("[INFO] Ready to start Lab 7 test A, send any key to begin (wait for test to complete or send 'X' to abort)...");
+  Serials.println("[INFO] Ready to start Lab 7 test A, send any key to begin (wait for test to complete or send 'X' to abort)...");
 
   while(!Xbee.available() && !SerialX.available()){} // wait for user to send any key to start test
   delay(100); // small delay to ensure serial buffer is fully received
@@ -394,13 +376,11 @@ bool CSV_header_complete = false;
         case 'X':
         case 'x':
           dataFile.close();
-          Xbee.print("[CAUTION] Test Canceled Early. File closed.");
-          SerialX.print("[CAUTION] Test Canceled Early. File closed.");
+          Serials.print("[CAUTION] Test Canceled Early. File closed.");
           driver.setOutput(0);
           return;
         default:
-          Xbee.println("[CAUTION] Invalid Input, continuing test...");
-          SerialX.println("[CAUTION] Invalid Input, continuing test...");
+          Serials.println("[CAUTION] Invalid Input, continuing test...");
           break;
       }
     }
@@ -437,19 +417,19 @@ bool CSV_header_complete = false;
       logger.clear();
 
       logger.add("time", "ms", time);
-      logger.add("w_RW_cmd", "RPM", w_RW_cmd);
-      logger.add("w_RW_meas", "RPM", w_RW_meas);
+      logger.add("RW_cmd", "RPM", w_RW_cmd);
+      logger.add("RW_meas", "RPM", w_RW_meas);
 
       uint8_t ii = 0;
       if (dataFile) {
         if (!CSV_header_complete){logger.create_CSV_header(dataFile); CSV_header_complete = true;}
         logger.logToCSV(dataFile);
         if (!(test_point_count % serial_decimation)) {
-          logger.logToSerial(Xbee);
+          logger.logToSerial(Serials);
           dataFile.flush();
         } // print to serial sometimes
         else {
-          Xbee.println("file error");
+          Serials.println("file error");
         }
       }
       test_point_count++;
@@ -459,8 +439,7 @@ bool CSV_header_complete = false;
     // End test if complete:
     if (millis() - t0 > 15000){
       dataFile.close();
-      Xbee.print("[INFO] Test A Complete. File closed.");
-      SerialX.print("[INFO] Test A Complete. File closed.");
+      Serials.print("[INFO] Test A Complete. File closed.");
       return;
     } // end if test is complete
 
@@ -482,8 +461,7 @@ bool CSV_header_complete = false;
  * @return none
  */
 inline void manual_set_RW_speed(){
-  Xbee.println("Enter RW Motor Throttle Percent (-100 to 100):");
-  SerialX.println("Enter RW Motor Throttle Percent (-100 to 100):");
+  Serials.println("Enter RW Motor Throttle Percent (-100 to 100):");
   while(!Xbee.available() && !SerialX.available()){} // wait for user to send any key to start test
   delay(100); // small delay to ensure serial buffer is fully received
 
@@ -492,10 +470,8 @@ inline void manual_set_RW_speed(){
   if (rw_speed_int< -100) rw_speed_int = -100;
   const float rw_speed = float(rw_speed_int) / 100.0;
 
-  Xbee.println("Setting motor speed to: ");
-  Xbee.println(rw_speed);
-  SerialX.println("Setting motor speed to: ");
-  SerialX.println(rw_speed);
+  Serials.println("Setting motor speed to: ");
+  Serials.println(rw_speed);
 
   delay(500);
 

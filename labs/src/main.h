@@ -13,15 +13,19 @@
 #include <vector>
 
 extern HardwareSerial Xbee; // Serial object for communication with XBee
-extern FsFile dataFile;   // data file object
+// extern FsFile dataFile;   // data file object
 
-// class TelemetryLogger;
+class DualSerial;
+extern DualSerial Serials;
+
+class TelemetryLogger;
+extern TelemetryLogger logger;
 
 
 // extern uint32_t timeNext_testPoint; // time of next test point (ms)
 // extern const uint32_t interval_testPoint; // time interval between test points (ms)
 
-extern ICM_20948_I2C imu_sensor;
+// extern ICM_20948_I2C imu_sensor;
 
 // extern int sun_plusX, sun_minusX, sun_plusY, sun_minusY;
 // extern float sun_X, sun_Y, sun_direction;
@@ -33,11 +37,11 @@ extern ICM_20948_I2C imu_sensor;
 // extern float mag_Y;
 
 
-extern TB9051FTGMotorCarrier driver;
-extern ESP32Encoder enc;
-
-
-extern SFE_MAX1704X lipo; // SparkFun Thing Plus ESP32-WROOM onboard fuel gauge (I2C addr 0x36)
+// extern TB9051FTGMotorCarrier driver;
+// extern ESP32Encoder enc;
+//
+//
+// extern SFE_MAX1704X lipo; // SparkFun Thing Plus ESP32-WROOM onboard fuel gauge (I2C addr 0x36)
 
 
 // #include <Adafruit_INA238.h>
@@ -72,6 +76,41 @@ inline int get_command_from_ground_station(){
 	return received_int;
 }
 
+
+/* TelemetryLogger class
+ *
+ * It's complicated to hold and print both ints and floats.
+ * in the same place. This handles some of that logic.
+ *
+ * USAGE:
+ * #include "main.h"
+ * TelemetryLogger logger
+ *
+ * logger.clear() // clears all fields
+ * logger.add("label", "unit", value)
+ * logger.add("label2", "unit2", value2)
+ * ⋮
+ *
+ * logger.create_CSV_header(dataFile)
+ *		writes this to dataFile (header on first row of CSV)
+ *			"label_unit, label2_unit2, …,"
+ *
+ *	logger.logToCSV(dataFile)
+ *		writes this to dataFile:
+ *			"value, value2, …,"
+ *
+ *	logger.logToSerial(Serial)
+ *		writes this to Serial:
+ *			"label:value, label2:value2, …,"
+ *
+ * REQUIRES:
+ * - >=c++17 for:
+ *		- variant
+ *		- vector
+ *
+ *	Lt Col Jordan Firth
+ *	2026 May
+*/
 class TelemetryLogger {
 public:
 	// Define the variant type for easier reading
@@ -128,4 +167,29 @@ public:
 
 private:
 	std::vector<Entry> entries;
+};
+
+/* DualSerial class
+ * creates a serial object that sends text simultaneously
+ * to two serial portss
+ *
+ * USAGE
+ * DualSerial Serials(Serial, Serial2)
+ *
+ * Serials.print(anything);
+ *
+ *
+*/
+class DualSerial : public Print {
+public:
+	DualSerial(HardwareSerial& s1, HardwareSerial& s2) : serial1(s1), serial2(s2) {}
+
+	virtual size_t write(uint8_t c) {
+		serial1.write(c);
+		return serial2.write(c);
+	}
+
+	  private:
+	HardwareSerial& serial1;
+	HardwareSerial& serial2;
 };
