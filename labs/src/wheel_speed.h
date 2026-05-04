@@ -83,13 +83,13 @@ bool TEST_COMPLETE = true;
  */
 inline void lab7_run_test_B() {
   TEST_COMPLETE = false;
+  bool CSV_header_complete = false;
+
 
   const uint32_t t0_ms = millis();
 
   if(sd_createDataFile(&dataFile, "att_control/Lab7_testB")){
     // write header row:
-    dataFile.println("mcu_time(ms),gyro_Z(deg/s),mag_X(uT),mag_Y(uT),sun_direction(deg),sun_plusX(count),sun_plusY(count),sun_minusX(count),sun_minusY(count),w_RW_cmd(RPM),w_RW_meas(RPM)");
-    dataFile.flush();
     char file_name[40];
     dataFile.getName(file_name, sizeof(file_name));
     Serials.print("[INFO] Data file created successfully: ");
@@ -190,6 +190,11 @@ inline void lab7_run_test_B() {
   uint8_t ii = 0;
       if (dataFile) {
         logger.logToCSV(dataFile);
+        if (!CSV_header_complete) {
+          logger.create_CSV_header(dataFile);
+          CSV_header_complete = true;
+        }
+
         if (!(test_point_count % serial_decimation)) {
           // print to serial sometimes
           logger.logToSerial(Serials);

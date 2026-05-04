@@ -22,21 +22,9 @@
  *                                 GND
  **/
 
-
-
 #include "main.h"
-// #include "wheel_speed.h"
-#include <HardwareSerial.h>
 
-extern HardwareSerial SerialX;
-extern HardwareSerial Xbee;
-
-extern TelemetryLogger logger;
 inline uint32_t serial_decimation = 5; // only print every 5th point to serial
-
-
-extern FsFile dataFile;   // data file object
-// int get_command_from_ground_station();
 
 uint32_t timeNext_testPoint;        // time of next test point (ms)
 const uint32_t interval_testPoint = 50;  // time interval between test points (ms)
@@ -69,29 +57,18 @@ extern float sun_direction;
  * @return none
  */
 inline void lab6_run_test() {
+  bool CSV_header_complete = false;
 
   char file_name[40];
   if(sd_createDataFile(&dataFile, "att_determ/Lab6_test")){
     // write header row:
-    dataFile.println("mcu time (ms),gyro Z (dps),mag X (uT),mag Y (uT),sun direction (deg),sun_plusX,sun_plusY,sun_minusX,sun_minusY");
-    dataFile.flush();
     dataFile.getName(file_name, sizeof(file_name));
-    SerialX.print("[INFO] Data file created successfully: ");
-    SerialX.println(file_name);
-    Xbee.print("[INFO] Data file created successfully: ");
-    Xbee.println(file_name);
+    Serials.printf("[INFO] Data file created successfully: %c \n", file_name);
   } else {
-    SerialX.println("[ERROR] Failed to create data file. Aborting test.");
-    Xbee.println("[ERROR] Failed to create data file. Aborting test.");
+    Serials.println("[ERROR] Failed to create data file. Aborting test.");
     return;
   }
-  Xbee.println("[INFO] Ready to start Lab 6 test, send any key to begin (send 'X' to stop test)...");
-  SerialX.println("[INFO] Ready to start Lab 6 test, send any key to begin (send 'X' to stop test)...");
-
-  // while(!Xbee.available() && !SerialX.available()){} // wait for user to send any key to start test
-  // delay(100); // small delay to ensure serial buffer is fully received
-  // while(Xbee.available()) Xbee.read(); // clear serial buffer
-  // while(SerialX.available()) SerialX.read(); // clear Xbee buffer
+  Serials.println("[INFO] Ready to start Lab 6 test, send any key to begin (send 'X' to stop test)...");
 
   int start = get_command_from_ground_station();
 
@@ -100,25 +77,9 @@ inline void lab6_run_test() {
   neopixelWrite(RGB_BUILTIN, 25, 16, 0); // Set to orange (R=255, G=165, B=0)
   while(true){
 
-    if(Xbee.available() > 0 || SerialX.available() > 0) { // Check for user input from USB or XBee
-      char c = (Xbee.available() > 0) ? Xbee.read() : SerialX.read();
-      if(c == 'X' || c == 'x') { // If user sent 'X', stop the test
-        Xbee.print("[INFO] Test Complete. File ");
-        Xbee.print(file_name);
-        SerialX.print("[INFO] Test Complete. File: ");
-        SerialX.print(file_name);
-        if(dataFile.close()) {
-          Xbee.println(" closed.");
-          SerialX.println(" closed.");
-        } else {
-          Xbee.println(" failed to close.");
-          SerialX.println(" failed to close.");
-        }
-        return;
-      } else {
-        Xbee.println("[CAUTION] Invalid Input, continuing test...");
-        SerialX.println("[CAUTION] Invalid Input, continuing test...");
-      }
+    if (user_has_typed_x()) {
+      dataFile.close();
+      return;
     }
 
     uint32_t timeNow = millis();
@@ -180,12 +141,18 @@ inline void lab6_run_test() {
       uint8_t ii = 0;
       if (dataFile) {
         logger.logToCSV(dataFile);
+        if (!CSV_header_complete) {
+          logger.create_CSV_header(dataFile);
+          CSV_header_complete = true;
+        }
+
+
         if (!(test_point_count % serial_decimation)) {
-          logger.logToSerial(Xbee);
+          logger.logToSerial(Serials);
           dataFile.flush();
         } // print to serial sometimes
         else {
-          Xbee.println("file error");
+          Serials.println("file error");
         }
       } // end if (dataFile)
     } // end if (timeNow>timeNext_testPoint)
