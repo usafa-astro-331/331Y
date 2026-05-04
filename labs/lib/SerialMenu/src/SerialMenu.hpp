@@ -2,6 +2,8 @@
 
 #include <HardwareSerial.h>
 extern HardwareSerial Xbee;
+#include "main.h"
+extern DualSerial Serials;
 
 // #if SERIALMENU_DISABLE_PROGMEM_SUPPORT != true
 // constexpr PROGMEM char SERIAL_MENU_COPYRIGHT[] =
@@ -334,7 +336,7 @@ class SerialMenu
       for (uint8_t i = 0; i < size; ++i)
       {
         // String in data SRAM, print directly
-        Xbee.println(menu[i].getMenu());
+        Serials.println(menu[i].getMenu());
       }
     }
 
@@ -357,7 +359,7 @@ class SerialMenu
       
       if (message)
       {
-        Xbee.print(message);
+        Serials.print(message);
       }
       char c = '0';
       
@@ -406,7 +408,7 @@ class SerialMenu
       
       if (message)
       {
-        Xbee.println(value);
+        Serials.println(value);
       }
       return value;
     }
@@ -446,8 +448,8 @@ class SerialMenu
           if (waiting % loopsPerTick == 0)
           {
             heartbeat_num++;
-            Xbee.print("\r");
-            Xbee.print(heartbeats[heartbeat_num % 4]);
+            Serials.print("\r");
+            Serials.print(heartbeats[heartbeat_num % 4]);
           }
         }
         // else
@@ -489,8 +491,8 @@ class SerialMenu
         }
         if (i == size)
         {
-          Xbee.print(menuChoice);
-          Xbee.println(": Invalid menu choice.");
+          Serials.print(menuChoice);
+          Serials.println(": Invalid menu choice.");
         }
         return true;
       }
