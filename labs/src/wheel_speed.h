@@ -49,6 +49,12 @@ float set_wheel_speed(uint32_t t_ms, uint32_t t0_ms, bool* COMPLETE);
 
 bool TEST_COMPLETE = true;
 
+
+
+
+
+
+
 /*---------------------------------------------------------------------------------------------*/
 // Lab 7: Run Test B
 /*---------------------------------------------------------------------------------------------*/
@@ -101,33 +107,14 @@ inline void lab7_run_test_B() {
 
   neopixelWrite(RGB_BUILTIN, 25, 0, 25); // Set to magenta (R=255, G=0, B=255)
 
-  timeNext_testPoint = millis();
-  while (true) { // test loop
 
-    // Check for User Input:
-    char c;
-    bool newUserInput = false;
-    if (Xbee.available() > 0) {  // Check for user input from USB
-      c = Xbee.read();
-      newUserInput = true;
-    }
-    if (SerialX.available() > 0) {  // Check for user input from USB
-      c = SerialX.read();
-      newUserInput = true;
-    }
-    if(newUserInput){
-      newUserInput = false;
-      switch (c) {
-        case 'X':
-        case 'x':
-          dataFile.close();
-          Serials.print("[CAUTION] Test Canceled Early. File closed.");
-          driver.setOutput(0);
-          return;
-        default:
-          Serials.println("[CAUTION] Invalid Input, continuing test...");
-          break;
-      }
+  timeNext_testPoint = millis();
+  while (true) {
+
+    if (user_has_typed_x()) {
+      dataFile.close();
+      driver.setOutput(0);
+      return;
     }
 
     // Record test point:
@@ -274,20 +261,10 @@ inline void stream_RW_speed()
 
   while(true){
     // Check for User Input:
-    char c;
-    bool newUserInput = false;
-    if (Xbee.available() > 0) {  // Check for user input from USB
-      c = Xbee.read();
-      newUserInput = true;
-    }
-
-    if(newUserInput){
-      newUserInput = false;
-      switch (c) {
-        case 'X':
-        case 'x':
-          return;
-      }
+    if (user_has_typed_x()) {
+      dataFile.close();
+      driver.setOutput(0);
+      return;
     }
 
     static uint32_t timeLastEncMeas = millis();
@@ -335,23 +312,16 @@ inline void lab7_run_test_A() {
     return;
   }
 
-  // // write header row:
-  // dataFile.println("mcu time(ms),gyro_Z(deg/s),mag_X(uT),mag_Y(uT),sun_direction(deg),sun_plusX(count),sun_plusY(count),sun_minusX(count),sun_minusY(count),w_RW_cmd(RPM),w_RW_meas(RPM)");
-  // dataFile.flush();
   char file_name[40];
   dataFile.getName(file_name, sizeof(file_name));
   Serials.print("[INFO] Data file created successfully: ");
   Serials.println(file_name);
-
-
-
 
   Serials.println("[INFO] Ready to start Lab 7 test A, send any key to begin (wait for test to complete or send 'X' to abort)...");
 
   while(!Xbee.available() && !SerialX.available()){} // wait for user to send any key to start test
   delay(100); // small delay to ensure serial buffer is fully received
   while(Xbee.available()) Xbee.read(); // clear serial buffer
-  while(SerialX.available()) SerialX.read(); // clear Xbee buffer
 
   timeNext_testPoint = millis();
   bool newUserInput = false;
@@ -361,28 +331,10 @@ inline void lab7_run_test_A() {
   while (true) { //test loop
 
     // Check for User Input:
-    char c;
-    if (Xbee.available() > 0) {  // Check for user input from USB
-      c = Xbee.read();
-      newUserInput = true;
-    }
-    if (SerialX.available() > 0) {  // Check for user input from USB
-      c = SerialX.read();
-      newUserInput = true;
-    }
-    if(newUserInput){
-      newUserInput = false;
-      switch (c) {
-        case 'X':
-        case 'x':
-          dataFile.close();
-          Serials.print("[CAUTION] Test Canceled Early. File closed.");
-          driver.setOutput(0);
-          return;
-        default:
-          Serials.println("[CAUTION] Invalid Input, continuing test...");
-          break;
-      }
+    if (user_has_typed_x()) {
+      dataFile.close();
+      driver.setOutput(0);
+      return;
     }
 
     // Set RW Motor Speed:
@@ -425,12 +377,13 @@ inline void lab7_run_test_A() {
         if (!CSV_header_complete){logger.create_CSV_header(dataFile); CSV_header_complete = true;}
         logger.logToCSV(dataFile);
         if (!(test_point_count % serial_decimation)) {
+          // print to serial sometimes
           logger.logToSerial(Serials);
           dataFile.flush();
-        } // print to serial sometimes
-        else {
-          Serials.println("file error");
         }
+      }
+      else {
+          Serials.println("file error");
       }
       test_point_count++;
 

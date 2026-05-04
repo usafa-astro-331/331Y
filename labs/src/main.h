@@ -77,6 +77,7 @@ inline int get_command_from_ground_station(){
 }
 
 
+
 /* TelemetryLogger class
  *
  * It's complicated to hold and print both ints and floats.
@@ -171,7 +172,7 @@ private:
 
 /* DualSerial class
  * creates a serial object that sends text simultaneously
- * to two serial portss
+ * to two serial ports
  *
  * USAGE
  * DualSerial Serials(Serial, Serial2)
@@ -193,3 +194,28 @@ public:
 	HardwareSerial& serial1;
 	HardwareSerial& serial2;
 };
+
+/// function user_has_typed_x()
+/// @return true if user has typed X
+///
+/// @brief test to exit function early
+inline bool user_has_typed_x() {
+	switch (tolower(Xbee.peek()) ) {
+
+	case 'x': // stop if user types 'X' or 'x'
+		Xbee.read();
+		Serials.print("[CAUTION] Test Canceled Early. File closed.");
+
+		return true;
+		// break;
+
+	case EOF: // if no input (peek returns end-of-file), do nothing
+		return false;
+		// break;
+
+	default:
+		Serials.printf("[CAUTION] Invalid Input (%c) continuing test...", Xbee.read() );
+
+	} // end switch
+	return false;
+} // end has_user_typed_x()
