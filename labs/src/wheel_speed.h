@@ -26,7 +26,7 @@ extern const uint32_t serial_interval;
 extern uint32_t timeNext_testPoint;
 
 // uint32_t serial_decimation = interval_testPoint/serial_interval;
-extern uint32_t serial_decimation; // only print every 5th point to serial
+// extern uint32_t serial_decimation; // only print every 5th point to serial
 
 int sun_plusX, sun_minusX, sun_plusY, sun_minusY;
 int sun_X, sun_Y;
@@ -187,7 +187,7 @@ inline void lab7_run_test_B() {
       logger.add("RW_cmd", "RPM", speedx* 1000.0f * MOTOR_VOLTAGE / 12.0f);
       logger.add("RW_meas", "RPM", w_RW_meas);
 
-  uint8_t ii = 0;
+  // uint8_t ii = 0;
       if (dataFile) {
         logger.logToCSV(dataFile);
         if (!CSV_header_complete) {

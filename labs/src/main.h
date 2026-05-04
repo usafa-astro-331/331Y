@@ -12,6 +12,8 @@
 #include <variant>
 #include <vector>
 
+inline constexpr uint32_t serial_decimation = 5; // only print every 5th point to serial
+
 extern HardwareSerial Xbee; // Serial object for communication with XBee
 // extern FsFile dataFile;   // data file object
 
@@ -200,7 +202,7 @@ public:
 ///
 /// @brief test to exit function early
 inline bool user_has_typed_x() {
-	switch (tolower((unsigned char) Xbee.peek()) ) {
+	switch (tolower(Xbee.peek()) ) {
 
 	case 'x': // stop if user types 'X' or 'x'
 		Xbee.read();
@@ -214,6 +216,7 @@ inline bool user_has_typed_x() {
 		// break;
 
 	default:
+		Xbee.read();
 		Serials.printf("[CAUTION] Invalid Input (%c) continuing test...", Xbee.read() );
 
 	} // end switch

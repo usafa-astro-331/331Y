@@ -24,7 +24,7 @@
 
 #include "main.h"
 
-inline uint32_t serial_decimation = 5; // only print every 5th point to serial
+// inline constexpr uint32_t serial_decimation = 5; // only print every 5th point to serial
 
 uint32_t timeNext_testPoint;        // time of next test point (ms)
 const uint32_t interval_testPoint = 50;  // time interval between test points (ms)
