@@ -1,7 +1,7 @@
 #pragma once
 
 #include "dual_serial.h"
-#include "main.h"
+#include "project_common.h"
 
 /*---------------------------------------------------------------------------------------------*/
 // Get XBee RSSI:

@@ -22,7 +22,7 @@
  *                                 GND
  **/
 
-#include "main.h"
+#include "project_common.h"
 
 // inline constexpr uint32_t serial_decimation = 5; // only print every 5th point to serial
 

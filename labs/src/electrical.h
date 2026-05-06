@@ -1,9 +1,9 @@
 #pragma once
 
-#include "main.h"
+#include "project_common.h"
 // #include <HardwareSerial.h>
 
-extern HardwareSerial SerialX;
+// extern HardwareSerial SerialX;
 // extern HardwareSerial Xbee;
 
 Adafruit_INA238 ina238 = Adafruit_INA238();

@@ -3,7 +3,7 @@
 
 // int get_command_from_ground_station();
 
-#include "main.h"
+#include "project_common.h"
 #include <vector>
 #include <cmath>
 #include <variant>
@@ -12,7 +12,7 @@
 
 #include <HardwareSerial.h>
 
-extern HardwareSerial SerialX;
+// extern HardwareSerial SerialX;
 
 extern FsFile dataFile;   // data file object
 extern TB9051FTGMotorCarrier driver;
@@ -100,10 +100,10 @@ inline void lab7_run_test_B() {
   }
   Serials.println("[INFO] Ready to start Lab 7 test B, send any key to begin (wait for test to complete or send 'X' to abort)...");
 
-  while(!Xbee.available() && !SerialX.available()){} // wait for user to send any key to start test
+  while(!Xbee.available() ){} // wait for user to send any key to start test
   delay(100); // small delay to ensure serial buffer is fully received
   while(Xbee.available()) Xbee.read(); // clear serial buffer
-  while(SerialX.available()) SerialX.read(); // clear Xbee buffer
+  // while(SerialX.available()) SerialX.read(); // clear Xbee buffer
 
   neopixelWrite(RGB_BUILTIN, 25, 0, 25); // Set to magenta (R=255, G=0, B=255)
 
@@ -261,7 +261,7 @@ inline void stream_RW_speed()
   Serials.println("Ready to stream RW Motor speed, send any key to start. Send 'X' to stop.");
   Xbee.read();
   delay(100);
-  while(!Xbee.available() && !SerialX.available()){} // wait for user to send any key to start test
+  while(!Xbee.available() ){} // wait for user to send any key to start test
   delay(100); // small delay to ensure serial buffer is fully received
 
   while(true){
@@ -324,7 +324,7 @@ inline void lab7_run_test_A() {
 
   Serials.println("[INFO] Ready to start Lab 7 test A, send any key to begin (wait for test to complete or send 'X' to abort)...");
 
-  while(!Xbee.available() && !SerialX.available()){} // wait for user to send any key to start test
+  while(!Xbee.available() ){} // wait for user to send any key to start test
   delay(100); // small delay to ensure serial buffer is fully received
   while(Xbee.available()) Xbee.read(); // clear serial buffer
 
@@ -420,7 +420,7 @@ inline void lab7_run_test_A() {
  */
 inline void manual_set_RW_speed(){
   Serials.println("Enter RW Motor Throttle Percent (-100 to 100):");
-  while(!Xbee.available() && !SerialX.available()){} // wait for user to send any key to start test
+  while(!Xbee.available() ){} // wait for user to send any key to start test
   delay(100); // small delay to ensure serial buffer is fully received
 
   int rw_speed_int = get_command_from_ground_station();
@@ -436,5 +436,5 @@ inline void manual_set_RW_speed(){
   driver.setOutput(rw_speed);
 
   while(Xbee.available()) Xbee.read(); // clear serial buffer
-  while(SerialX.available()) SerialX.read(); // clear Xbee buffer
+  // while(SerialX.available()) SerialX.read(); // clear Xbee buffer
 }

@@ -19,13 +19,13 @@ FsFile dataFile;   // data file object
 
 // #include "communication.h"
 
-#include "main.h"
+#include "project_common.h"
 
-HardwareSerial Xbee(2);
-HardwareSerial SerialX(3); // empty serial port, exists to prevent code errors from calls to Serial2
-DualSerial Serials(Serial, Xbee);
-
-TelemetryLogger logger;
+// extern HardwareSerial Xbee;
+// extern HardwareSerial SerialX; // empty serial port, exists to prevent code errors from calls to Serial2
+// DualSerial Serials(Serial, Xbee);
+//
+// TelemetryLogger logger;
 
 #include "wheel_speed.h"
 #include "att_determ.h"
@@ -142,7 +142,7 @@ void setup() {
   //----------------------------------------------
 
   Serials.println("[INFO] SETUP COMPLETE.");
-  SerialX.println("[INFO] SETUP COMPLETE.SEND '1' FOR OPTIONS.");
+  // SerialX.println("[INFO] SETUP COMPLETE.SEND '1' FOR OPTIONS.");
   neopixelWrite(RGB_BUILTIN, 0, 25, 0); // Set to green (R=0, G=255, B=0)
 
 
