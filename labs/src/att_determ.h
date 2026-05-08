@@ -9,17 +9,15 @@
  *    blue: SDA
  *    yellow: SCL
  *
- * 4x phototransistor sun sensors via voltage divider*/
-    #define SUN_SENSOR_PLUS_X_PIN   A0
-    #define SUN_SENSOR_MINUS_X_PIN  A2
-    #define SUN_SENSOR_PLUS_Y_PIN   A1
-    #define SUN_SENSOR_MINUS_Y_PIN  A3
-/*
+ * 4x phototransistor sun sensors via voltage divider
+ *
  *   3V3     (* is phototransistor)
  *    |
  *    └-----(*)-----┬-----<1kΩ>-----┐
- *              sensor pin          |
+ *             sensor pin †         |     †see include/definitions.h for pin assignments
  *                                 GND
+ *
+ *
  **/
 
 #include "project_common.h"
@@ -100,10 +98,10 @@ inline void lab6_run_test() {
       sun_plusY = 0;
       sun_minusY = 0;
       for (int i = 0; i < n_sun_sensor_reads; i++) {
-        sun_plusX += analogRead(SUN_SENSOR_PLUS_X_PIN);
-        sun_minusX += analogRead(SUN_SENSOR_MINUS_X_PIN);
-        sun_plusY += analogRead(SUN_SENSOR_PLUS_Y_PIN);
-        sun_minusY += analogRead(SUN_SENSOR_MINUS_Y_PIN);
+        sun_plusX += analogRead(SUN_PX_PIN);
+        sun_minusX += analogRead(SUN_NX_PIN);
+        sun_plusY += analogRead(SUN_PY_PIN);
+        sun_minusY += analogRead(SUN_NY_PIN);
       }
       sun_plusX /= n_sun_sensor_reads;
       sun_minusX /= n_sun_sensor_reads;

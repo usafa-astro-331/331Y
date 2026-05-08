@@ -140,10 +140,10 @@ inline void lab7_run_test_B() {
       sun_plusY = 0.0;
       sun_minusY = 0.0;
       for (int i = 0; i < n_sun_sensor_reads; i++) {
-        sun_plusX += analogRead(SUN_SENSOR_PLUS_X_PIN);
-        sun_minusX += analogRead(SUN_SENSOR_MINUS_X_PIN);
-        sun_plusY += analogRead(SUN_SENSOR_PLUS_Y_PIN);
-        sun_minusY += analogRead(SUN_SENSOR_MINUS_Y_PIN);
+        sun_plusX += analogRead(SUN_PX_PIN);
+        sun_minusX += analogRead(SUN_NX_PIN);
+        sun_plusY += analogRead(SUN_PY_PIN);
+        sun_minusY += analogRead(SUN_NY_PIN);
       }
       sun_plusX /= n_sun_sensor_reads;
       sun_minusX /= n_sun_sensor_reads;
@@ -169,7 +169,7 @@ inline void lab7_run_test_B() {
       int64_t c = enc.getCount();
       int64_t dc = c - lastCount;
       float dt_s = (timeNow - timeLastEncMeas) / 1000.0f;
-      float rev = (float)dc / ((float)CPR * 10.0);
+      float rev = (float)dc / ((float)CT_PER_REV * 10.0);
       float w_RW_meas = (rev / dt_s) * 60.0f;
       lastCount = c;
       timeLastEncMeas = timeNow;
@@ -283,8 +283,8 @@ inline void stream_RW_speed()
 
       float dt_s = (now - timeLastEncMeas) / 1000.0f;
 
-      // If you use full-quad (x4), make sure CPR reflects *counts per rev after decoding*
-      float rev = (float)dc / ((float)CPR * 10.0);
+      // If you use full-quad (x4), make sure CT_PER_REV reflects *counts per rev after decoding*
+      float rev = (float)dc / ((float)CT_PER_REV * 10.0);
       float rpm = (rev / dt_s) * 60.0f;
 
       Serials.printf("count:%lld,dc:%lld,rpm:%.2f\n", (long long)c, (long long)dc, rpm);
@@ -365,7 +365,7 @@ inline void lab7_run_test_A() {
       int64_t c = enc.getCount();
       int64_t dc = c - lastCount;
       float dt_s = (timeNow - timeLastEncMeas) / 1000.0f;
-      float rev = (float)dc / ((float)CPR * 10.0);
+      float rev = (float)dc / ((float)CT_PER_REV * 10.0);
       float w_RW_meas = (rev / dt_s) * 60.0f;
       lastCount = c;
       timeLastEncMeas = timeNow;
