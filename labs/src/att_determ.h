@@ -11,10 +11,10 @@
  *
  * 4x phototransistor sun sensors via voltage divider
  *
- *   3V3     (* is phototransistor)
- *    |
+ *   3V3        (phototransistor)
+ *    |        ↙
  *    └-----(*)-----┬-----<1kΩ>-----┐
- *             sensor pin †         |     †see include/definitions.h for pin assignments
+ *             sensor pin‡          |     ‡see include/definitions.h for pin assignments
  *                                 GND
  *
  *
