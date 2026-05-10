@@ -15,8 +15,8 @@
  *    |        ↙
  *    └-----(*)-----┬-----<1kΩ>-----┐
  *             sensor pin‡          |     ‡see include/definitions.h for pin assignments
+ *                                  ⏚
  *                                 GND
- *
  *
  **/
 
@@ -66,9 +66,12 @@ inline void lab6_run_test() {
     Serials.println("[ERROR] Failed to create data file. Aborting test.");
     return;
   }
-  Serials.println("[INFO] Ready to start Lab 6 test, send any key to begin (send 'X' to stop test)...");
+  Serials.println("[INFO] Ready to start Lab 6 test. 'Enter' to begin. 'X' to stop test)...");
 
-  int start = get_command_from_ground_station();
+  if (!get_command_from_ground()) {
+    Serials.println("[ERROR] Failed to receive command from ground. Aborting test.");
+    return;
+  }
 
   timeNext_testPoint = millis();
   int test_point_count = 0;

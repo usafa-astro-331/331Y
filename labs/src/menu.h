@@ -166,22 +166,24 @@ inline void transfer_file_from_directory(const String& directory_name) {
 //
 //
      // Wait for user input with timeout
-     unsigned long timeout = millis() + 15000; // 15 second timeout
-     while (!Xbee.available() && millis() < timeout) {
-       delay(10);
-     }
+	int choice = get_int_from_ground();
 //
-     if (millis() >= timeout) {
-       Xbee.println("[CAUTION] Input timeout, returning to Menu.");
-       return;
-     }
-
-     int choice = Xbee.parseInt();   // read number user typed
-
-     // Clear remaining characters in buffer
-     while (Xbee.available()) {
-       Xbee.read();
-     }
+//      unsigned long timeout = millis() + 15000; // 15 second timeout
+//      while (!Xbee.available() && millis() < timeout) {
+//        delay(10);
+//      }
+// //
+//      if (millis() >= timeout) {
+//        Xbee.println("[CAUTION] Input timeout, returning to Menu.");
+//        return;
+//      }
+//
+//      int choice = Xbee.parseInt();   // read number user typed
+//
+//      // Clear remaining characters in buffer
+//      while (Xbee.available()) {
+//        Xbee.read();
+//      }
 //
      // if (choice > 0 && choice <= fileCount) {
        Xbee.print("[INFO] You picked file #");  Xbee.println(choice);

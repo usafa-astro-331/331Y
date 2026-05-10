@@ -1,5 +1,6 @@
 #include "project_common.h"
 #include <HardwareSerial.h>
+#include "definitions.h"
 
 // Initialize Global Objects
 // (Note: Ensure Serial1/Serial2 match your actual hardware wiring)
@@ -61,19 +62,138 @@ size_t DualSerial::write(uint8_t c) {
 
 // --- Global Functions ---
 
-int get_command_from_ground_station() {
-    int received_int = 0;
-    if (Xbee.available()) {
-        String received_string = Xbee.readStringUntil('\n');
-        delay(10);
-        if (received_string.length() == 0) return -1;
+///
+/// @return int: user input
+/// @return -1: error
+int get_int_from_ground() {
+    int timeout = millis() + SERIAL_TIMEOUT ;
 
-        Xbee.print("Received from Serial: ");
-        Xbee.println(received_string);
-        received_int = received_string.toInt();
+    String received_String ="";
+
+    while (millis() < timeout) {
+
+        if (received_String.length() > 8) {
+        Serials.println("Input too long: ");
+            Serials.print(received_String);
+            Serials.println("; Aborting.");
+        return -98789;
+        }
+
+        switch (Xbee.peek()){
+
+        case EOF: // no input
+            break;
+
+        case '-':
+            if (received_String.length() == 0) { // entered '-' at beginning of number --> this is fine
+                received_String += (char)Xbee.read();
+            }
+            else{         // entered '-' in middle of number
+                Serials.print("Unknown entry: '");
+                Serials.print(received_String);
+                Serials.print("-'\n");
+                Serials.println("Retry with integers only. 'Enter' when complete. 'X' to exit" );
+                received_String = "";
+            }   // end of if/else
+            break; // end of case '-':
+
+        case '0': case '1': case '2': case '3': case '4':
+        case '5': case '6': case '7': case '8': case '9':
+            received_String += (char)Xbee.read();
+            Serials.print(received_String.charAt(received_String.length() - 1)); //
+            timeout = millis() + SERIAL_TIMEOUT;
+            break;
+
+        case '\n': case'\r': // entry complete
+            while (Xbee.available()) {
+                // clear Serial buffer
+                Xbee.read();
+            }
+            Serials.print("\nReceived: ");
+            Serials.println(received_String);
+            return received_String.toInt();
+
+        case 'x': case 'X':
+            Serials.println("Aborting.");
+            return -98789;
+
+        default:
+            Serials.print("Unknown entry: ");
+            Serials.println((char)Xbee.read());
+            delay(100);
+            Serials.println(". Integers only. 'Enter' when complete. 'X' to abort" );
+            break;
+        } // end switch/case
+    } // end while
+
+    if (received_String.length() > 0) {
+    Serials.print("Received: ");
+    Serials.println(received_String);
+    return received_String.toInt();
     }
-    return received_int;
-}
+    else {
+        Serials.println("No input received. Aborting.");
+        return -98789;
+    }
+
+} // end get_int_from_ground()
+
+///
+/// @return String: user input
+/// @return "-1": error
+bool get_command_from_ground() {
+    int timeout = millis() + SERIAL_TIMEOUT ;
+
+    String received_String;
+
+    while (millis() < timeout) {
+
+        if (received_String.length() > 8) {
+        Serials.println("Input too long. Aborting.");
+        return false;
+        }
+
+        switch (Xbee.peek()){
+        case EOF: // no input
+            break;
+
+        default:
+            received_String += Xbee.read();
+            Serials.print(received_String.charAt(received_String.length() - 1));
+            timeout = millis() + SERIAL_TIMEOUT;
+            break;
+
+        case '\n': case'\r': // entry complete
+            // clear Serial buffer
+            while (Xbee.available()) {
+                Xbee.read();
+            }
+
+            if (received_String.length() > 0) {
+                Serials.print("\nReceived: ");
+                Serials.println(received_String);
+            }
+            return true;
+
+        case 'x': case 'X':
+            Serials.println("Aborting.");
+            return false;
+
+
+        } // end switch/case
+    } // end while
+
+    if (received_String.length() > 0) {
+    Serials.print("Received: ");
+    Serials.println(received_String);
+    return true;
+    }
+    else {
+        Serials.println("No input received. Aborting.");
+        return false;
+    }
+
+} // end get_command_from_ground()
 
 bool user_has_typed_x() {
     if (Xbee.available() == 0) return false;

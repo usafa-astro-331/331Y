@@ -52,6 +52,10 @@ private:
 	HardwareSerial& serial2;
 };
 
-// Global helper functions
-int get_command_from_ground_station();
+// Global functions
+
+int get_int_from_ground();
+
+bool get_command_from_ground();
+
 bool user_has_typed_x();

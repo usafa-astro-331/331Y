@@ -189,11 +189,12 @@ inline void lab7_run_test_B() {
 
   // uint8_t ii = 0;
       if (dataFile) {
-        logger.logToCSV(dataFile);
         if (!CSV_header_complete) {
           logger.create_CSV_header(dataFile);
           CSV_header_complete = true;
         }
+        logger.logToCSV(dataFile);
+
 
         if (!(test_point_count % serial_decimation)) {
           // print to serial sometimes
@@ -229,7 +230,7 @@ inline float set_wheel_speed(const uint32_t t_ms, const uint32_t t0_ms, bool* CO
   std::vector<float> speeds;
   dtimes = { 0, 1000, 2000,   10000,  2500,  2500, 10000, 2500,   2500, 10000, 1000, 5000 };
   speeds = { 0,   0,   0.6,    0.6,   1.0f,   0.6,  0.6,   0.2,   0.6,   0.6,  0,    0 };
-  //         ________/-----------------/\------------------\/-----------------\_______
+  //         ________/----------------/‾\------------------\_/-----------------\_______
 
   std::vector<uint32_t> times(dtimes.size());
   std::partial_sum(dtimes.begin(), dtimes.end(), times.begin());
@@ -420,10 +421,11 @@ inline void lab7_run_test_A() {
  */
 inline void manual_set_RW_speed(){
   Serials.println("Enter RW Motor Throttle Percent (-100 to 100):");
-  while(!Xbee.available() ){} // wait for user to send any key to start test
-  delay(100); // small delay to ensure serial buffer is fully received
+  // while(!Xbee.available() ){} // wait for user to send any key to start test
+  // delay(100); // small delay to ensure serial buffer is fully received
 
-  int rw_speed_int = get_command_from_ground_station();
+  int rw_speed_int = get_int_from_ground();
+  if (rw_speed_int == -98789) {delay(500); return; }
   if (rw_speed_int>100) rw_speed_int = 100;
   if (rw_speed_int< -100) rw_speed_int = -100;
   const float rw_speed = float(rw_speed_int) / 100.0;
@@ -431,10 +433,10 @@ inline void manual_set_RW_speed(){
   Serials.println("Setting motor speed to: ");
   Serials.println(rw_speed);
 
-  delay(500);
 
   driver.setOutput(rw_speed);
+  delay(500);
 
-  while(Xbee.available()) Xbee.read(); // clear serial buffer
-  // while(SerialX.available()) SerialX.read(); // clear Xbee buffer
+
+  return void();
 }
