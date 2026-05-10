@@ -5,11 +5,12 @@
 
 // sparkfun thing plus C pinout diagram:
 // ../thing_pinout.pdf
+// ../thing_pinout.png
 // https://learn.sparkfun.com/tutorials/esp32-thing-plus-usb-c-hookup-guide/hardware-overview
 
 
 
-
+///////////////////////////////////////////////////////////
 //		THING PLUS LEFT SIDE:
 //
 //								███████	PCB antenna ██████
@@ -38,7 +39,7 @@
 //
 //
 //
-//
+///////////////////////////////////////////////////////////
 //		THING PLUS RIGHT SIDE:
 //
 //								███████	PCB antenna ██████
@@ -67,7 +68,7 @@
 
 
 
-
+///////////////////////////////////////////////////////////
 //		ARDUCAM MEGA pinout
 //		https://docs.arducam.com/Arduino-SPI-camera/MEGA-SPI/MEGA-Quick-Start-Guide/
 //
@@ -81,7 +82,7 @@
 // 								████████████████████
 
 
-
+///////////////////////////////////////////////////////////
 //		MOTOR/MOTOR CONTROLLER
 //		https://www.pololu.com/product/2997
 //		../motor_driver.jpg
@@ -116,16 +117,16 @@
 
 
 
-
+///////////////////////////////////////////////////////////
 //		SOLAR PANEL POWER
 //		https://learn.adafruit.com/adafruit-ina237-dc-current-voltage-power-monitor
 //
 //						(QWIIC)
 //		(VCC)  NC	┌---████---┐							  ↗
-//		(GBD)  NC	|		   |						     ╱
+//		(GND)  NC	|		   |						     ╱
 //		(SCL)  NC	|		 ██|	Vin- --> to pot --> ^˅^˅╱^˅^˅ --> to GND/tie to solar ground
 //		(SDA)  NC	|		 ██|	NC (Vbus)			   ╱
-//		(Vbus) NC	|		 ██|	Vin+ --> to	solar power +
+//		(Vbus) NC	|		 ██|	Vin+ --> to	solar +
 //		(Vin-) NC	|		   |
 //		(Vin+) NC	|		   |
 //		(ALRT) NC	└---████---┘
@@ -143,3 +144,5 @@
 
 #define MOTOR_VOLTAGE           5.05f
 #define CT_PER_REV              64 // encoder counts per revolution
+
+#define SERIAL_TIMEOUT 10000 // time in ms to wait for user response
