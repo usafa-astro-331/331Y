@@ -147,12 +147,13 @@
 //	potentiometer pointing left		|	potentiometer pointing right
 //	for quantization demo:			|	for solar panel characterization:
 //									|
-//				  ▄▄▄▄▄▄▄▄▄			|	 ▄▄▄▄▄▄▄▄▄
-//	(GND)		A-██▛▀▀▀▜██			|	 ██▛▀▀▀▜██-B	(NC)
-//	(ADC_PIN)	A-██▌ 🟐 ▐██			|	 ██▌ 🟐 ▐██-B	(GND)
-//	(3.3V)		A-██▙▄▄▄▟██			|	 ██▙▄▄▄▟██-B	(Vin- from current sensor)
-//				  ▀▀▀▀▀▀▀▀▀			|	 ▀▀▀▀▀▀▀▀▀
-//
+//					▒▒▒▒			|		▒▒▒▒
+//			□ □	□ ▄▄▄▄▄▄▄▄▄			|	 ▄▄▄▄▄▄▄▄▄ □  □  □
+//	(GND)	□ □ A-███▀▀▀███			|	 ███▀▀▀███-B  □	(NC)
+//	(ADC_PIN) □	A-██  🟐	 ██			|	 ██  🟐 	██-B  □	(GND)
+//	(3.3V)	□ □	A-███▄▄▄███			|	 ███▄▄▄███-B  □	(Vin- from current sensor)
+//			□ □	□ ▀▀▀▀▀▀▀▀▀			|	 ▀▀▀▀▀▀▀▀▀ □  □  □
+//					▒▒▒▒					▒▒▒▒
 
 
 ///////////////////////////////////////////////////////////
