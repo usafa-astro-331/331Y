@@ -13,30 +13,29 @@
 ///////////////////////////////////////////////////////////
 //		THING PLUS LEFT SIDE:
 //
-//								███████	PCB antenna ██████
-//								███████	PCB antenna ██████
-//							21
-//							22
-#define ENCODER_PIN_A		14
-#define ENCODER_PIN_B		32
-#define MOTOR_PWM_2_PIN		15
-#define MOTOR_PWM_1_PIN		33
-//						 	27
-#define ARDUCAM_CS		 	12
-//						 	13 (LED_BUILTIN)		░ status LED (LED_BUILTIN)
-//						 	VUSB (5V)				░ charging LED
-//						 	EN (ground to disable)	░ power LED
-//						 	VBAT (3.7 V)				█ RST (reset button)
-//						 	┌----┐
-//						 	│ JST						█ BOOT (boot mode button)
-//						 	│ (3.7 V battery)
-//						 	└----┘
-//						 	┌----┐
-//						 	│ QWIIC
+//								███████	PCB antenna ██████	  |
+//								███████	PCB antenna ██████	  |
+//							21							// 4  |
+//							22							// 17 |
+#define ENCODER_PIN_A		14							// 16 |
+#define ENCODER_PIN_B		32							// 19 |
+#define MOTOR_PWM_2_PIN		15							// 23 |
+#define MOTOR_PWM_1_PIN		33							// 18 |
+//						 	27							// 35 |
+#define ARDUCAM_CS		 	12				// LEDs:	// 36 |
+//						 	13 (LED_BUILTIN)		░ status (LED_BUILTIN)
+//						 	VUSB (5V)				░ charging|
+//						 	EN (ground to disable)	░ power	  |
+//						 	VBAT (3.7 V)			RST	█	  |	(reset button)
+//						 	┌----┐							  |
+//						 	│ JST					BOOT█	  | (boot mode button)
+//						 	│ (3.7 V battery)				  |
+//						 	└----┘							  |
+//						 	┌----┐							  |
+//						 	│ QWIIC							  |
 //						 	└----┘		┌----┐
 //										│USBC│
 //										│USBC│
-//
 //
 //
 ///////////////////////////////////////////////////////////
@@ -51,7 +50,7 @@
 #define SPI_MOSI											23	//	23 (MOSI)
 #define SPI_SCK												18	//	18 (SCK)
 //															35			(A5)
-//															36			(A4)
+#define ADC_PIN												36	//	36	(A4)
 #define SUN_NY_PIN											A3	//	39 (A3)
 #define SUN_NX_PIN											A2	//	34 (A2)
 #define SUN_PY_PIN											A1	//	25 (A1)
@@ -133,7 +132,51 @@
 //						(QWIIC)
 
 
+///////////////////////////////////////////////////////////
+//		POTENTIOMETER
+//
+//				║  ║  □  □  □  □  □  ▒▒▒▒  □  □  □  □  □  ║  ║
+//				║  ║  □  □  □  □  □  ▒▒▒▒  □  □  □  □  □  ║  ║
+//				╟──╫──□  □  □  □  A  ▒▒▒▒  B  □  □  □  □  ║  ║
+//				║  ║  □  □  □  □  A  ▒▒▒▒  B  □  □  □  □──╢  ║
+//		3.3V <──╫──╫──□  □  □  □  A  ▒▒▒▒  B  □  □  □  □──╫──╫──> Vin-
+//				║  ║  □  □  □  □  □  ▒▒▒▒  □  □  □  □  □  ║  ║
+//				║  ║  □  □  □  □  □  ▒▒▒▒  □  □  □  □  □  ║  ║
+//				⏚ 5V  □  □  □  □  □  ▒▒▒▒  □  □  □  □  □  ⏚ 5V
+//
+//	potentiometer pointing left		|	potentiometer pointing right
+//	for quantization demo:			|	for solar panel characterization:
+//									|
+//				  ▄▄▄▄▄▄▄▄▄			|	 ▄▄▄▄▄▄▄▄▄
+//	(GND)		A-██▛▀▀▀▜██			|	 ██▛▀▀▀▜██-B	(NC)
+//	(ADC_PIN)	A-██▌ 🟐 ▐██			|	 ██▌ 🟐 ▐██-B	(GND)
+//	(3.3V)		A-██▙▄▄▄▟██			|	 ██▙▄▄▄▟██-B	(Vin- from current sensor)
+//				  ▀▀▀▀▀▀▀▀▀			|	 ▀▀▀▀▀▀▀▀▀
+//
 
+
+///////////////////////////////////////////////////////////
+// sparkfun 9DOF IMU via QWIIC/I2C
+//    black: GND
+//    red: 3.3V
+//    blue: SDA
+//    yellow: SCL
+//
+
+
+///////////////////////////////////////////////////////////
+//		PHOTOTRANSISTORS
+//		https://www.digikey.com/en/products/detail/american-bright-optoelectronics-corporation/BPT-NPG3C1/9678552
+//
+// 4x phototransistor sun sensors via voltage divider
+//
+//   3V3         (phototransistor)
+//    |         ↙
+//    └-----(PT)-----┬-----<1kΩ>-----┐
+//             sensor pin           |
+//           (SUN_PX_PIN, etc.)		⏚
+//                                 GND
+//
 
 // OTHER:
 
@@ -145,4 +188,4 @@
 #define MOTOR_VOLTAGE           5.05f
 #define CT_PER_REV              64 // encoder counts per revolution
 
-#define SERIAL_TIMEOUT 10000 // time in ms to wait for user response
+#define COMMAND_TIMEOUT 10000 // time in ms to wait for user response

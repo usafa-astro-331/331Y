@@ -1,23 +1,7 @@
 #pragma once
 
 /* ATTITUDE DETERMINATION
- *
- * CONNECTIONS:
- * sparkfun 9DOF IMU via QWIIC/I2C
- *    black: GND
- *    red: 3.3V
- *    blue: SDA
- *    yellow: SCL
- *
- * 4x phototransistor sun sensors via voltage divider
- *
- *   3V3        (phototransistor)
- *    |        ↙
- *    └-----(*)-----┬-----<1kΩ>-----┐
- *             sensor pin‡          |     ‡see include/definitions.h for pin assignments
- *                                  ⏚
- *                                 GND
- *
+
  **/
 
 #include "project_common.h"
@@ -39,18 +23,13 @@ extern int S_mag, sun_X, sun_Y;
 
 extern float sun_direction;
 
-/*---------------------------------------------------------------------------------------------*/
-// Run Lab 6 Test:
-/*---------------------------------------------------------------------------------------------*/
 /**
  * @brief Runs the test for Lab 6 - Attitude Determination
  *
  * Collects IMU (gyroscope, magnetometer) and sun sensor data at regular intervals
  * and logs all readings to an SD card file. Test continues until user sends 'X'.
  *
- * @note Data is written to a CSV file with the following columns:
- *       mcu time (ms), gyro Z (dps), mag X (uT), mag Y (uT), sun direction (deg),
- *       sun_plusX, sun_plusY, sun_minusX, sun_minusY
+ * @note Data is written to a CSV file with column headers
  *
  * @return none
  */
@@ -76,12 +55,12 @@ inline void lab6_run_test() {
   timeNext_testPoint = millis();
   int test_point_count = 0;
   neopixelWrite(RGB_BUILTIN, 25, 16, 0); // Set to orange (R=255, G=165, B=0)
-  while(true){
+  while(!user_has_typed_x()){
 
-    if (user_has_typed_x()) {
-      dataFile.close();
-      return;
-    }
+    // if (user_has_typed_x()) {
+    //   dataFile.close();
+    //   return;
+    // }
 
     uint32_t timeNow = millis();
     if(timeNow > timeNext_testPoint){ // Collect Test Point loop

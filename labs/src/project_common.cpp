@@ -142,7 +142,7 @@ int get_int_from_ground() {
 /// @return String: user input
 /// @return "-1": error
 bool get_command_from_ground() {
-    int timeout = millis() + SERIAL_TIMEOUT ;
+    int timeout = millis() + COMMAND_TIMEOUT ;
 
     String received_String;
 
@@ -160,7 +160,7 @@ bool get_command_from_ground() {
         default:
             received_String += Xbee.read();
             Serials.print(received_String.charAt(received_String.length() - 1));
-            timeout = millis() + SERIAL_TIMEOUT;
+            timeout = millis() + COMMAND_TIMEOUT;
             break;
 
         case '\n': case'\r': // entry complete

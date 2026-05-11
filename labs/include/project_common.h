@@ -4,6 +4,9 @@
 #include <variant>
 #include <vector>
 
+#include "FsLib/FsFile.h"
+// #include "SdFat.h"
+
 // Configuration
 inline constexpr uint32_t serial_decimation = 5;
 
@@ -13,6 +16,8 @@ class DualSerial;
 extern DualSerial Serials;
 class TelemetryLogger;
 extern TelemetryLogger logger;
+
+extern FsFile dataFile;   // data file object
 
 /**
  * TelemetryLogger class
@@ -59,3 +64,6 @@ int get_int_from_ground();
 bool get_command_from_ground();
 
 bool user_has_typed_x();
+
+bool create_and_open_file(FsFile *dataFile, const String& directory, const String& filename_preamble);
+

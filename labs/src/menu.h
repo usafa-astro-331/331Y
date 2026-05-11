@@ -10,6 +10,8 @@
 
 void folder_ls(const String& directory);
 void transfer_file_from_directory(const String& directory_name);
+void metrology_example();
+void pause_refresh();
 
 inline char menu_buf[256];
 extern char cmd;
@@ -89,8 +91,9 @@ inline uint8_t electrical_menu_size = GET_MENU_SIZE(electrical_menu);
 
 inline SerialMenuEntry communication_menu[] = {
     {"\ncommunication menu", false, ' ', [](){ menu.show(); } },
-    {"1: get RSSI",      false, '1', [](){ get_sat_rssi(); pause_refresh();} },
-    {"2: toggle LED",false, '2', [](){ toggle_LED(); pause_refresh();} },
+	{"1: ADC example",      false, '1', [](){ metrology_example(); pause_refresh();} },
+	{"2: get RSSI",      false, '2', [](){ get_sat_rssi(); pause_refresh();} },
+    {"3: toggle LED",false, '3', [](){ toggle_LED(); pause_refresh();} },
     {"0: return to main menu", false, '0', [](){ menu.load(main_menu,main_menu_size); menu.show(); } },
     {" ", false, 'z', [](){ menu.show(); } },
    };
@@ -156,37 +159,11 @@ inline void transfer_file_from_directory(const String& directory_name) {
 
 	directory_listing();
 
-//
-//   if (fileCount > 0) {
-	// Clear any existing serial input buffer
-	    while (Xbee.available()) {
-	      Xbee.read();
-	    }
-     Xbee.println("[REQUEST] Enter the file number to print.");
-//
-//
-     // Wait for user input with timeout
+     Serials.println("[REQUEST] Enter the file number to print.");
+
 	int choice = get_int_from_ground();
-//
-//      unsigned long timeout = millis() + 15000; // 15 second timeout
-//      while (!Xbee.available() && millis() < timeout) {
-//        delay(10);
-//      }
-// //
-//      if (millis() >= timeout) {
-//        Xbee.println("[CAUTION] Input timeout, returning to Menu.");
-//        return;
-//      }
-//
-//      int choice = Xbee.parseInt();   // read number user typed
-//
-//      // Clear remaining characters in buffer
-//      while (Xbee.available()) {
-//        Xbee.read();
-//      }
-//
-     // if (choice > 0 && choice <= fileCount) {
-       Xbee.print("[INFO] You picked file #");  Xbee.println(choice);
+
+       Serials.print("[INFO] You picked file #");  Serials.println(choice);
 
 	FsFile dirsz;
 
@@ -217,4 +194,60 @@ inline void transfer_file_from_directory(const String& directory_name) {
 	change_directory("/");
 } // end function transfer files from directory()
 
+/**
+ * @brief ADC-based metrology example
+ *
+ * This function continuously reads the ADC pin and logs data to the serial interface.
+ *
+ * Functionality:
+ * - Enables 10-bit ADC resolution.
+ * - Reads the analog value from the specified ADC pin.
+ * - Logs the following attributes to the serial interface:
+ *   - Elapsed time in milliseconds.
+ *   - 10-bit ADC value.
+ *   - Reduced 3-bit ADC value (3 most significant bits of the 10-bit result).
+ *   - A non-linear 3-bit ADC value (reads first 3 bits then saturates at 7)
+ * - Provides an exit option by checking for user input ('X').
+ *
+ * Logging:
+ * - Utilizes the `TelemetryLogger` class to structure and log the data.
+ * - Clears previous log entries before adding new data points.
+ * - All logs are written to the serial interface using the `DualSerial` instance.
+ *
+ * Behavior:
+ * - Waits 1 second before entering the infinite logging loop.
+ * - Captures data approximately every 250 milliseconds.
+ * - Exits the loop and the function when the user types 'X'.
+ *
+ * Precondition:
+ * - `ADC_PIN` should be defined and properly connected to the ADC source.
+ * - The `logger` object and `Serials` instance must be initialized.
+ * - `user_has_typed_x()` function must be implemented to detect the exit condition.
+ *
+ * @see TelemetryLogger
+ * @see DualSerial
+ * @see user_has_typed_x
+ */
+inline void metrology_example() {
+	Serials.println("'X' to exit");
+	delay(1000);
 
+	while (!user_has_typed_x()) {
+		// if (user_has_typed_x()){ return;}
+
+		analogReadResolution(10);
+		int adc = analogRead(ADC_PIN);
+
+		logger.clear();
+
+		logger.add("time", "ms", (int)millis());
+		logger.add("adc_10_bit", "ct", adc);
+		logger.add("adc_3_bit", "ct", adc >> 7);
+		logger.add("non_linear_adc", "ct", ( (adc & 0b1111111000) ?  0b111: (adc & 0b111)));
+
+		logger.logToSerial(Serials);
+
+		delay(250);
+
+	} // end while(true)
+} // end metrology_example()
