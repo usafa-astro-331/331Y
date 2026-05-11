@@ -66,7 +66,7 @@ size_t DualSerial::write(uint8_t c) {
 /// @return int: user input
 /// @return -1: error
 int get_int_from_ground() {
-    int timeout = millis() + SERIAL_TIMEOUT ;
+    int timeout = millis() + COMMAND_TIMEOUT ;
 
     String received_String ="";
 
@@ -101,7 +101,7 @@ int get_int_from_ground() {
         case '5': case '6': case '7': case '8': case '9':
             received_String += (char)Xbee.read();
             Serials.print(received_String.charAt(received_String.length() - 1)); //
-            timeout = millis() + SERIAL_TIMEOUT;
+            timeout = millis() + COMMAND_TIMEOUT;
             break;
 
         case '\n': case'\r': // entry complete
