@@ -5,7 +5,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 #define SERIALMENU_DISABLE_PROGMEM_SUPPORT true
 #define SERIALMENU_MINIMAL_FOOTPRINT true
-#include <SerialMenu.hpp>
+#include "SerialMenu.hpp"
 
 // Instantiate the singleton menu instance. It is initialized when called
 //SerialMenu SerialMenu::singleton;

@@ -1,6 +1,6 @@
 #pragma once
 #include "att_determ.h"
-#include "../lib/SerialMenu/src/SerialMenu.hpp"
+#include "SerialMenu/SerialMenu.hpp"
 #include "communication.h"
 // #include "project_common.h"
 #include "wheel_speed.h"
