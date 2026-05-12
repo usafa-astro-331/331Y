@@ -1,10 +1,15 @@
 #pragma once
 
+#include <unordered_set>
+
 /* ATTITUDE DETERMINATION
 
  **/
 
 #include "project_common.h"
+#include "zmodem.h"
+
+
 
 // inline constexpr uint32_t serial_decimation = 5; // only print every 5th point to serial
 
@@ -23,6 +28,7 @@ extern int S_mag, sun_X, sun_Y;
 
 extern float sun_direction;
 
+
 /**
  * @brief Runs the test for Lab 6 - Attitude Determination
  *
@@ -33,19 +39,29 @@ extern float sun_direction;
  *
  * @return none
  */
-inline void lab6_run_test() {
+inline void attitude_sensors() {
   bool CSV_header_complete = false;
 
-  char file_name[40];
-  if(sd_createDataFile(&dataFile, "att_determ/Lab6_test")){
-    // write header row:
-    dataFile.getName(file_name, sizeof(file_name));
-    Serials.printf("[INFO] Data file created successfully: %c \n", file_name);
-  } else {
+  if (!create_and_open_file(&dataFile, "att_determ", "attitude_sensors_")) {
     Serials.println("[ERROR] Failed to create data file. Aborting test.");
     return;
   }
-  Serials.println("[INFO] Ready to start Lab 6 test. 'Enter' to begin. 'X' to stop test)...");
+
+  char filename[40];
+  Serials.print("[INFO] Data file created successfully: ");
+  Serials.println(dataFile.getName(filename, sizeof(filename)));
+
+  //
+  // char file_name[40];
+  // if(sd_createDataFile(&dataFile, "att_determ/attitude_sensors_")){
+  //
+  //   dataFile.getName(file_name, sizeof(file_name));
+  //   Serials.printf("[INFO] Data file created successfully: %c \n", file_name);
+  // } else {
+  //   Serials.println("[ERROR] Failed to create data file. Aborting test.");
+  //   return;
+  // }
+  Serials.println("[INFO] Ready to start attitude sensor test. 'Enter' to begin. 'X' to stop test)...");
 
   if (!get_command_from_ground()) {
     Serials.println("[ERROR] Failed to receive command from ground. Aborting test.");
@@ -56,11 +72,6 @@ inline void lab6_run_test() {
   int test_point_count = 0;
   neopixelWrite(RGB_BUILTIN, 25, 16, 0); // Set to orange (R=255, G=165, B=0)
   while(!user_has_typed_x()){
-
-    // if (user_has_typed_x()) {
-    //   dataFile.close();
-    //   return;
-    // }
 
     uint32_t timeNow = millis();
     if(timeNow > timeNext_testPoint){ // Collect Test Point loop
@@ -138,5 +149,10 @@ inline void lab6_run_test() {
     } // end if (timeNow>timeNext_testPoint)
 
     } // end of while(true)
+
+  Serials.println("[INFO] Attitude sensor test complete.");
+  dataFile.close();
+  return ;
+
   } // end of lab6
 

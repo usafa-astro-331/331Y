@@ -42,7 +42,7 @@ float mag_Y = 0.0;
 float set_speed_test_B(uint32_t);
 
 void manual_set_RW_speed();
-void lab7_run_test_A();
+void full_speed_step_input();
 void lab7_run_test_B();
 void stream_RW_speed();
 float set_wheel_speed(uint32_t t_ms, uint32_t t0_ms, bool* COMPLETE);
@@ -56,7 +56,7 @@ bool TEST_COMPLETE = true;
 
 
 /*---------------------------------------------------------------------------------------------*/
-// Lab 7: Run Test B
+// Lab 7: open loop attitude control
 /*---------------------------------------------------------------------------------------------*/
 /**
  * @brief Runs Lab 7 Test B - Reaction wheel control and sensor data collection test.
@@ -81,41 +81,28 @@ bool TEST_COMPLETE = true;
  * @see IMU sensor getAGMT(), gyrZ(), magX(), magY() methods
  * @see Encoder getCount() method
  */
-inline void lab7_run_test_B() {
+inline void open_loop_att_control() {
   TEST_COMPLETE = false;
   bool CSV_header_complete = false;
 
 
   const uint32_t t0_ms = millis();
-
-  if(sd_createDataFile(&dataFile, "att_control/Lab7_testB")){
-    // write header row:
-    char file_name[40];
-    dataFile.getName(file_name, sizeof(file_name));
-    Serials.print("[INFO] Data file created successfully: ");
-    Serials.println(file_name);
-  } else {
+  if (!create_and_open_file(&dataFile, "att_control", "open_loop_")) {
     Serials.println("[ERROR] Failed to create data file. Aborting test.");
     return;
   }
-  Serials.println("[INFO] Ready to start Lab 7 test B, send any key to begin (wait for test to complete or send 'X' to abort)...");
 
-  while(!Xbee.available() ){} // wait for user to send any key to start test
-  delay(100); // small delay to ensure serial buffer is fully received
-  while(Xbee.available()) Xbee.read(); // clear serial buffer
-  // while(SerialX.available()) SerialX.read(); // clear Xbee buffer
+  Serials.println("[INFO] Ready to start Lab 7 test B, send any key to begin (wait for test to complete or send 'X' to abort)...");
+  if (!get_command_from_ground()) {
+    Serials.println("[ERROR] Failed to receive command from ground. Aborting test.");
+    return;
+  }
 
   neopixelWrite(RGB_BUILTIN, 25, 0, 25); // Set to magenta (R=255, G=0, B=255)
 
 
   timeNext_testPoint = millis();
-  while (true) {
-
-    if (user_has_typed_x()) {
-      dataFile.close();
-      driver.setOutput(0);
-      return;
-    }
+  while (!user_has_typed_x() && !TEST_COMPLETE) {
 
     // Record test point:
     static uint32_t test_point_count = 0;
@@ -207,14 +194,14 @@ inline void lab7_run_test_B() {
         }
     }
 
-    // End test if complete:
-    if (TEST_COMPLETE){
-      dataFile.close();
-      Serials.print("[INFO] Test B Complete. File closed.");
-      return;
-    }
 }
-} // end function lab7_run_test_B()
+
+  dataFile.close();
+  driver.setOutput(0);
+  return;
+
+
+} // end function open_loop_att_control()
 
 // linear interpolation function for wheel speed
 inline float lerp(float start_value, float end_value, float fraction){
@@ -298,7 +285,7 @@ inline void stream_RW_speed()
 
 
 /*---------------------------------------------------------------------------------------------*/
-// Lab 7: Run Test A
+// Lab 7: full speed step input
 /*---------------------------------------------------------------------------------------------*/
 /**
  * @brief Runs Test A - Tabletop static test. Initiates a step input at 100% speed 3 seconds into test.
@@ -309,39 +296,35 @@ inline void stream_RW_speed()
  *   - 10-15s: Motor off (speed_pwm = 0)
  * @return void
  */
-inline void lab7_run_test_A() {
+inline void full_speed_step_input() {
+  TEST_COMPLETE = false;
   int test_point_count = 0;
   bool CSV_header_complete = false;
 
-  if (!sd_createDataFile(&dataFile, "att_control/Lab7_testA")){
+  if (!create_and_open_file(&dataFile, "att_control", "full_speed_")) {
     Serials.println("[ERROR] Failed to create data file. Aborting test.");
     return;
   }
-
-  char file_name[40];
-  dataFile.getName(file_name, sizeof(file_name));
-  Serials.print("[INFO] Data file created successfully: ");
-  Serials.println(file_name);
+  //
+  // char file_name[40];
+  // dataFile.getName(file_name, sizeof(file_name));
+  // Serials.print("[INFO] Data file created successfully: ");
+  // Serials.println(file_name);
 
   Serials.println("[INFO] Ready to start Lab 7 test A, send any key to begin (wait for test to complete or send 'X' to abort)...");
 
-  while(!Xbee.available() ){} // wait for user to send any key to start test
-  delay(100); // small delay to ensure serial buffer is fully received
-  while(Xbee.available()) Xbee.read(); // clear serial buffer
+  if (!get_command_from_ground()) {
+    Serials.println("[ERROR] Failed to receive command from ground. Aborting test.");
+    return;
+  }
 
   timeNext_testPoint = millis();
-  bool newUserInput = false;
+
   float speed_pwm = 0.0;
   uint32_t t0 = millis();
-  neopixelWrite(RGB_BUILTIN, 0, 255, 255); // Set to cyan (R=0, G=255, B=255)
-  while (true) { //test loop
+  neopixelWrite(RGB_BUILTIN, 0, 25, 25); // Set to cyan (R=0, G=255, B=255)
+  while (!user_has_typed_x() && !(millis() - t0 > 15000)) { //test loop
 
-    // Check for User Input:
-    if (user_has_typed_x()) {
-      dataFile.close();
-      driver.setOutput(0);
-      return;
-    }
 
     // Set RW Motor Speed:
     if ((millis() - t0) > 3000 && (millis() - t0) < 10000){
@@ -395,14 +378,13 @@ inline void lab7_run_test_A() {
 
     } // end if (millis() > timeNext_testPoint)
 
-    // End test if complete:
-    if (millis() - t0 > 15000){
-      dataFile.close();
-      Serials.print("[INFO] Test A Complete. File closed.");
-      return;
-    } // end if test is complete
+    } // end while (!user_has_typed_x())
 
-    } // end while (true)
+  dataFile.close();
+  driver.setOutput(0);
+  Serials.print("[INFO] Test A Complete. File closed.");
+  return;
+
 }  // end function lab7_run_test_A()
 
 

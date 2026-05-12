@@ -2,7 +2,7 @@
 
 #include <HardwareSerial.h>
 extern HardwareSerial Xbee;
-#include "project_common.h"
+#include "../project_common.h"
 extern DualSerial Serials;
 
 // #if SERIALMENU_DISABLE_PROGMEM_SUPPORT != true

@@ -1,6 +1,8 @@
 #include "project_common.h"
 #include <HardwareSerial.h>
 #include "definitions.h"
+#include "sd_functions.h"
+#include "SdFat.h"
 
 // Initialize Global Objects
 // (Note: Ensure Serial1/Serial2 match your actual hardware wiring)
@@ -60,12 +62,23 @@ size_t DualSerial::write(uint8_t c) {
     return serial2.write(c);
 }
 
+
+// File-scope objects (NOT in the header)
+// static SdFat sd;
+SdFs sd;
+SdFile fout;
+
+
 // --- Global Functions ---
 
 ///
 /// @return int: user input
 /// @return -1: error
 int get_int_from_ground() {
+
+    // clear serial buffer
+    while (Xbee.available()) {Xbee.read();}
+
     int timeout = millis() + COMMAND_TIMEOUT ;
 
     String received_String ="";
@@ -214,3 +227,47 @@ bool user_has_typed_x() {
             return false;
     }
 }
+
+bool create_and_open_file(FsFile *dataFile2, const String& directory, const String& filename_preamble) {
+    sd.chdir(); // change to root ("/")
+
+    if (!sd.exists(directory)) {
+        Serials.println("[INFO] Creating directory: " + directory);
+        // mkdir("/"+directory);
+        sd.mkdir(directory);
+    }
+
+    sd.chdir(directory);
+    // change_directory("/"+directory);
+
+    char filename[40] ;
+    int fileNumber = 1;
+
+    do {
+        // We use .c_str() here because snprintf expects a const char*
+        snprintf(filename, sizeof(filename),
+                 "%s%03d.csv",
+                 filename_preamble.c_str(),
+                 fileNumber);
+        fileNumber++;
+    } while (sd.exists(filename) && fileNumber <= 999);
+
+    if (fileNumber > 999) {
+        Serials.println("[ERROR] Maximum file number exceeded (999).");
+        sd.chdir();
+        return false;
+    }
+
+    Serials.print("[INFO] Creating file: ");
+    Serials.println(filename);
+
+    *dataFile2 = sd.open(filename, FILE_WRITE);
+
+    if (!*dataFile2) {
+        Xbee.println("[ERROR] could not create file.");
+        sd.chdir();
+        return false;
+    }
+
+    return true;
+} // end create_and_open_file()

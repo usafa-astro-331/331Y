@@ -8,8 +8,8 @@ extern HardwareSerial Xbee;
 
 // File-scope objects (NOT in the header)
 // static SdFat sd;
-SdFs sd;
-SdFile fout;
+extern SdFs sd;
+extern SdFile fout;
 
 /*---------------------------------------------------------------------------------------------*/
 // Function Definitions:

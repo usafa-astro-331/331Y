@@ -16,29 +16,6 @@ void pause_refresh();
 inline char menu_buf[256];
 extern char cmd;
 
-// const SerialMenu& menu = SerialMenu::get();
-//
-// const SerialMenuEntry communication_menu[];
-// const uint8_t communication_menu_size;
-//
-// const SerialMenuEntry main_menu[] = {
-//     {"1: communication", false, '1',
-//         [](){menu.load(communication_menu, communication_menu_size);
-//             menu.show(); } },
-//     {"2: electrical", false, '2', Xbee.println("electrical")},
-// };
-// constexpr uint8_t main_menu_size = GET_MENU_SIZE(main_menu);
-//
-// const SerialMenuEntry communication_menu[] = {
-//     {"0: return to main menu", false, '0',
-//         [](){menu.load(main_menu, main_menu_size);
-//             menu.show(); } },
-//     {"1: do lab A", false, '2', Xbee.println("do lab A")},
-// };
-// constexpr uint8_t communication_menu_size = GET_MENU_SIZE(communication_menu);
-
-void pause_refresh();
-
 class SerialMenu;
  SerialMenu& menu = SerialMenu::get();
 
@@ -101,7 +78,7 @@ inline uint8_t communication_menu_size = GET_MENU_SIZE(communication_menu);
 
 inline SerialMenuEntry att_determ_menu[] = {
 	{"\nattitude determination menu", false, ' ', [](){ menu.show(); } },
-	{"1: run test",false, '1', [](){ lab6_run_test(); pause_refresh();} },
+	{"1: run test",false, '1', [](){ attitude_sensors(); pause_refresh();} },
 	{"0: return to main menu", false, '0', [](){ menu.load(main_menu,main_menu_size); menu.show(); } },
 	{" ", false, 'z', [](){ menu.show(); } },
    };
@@ -111,8 +88,8 @@ inline SerialMenuEntry att_control_menu[] = {
 	{"\nattitude control menu", false, ' ', [](){ menu.show(); } },
 	{"1: set manual RW speed",      false, '1', [](){ manual_set_RW_speed(); pause_refresh();} },
 	{"2: stream RW speed",false, '2', [](){ stream_RW_speed(); pause_refresh();} },
-	{"3: run test A",false, '3', [](){ lab7_run_test_A(); pause_refresh();} },
-	{"4: run test B",false, '4', [](){ lab7_run_test_B(); pause_refresh();} },
+	{"3: run test A",false, '3', [](){ full_speed_step_input(); pause_refresh();} },
+	{"4: run test B",false, '4', [](){ open_loop_att_control(); pause_refresh();} },
 	{"0: return to main menu", false, '0', [](){ menu.load(main_menu,main_menu_size); menu.show(); } },
 	{" ", false, 'z', [](){ menu.show(); } },
    };
