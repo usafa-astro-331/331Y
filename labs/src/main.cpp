@@ -6,7 +6,7 @@
 #include <Arduino.h>                                      // Main Arduino library
 #include <Wire.h>                                         // libray for I2C communication
 #include <SPI.h>                                          // SPI communication library
-#include <SdFat.h>                                        // SD Card library
+// #include <SdFat.h>                                        // SD Card library
 #include "definitions.h"                                  // Project definitions (this directory)
 #include "sd_functions.h"                                 //SD helper functions (this directory)
 #include <SparkFun_MAX1704x_Fuel_Gauge_Arduino_Library.h> // MAX17048 fuel gauge
@@ -15,11 +15,11 @@
 #include <ESP32Encoder.h>                                 // Motor encoder library to measure wheel speed
 #include <Adafruit_INA238.h>
 
-FsFile dataFile;   // data file object
 
 // #include "communication.h"
 
 #include "project_common.h"
+FsFile dataFile;   // data file object
 
 // extern HardwareSerial Xbee;
 // extern HardwareSerial SerialX; // empty serial port, exists to prevent code errors from calls to Serial2
