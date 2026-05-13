@@ -142,9 +142,7 @@ inline void attitude_sensors() {
           logger.logToSerial(Serials);
           dataFile.flush();
         } // print to serial sometimes
-        else {
-          Serials.println("file error");
-        }
+
       } // end if (dataFile)
     } // end if (timeNow>timeNext_testPoint)
 
