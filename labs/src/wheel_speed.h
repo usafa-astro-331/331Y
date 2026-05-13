@@ -412,12 +412,12 @@ inline void manual_set_RW_speed(){
   if (rw_speed_int< -100) rw_speed_int = -100;
   const float rw_speed = float(rw_speed_int) / 100.0;
 
-  Serials.println("Setting motor speed to: ");
+  Serials.print("Setting motor speed to: ");
   Serials.println(rw_speed);
 
 
   driver.setOutput(rw_speed);
-  delay(500);
+  delay(750);
 
 
   return void();

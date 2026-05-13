@@ -114,7 +114,7 @@ inline void pause_refresh()
     Xbee.print("Press any key to return to menu");
 
     // wait for input
-    while (!Xbee.available());
+    while (!Xbee.available()) {}
     Xbee.read();
 
     // send clear-screen sequence
@@ -139,6 +139,13 @@ inline void transfer_file_from_directory(const String& directory_name) {
      Serials.println("[REQUEST] Enter the file number to print.");
 
 	int choice = get_int_from_ground();
+
+	if (choice==-98789) {
+		Serials.println("no selection/invalid selection. Aborting");
+		change_directory("/");
+		delay(500);
+		return;
+	}
 
        Serials.print("[INFO] You picked file #");  Serials.println(choice);
 
@@ -169,6 +176,7 @@ inline void transfer_file_from_directory(const String& directory_name) {
 	Xbee.println("transfer complete");
 
 	change_directory("/");
+	delay(500);
 } // end function transfer files from directory()
 
 /**

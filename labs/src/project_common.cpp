@@ -209,22 +209,27 @@ bool get_command_from_ground() {
 } // end get_command_from_ground()
 
 bool user_has_typed_x() {
+    static bool first_key = false;
     if (Xbee.available() == 0) return false;
 
     switch (tolower(Xbee.peek())) {
-        case 'x':
-            Xbee.read(); // Clear the character from buffer
-            Serials.print("[CAUTION] Test Canceled Early. File closed.");
-            return true;
+    case 'x':
+        Xbee.read(); // Clear the character from buffer
+        Serials.print("[CAUTION] Test Canceled Early. File closed.");
+        return true;
 
-        case EOF: // if no input (peek returns end-of-file), do nothing
-            return false;
-            // break;
+    case EOF: // if no input (peek returns end-of-file), do nothing
+        return false;
+        // break;
 
-        default:
-            // Read and report invalid input
-            Serials.printf("[CAUTION] Invalid Input (%c) continuing test...", Xbee.read());
-            return false;
+    default:
+        // Read and report invalid input
+        if (!first_key) {
+
+        first_key = true;
+        Serials.printf("[CAUTION] Invalid Input (%c) continuing test...", (char)Xbee.read());
+        return false;
+    }
     }
 }
 
