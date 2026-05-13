@@ -68,7 +68,7 @@ inline void IV_data(){
   neopixelWrite(RGB_BUILTIN, 0, 0, 25); // Set to blue (R=0, G=0, B=255)
 
   // sd_createDataFile(&dataFile, "electrical/IV_curve_"); // create data file on SD card
-  if (!create_and_open_file(&dataFile, "att_determ", "attitude_sensors_")) {
+  if (!create_and_open_file(&dataFile, "electrical", "IV_curve_")) {
     Serials.println("[ERROR] Failed to create data file. Aborting test.");
     return;
   }

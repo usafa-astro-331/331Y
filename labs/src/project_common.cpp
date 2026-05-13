@@ -100,6 +100,7 @@ int get_int_from_ground() {
         case '-':
             if (received_String.length() == 0) { // entered '-' at beginning of number --> this is fine
                 received_String += (char)Xbee.read();
+                Serials.print(received_String.charAt(received_String.length() - 1));
             }
             else{         // entered '-' in middle of number
                 Serials.print("Unknown entry: '");
