@@ -240,10 +240,18 @@ bool create_and_open_file(FsFile *dataFile2, const String& directory, const Stri
     if (!sd.exists(directory)) {
         Serials.println("[INFO] Creating directory: " + directory);
         // mkdir("/"+directory);
-        sd.mkdir(directory);
+        if (!sd.mkdir(directory)) {
+            Serials.println("[ERROR] could not create directory.");
+            return false;
+        }
+
     }
 
-    sd.chdir(directory);
+    if (!sd.chdir(directory)) {
+        Serials.println("[ERROR] could not change directory.");
+        sd.chdir();
+        return false;
+    }
     // change_directory("/"+directory);
 
     char filename[40] ;

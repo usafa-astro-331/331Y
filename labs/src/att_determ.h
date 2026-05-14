@@ -148,6 +148,8 @@ inline void attitude_sensors() {
 
     } // end of while(true)
 
+  sd.chdir();
+
   Serials.println("[INFO] Attitude sensor test complete.");
   dataFile.close();
   return ;
