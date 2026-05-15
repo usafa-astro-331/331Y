@@ -57,7 +57,7 @@ uint32_t timeLastHeartBeat; // time of last heartbeat (ms)
 uint32_t interval_heartBeat = 500; // interval between heartbeat (ms)
 
 
-void initINA238();
+// void initINA238();
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 // SETUP:
