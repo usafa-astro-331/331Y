@@ -4,8 +4,6 @@
 #include "zmodem.h"
 #include <HardwareSerial.h>
 
-extern HardwareSerial Xbee;
-
 // File-scope objects (NOT in the header)
 // static SdFat sd;
 extern SdFs sd;

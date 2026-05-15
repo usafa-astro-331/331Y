@@ -13,10 +13,10 @@
 //							 _________________________________
 //							|	███████	PCB antenna ██████	  |
 //							|	███████	PCB antenna ██████	  |
-//							21							//    | 4
-//							22							//    | 17
-#define ENCODER_PIN_A		14							//    | 16
-#define ENCODER_PIN_B		32							//    | 19
+#define ENCODER_PIN_A		21							//    | 4
+#define ENCODER_PIN_B		22							//    | 17
+//							14							//    | 16
+//							32							//    | 19
 #define MOTOR_PWM_2_PIN		15							//    | 23
 #define MOTOR_PWM_1_PIN		33							//    | 18
 //						 	27							//    | 35	//	35 (A5)
@@ -203,9 +203,15 @@
 #define SD_CS_PIN 5  // Chip select pin for the microSD card on Thing Plus
 // #define SD_CS_PIN 33  // Chip select pin for the microSD card on Feather Adalogger
 
+#define Xbee Serial2
+
 #define XBEE_SPEED 57600
 
 #define MOTOR_VOLTAGE           5.05f
 #define CT_PER_REV              64 // encoder counts per revolution
 
 #define COMMAND_TIMEOUT 10000 // time in ms to wait for user response
+
+#define neopixelWrite(...) ((void)0)
+
+

@@ -12,8 +12,8 @@
 #include <SparkFun_MAX1704x_Fuel_Gauge_Arduino_Library.h> // MAX17048 fuel gauge
 #include <ICM_20948.h>                                    // Sparkfun IMU library
 #include <TB9051FTGMotorCarrier.h>                        // Pololu Motor Carrier Library
-#include <ESP32Encoder.h>                                 // Motor encoder library to measure wheel speed
 #include <Adafruit_INA238.h>
+#include "PicoEncoder.h"
 
 
 // #include "communication.h"
@@ -48,7 +48,7 @@ FsFile dataFile;   // data file object
 constexpr uint8_t pwm1Pin{MOTOR_PWM_1_PIN}; // PWM1
 constexpr uint8_t pwm2Pin{MOTOR_PWM_2_PIN}; // PWM2
 TB9051FTGMotorCarrier driver{ pwm1Pin, pwm2Pin };// Instantiate TB9051FTGMotorCarrier
-// ESP32Encoder enc;
+PicoEncoder enc;
 
 // Variables:
 uint32_t timeLastCheckForCommand; // time of next Xbee check
@@ -65,19 +65,15 @@ void initINA238();
 void setup() {
   Wire.begin(); // Initialize I2C communication
 
-  // Initialize built-in RGB LED (WS2812) and STAT LED
-  // #define RGB_BUILTIN  2
-  pinMode(RGB_BUILTIN, OUTPUT);
   pinMode(LED_BUILTIN, OUTPUT);
   neopixelWrite(RGB_BUILTIN, 25, 0, 0); // Default to red (R=255, G=0, B=0)
-
-
-
-
+  
   //----------------------------------------------
   // Initialize Serial links
   //----------------------------------------------
-  Xbee.begin(XBEE_SPEED,SERIAL_8N1, XBEE_RX, XBEE_TX);  // Begin MCU <> XBee communication
+  Xbee.setRX(XBEE_RX);
+  Xbee.setRX(XBEE_TX);
+  Xbee.begin(57600);  // Begin MCU <> XBee communication
   Xbee.setTimeout(20);
   Serial.begin(115200); // Begin Serial communication with computer
   // while (!Serial) {delay(10);} // Wait for user to open Serial monitor before proceeding
@@ -137,8 +133,7 @@ void setup() {
   //----------------------------------------------
   driver.enable(); // TB9051FTG Motor Driver
   driver.setOutput(0);
-  enc.attachFullQuad(ENCODER_PIN_A, ENCODER_PIN_B); // Motor Encoder
-  enc.clearCount();
+  enc.begin(16); // Motor Encoder
   //----------------------------------------------
 
   Serials.println("[INFO] SETUP COMPLETE.");

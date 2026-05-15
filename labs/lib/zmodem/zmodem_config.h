@@ -1,8 +1,6 @@
 #pragma once
 
 #define Progname F("Arduino ZModem V3.0")
-#include <HardwareSerial.h>
-extern HardwareSerial Xbee;
 
 #define SD_SEL 5 // Thing Plus C
 // #define SD_SEL 21 // XIAO ESP32S3
@@ -53,6 +51,7 @@ extern HardwareSerial Xbee;
 	#endif
 
 // #define ZSERIAL Serial
+#define Xbee Serial2
 #define ZSERIAL Xbee
 #define ZMODEM_SPEED 9600 // adjust for your board and needs
 

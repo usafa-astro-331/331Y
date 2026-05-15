@@ -6,7 +6,7 @@
 
 // Initialize Global Objects
 // (Note: Ensure Serial1/Serial2 match your actual hardware wiring)
-HardwareSerial Xbee(2);
+
 DualSerial Serials(Serial, Xbee);
 TelemetryLogger logger;
 

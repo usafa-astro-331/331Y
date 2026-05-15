@@ -17,7 +17,6 @@
 #include "zmodem_config.h"
 #include "zmodem_fixes.h"
 #include <HardwareSerial.h>
-extern HardwareSerial Xbee;
 
 #ifdef ARDUINO_SMALL_MEMORY_INCLUDE_SZ
 

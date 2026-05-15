@@ -11,7 +11,6 @@
 inline constexpr uint32_t serial_decimation = 5;
 
 // External instances (Defined in the .cpp)
-extern HardwareSerial Xbee;
 class DualSerial;
 extern DualSerial Serials;
 class TelemetryLogger;

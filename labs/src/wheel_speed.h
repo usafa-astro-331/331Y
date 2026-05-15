@@ -11,13 +11,14 @@
 #include <iterator>
 
 #include <HardwareSerial.h>
+#include "PicoEncoder.h"
 
 // extern HardwareSerial SerialX;
 
 extern FsFile dataFile;   // data file object
 extern TB9051FTGMotorCarrier driver;
 
-ESP32Encoder enc;
+extern PicoEncoder enc;
 
 ICM_20948_I2C imu_sensor; // IMU object
 
@@ -154,16 +155,9 @@ inline void open_loop_att_control() {
       /////////////////////////////////////////////////////////////////////////////
 
       // Get measured reaction wheel speed:
-      static int64_t lastCount = 0;
-      static uint32_t timeLastEncMeas = 0;
-      uint32_t timeNow = millis();
-      int64_t c = enc.getCount();
-      int64_t dc = c - lastCount;
-      float dt_s = (timeNow - timeLastEncMeas) / 1000.0f;
-      float rev = (float)dc / ((float)CT_PER_REV * 10.0);
-      float w_RW_meas = (rev / dt_s) * 60.0f;
-      lastCount = c;
-      timeLastEncMeas = timeNow;
+
+      float rev = (float)enc.position / ((float)CT_PER_REV * 10.0);
+      float w_RW_meas = (float)enc.speed / ((float)CT_PER_REV *10.0);
 
       logger.clear();
 
@@ -249,8 +243,7 @@ inline float set_wheel_speed(const uint32_t t_ms, const uint32_t t0_ms, bool* CO
 }
 
 
-inline void stream_RW_speed()
-{
+inline void stream_RW_speed() {
   Serials.println("Ready to stream RW Motor speed, send any key to start. Send 'X' to stop.");
   Xbee.read();
   delay(100);
@@ -265,28 +258,16 @@ inline void stream_RW_speed()
       return;
     }
 
-    static uint32_t timeLastEncMeas = millis();
-    static int64_t lastCount = 0;
     #define ENC_SAMPLE_MS 50
 
-    uint32_t now = millis();
-    if (now - timeLastEncMeas >= ENC_SAMPLE_MS) {
-      int64_t c = enc.getCount();
-      int64_t dc = c - lastCount;
-
-      float dt_s = (now - timeLastEncMeas) / 1000.0f;
-
       // If you use full-quad (x4), make sure CT_PER_REV reflects *counts per rev after decoding*
-      float rev = (float)dc / ((float)CT_PER_REV * 10.0);
-      float rpm = (rev / dt_s) * 60.0f;
+      float rev = (float)enc.position / ((float)CT_PER_REV * 10.0);
+      float rpm = (float)enc.speed / ((float)CT_PER_REV * 10.0);
 
-      Serials.printf("count:%lld,dc:%lld,rpm:%.2f\n", (long long)c, (long long)dc, rpm);
+      Serials.printf("count:%lld,rpm:%.2f\n", (long long)rev, rpm);
 
-      lastCount = c;
-      timeLastEncMeas = now;
     }
-  }
-} //end stream_RWspeed()
+  } //end stream_RWspeed()
 
 
 /*---------------------------------------------------------------------------------------------*/
@@ -353,17 +334,9 @@ inline void full_speed_step_input() {
 
       // Get commanded reaction wheel speed:
       float w_RW_cmd = -speed_pwm * 1000.0 * MOTOR_VOLTAGE / 12.0;
-      // Get measured reaction wheel speed:
-      static int64_t lastCount = 0;
-      static uint32_t timeLastEncMeas = 0;
-      uint32_t timeNow = millis();
-      int64_t c = enc.getCount();
-      int64_t dc = c - lastCount;
-      float dt_s = (timeNow - timeLastEncMeas) / 1000.0f;
-      float rev = (float)dc / ((float)CT_PER_REV * 10.0);
-      float w_RW_meas = (rev / dt_s) * 60.0f;
-      lastCount = c;
-      timeLastEncMeas = timeNow;
+
+      float rev = (float)enc.position / ((float)CT_PER_REV * 10.0);
+      float w_RW_meas = (float)enc.speed / ((float)CT_PER_REV * 10.0);
 
       // Print data to SD & XBee serial:
       logger.clear();

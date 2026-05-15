@@ -1,7 +1,7 @@
 #pragma once
 
-#include <HardwareSerial.h>
-extern HardwareSerial Xbee;
+#define Xbee Serial2
+
 #include "../project_common.h"
 extern DualSerial Serials;
 
