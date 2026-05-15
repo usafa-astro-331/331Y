@@ -48,7 +48,7 @@ FsFile dataFile;   // data file object
 constexpr uint8_t pwm1Pin{MOTOR_PWM_1_PIN}; // PWM1
 constexpr uint8_t pwm2Pin{MOTOR_PWM_2_PIN}; // PWM2
 TB9051FTGMotorCarrier driver{ pwm1Pin, pwm2Pin };// Instantiate TB9051FTGMotorCarrier
-PicoEncoder enc;
+PicoEncoder enc; // https://github.com/pmarques-dev/PicoEncoder
 
 // Variables:
 uint32_t timeLastCheckForCommand; // time of next Xbee check
