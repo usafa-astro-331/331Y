@@ -205,6 +205,13 @@
 
 #define COMMAND_TIMEOUT 10000 // time in ms to wait for user response
 
-#define neopixelWrite(...) ((void)0)
+#define neopixel_pin 17 // for RP2040 adalogger
+#define neopixel_count 1 // there is only 1 on this board
+// strip.setPixelColor(0, 0, 0, 0);
+// strip.show();
 
+#define neopixelWrite(a,b,c,d) { \
+			strip.setPixelColor((b), (c), (d), 0); \
+			strip.show(); \
+}
 

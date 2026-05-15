@@ -14,7 +14,9 @@
 #include <TB9051FTGMotorCarrier.h>                        // Pololu Motor Carrier Library
 #include <Adafruit_INA238.h>
 #include "PicoEncoder.h"
+#include <Adafruit_NeoPixel.h>
 
+Adafruit_NeoPixel strip(neopixel_count, neopixel_pin);
 
 // #include "communication.h"
 
@@ -63,6 +65,11 @@ uint32_t interval_heartBeat = 500; // interval between heartbeat (ms)
 // SETUP:
 /////////////////////////////////////////////////////////////////////////////////////////////////
 void setup() {
+
+  //neopixel setup
+  strip.begin();
+  strip.show(); // initializae all pixels to OFF
+  
   Wire.begin(); // Initialize I2C communication
 
   pinMode(LED_BUILTIN, OUTPUT);
