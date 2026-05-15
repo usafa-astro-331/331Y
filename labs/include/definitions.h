@@ -39,9 +39,9 @@
 //							|	░░░░░░░SD SLOT░░░░░░░░	|
 //							|	░░░░░░░░░░░░░░░░░░░░░░	|
 //															4
-									#define XBEE_TX			0		//	(TX)
-									#define XBEE_RX			1		//	(RX)T
-									#define SPI_MISO		8		//	(MISO)
+									#define XBEE_TX			0	//	(TX)
+									#define XBEE_RX			1	//	(RX)
+									#define SPI_MISO		8	//	(MISO)
 									#define SPI_MOSI		15	//	(MOSI)
 									#define SPI_SCK			14	//	(SCK)
 									//						25	//
