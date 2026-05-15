@@ -232,6 +232,7 @@ bool user_has_typed_x() {
         return false;
     }
     }
+    return false;
 }
 
 bool create_and_open_file(FsFile *dataFile2, const String& directory, const String& filename_preamble) {
