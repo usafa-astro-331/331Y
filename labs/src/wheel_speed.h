@@ -89,12 +89,16 @@ inline void open_loop_att_control() {
   const uint32_t t0_ms = millis();
   if (!create_and_open_file(&dataFile, "att_control", "open_loop_")) {
     Serials.println("[ERROR] Failed to create data file. Aborting test.");
+    dataFile.close();
+    sd.chdir();
     return;
   }
 
   Serials.println("[INFO] Ready to start Lab 7 test B, send any key to begin (wait for test to complete or send 'X' to abort)...");
   if (!get_command_from_ground()) {
     Serials.println("[ERROR] Failed to receive command from ground. Aborting test.");
+    dataFile.close();
+    sd.chdir();
     return;
   }
 
@@ -197,6 +201,7 @@ inline void open_loop_att_control() {
 }
 
   dataFile.close();
+  sd.chdir();
   driver.setOutput(0);
   return;
 
@@ -303,6 +308,9 @@ inline void full_speed_step_input() {
 
   if (!create_and_open_file(&dataFile, "att_control", "full_speed_")) {
     Serials.println("[ERROR] Failed to create data file. Aborting test.");
+    dataFile.close();
+
+    sd.chdir();
     return;
   }
   //
@@ -315,6 +323,9 @@ inline void full_speed_step_input() {
 
   if (!get_command_from_ground()) {
     Serials.println("[ERROR] Failed to receive command from ground. Aborting test.");
+    dataFile.close();
+
+    sd.chdir();
     return;
   }
 
@@ -381,6 +392,9 @@ inline void full_speed_step_input() {
     } // end while (!user_has_typed_x())
 
   dataFile.close();
+
+  sd.chdir();
+
   driver.setOutput(0);
   Serials.print("[INFO] Test A Complete. File closed.");
   return;

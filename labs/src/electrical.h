@@ -81,6 +81,7 @@ inline void IV_data(){
 
     if (user_has_typed_x()) {
       dataFile.close();
+      sd.chdir();
       driver.setOutput(0);
       return;
     }

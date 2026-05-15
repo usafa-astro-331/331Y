@@ -132,7 +132,10 @@ inline void folder_ls(const String& directory) {
 }
 
 inline void transfer_file_from_directory(const String& directory_name) {
-	change_directory(directory_name);
+	if (!sd.chdir(directory_name)) {
+		Serials.printf("[ERROR] directory %c not found \n", directory_name.c_str());
+		return;
+	}
 
 	directory_listing();
 
@@ -142,7 +145,7 @@ inline void transfer_file_from_directory(const String& directory_name) {
 
 	if (choice==-98789) {
 		Serials.println("no selection/invalid selection. Aborting");
-		change_directory("/");
+		sd.chdir();
 		delay(500);
 		return;
 	}
@@ -175,7 +178,7 @@ inline void transfer_file_from_directory(const String& directory_name) {
 	saybibi();
 	Xbee.println("transfer complete");
 
-	change_directory("/");
+	sd.chdir();
 	delay(500);
 } // end function transfer files from directory()
 
