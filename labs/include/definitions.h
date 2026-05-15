@@ -9,59 +9,53 @@
 // https://learn.sparkfun.com/tutorials/esp32-thing-plus-usb-c-hookup-guide/hardware-overview
 
 ///////////////////////////////////////////////////////////
-//		THING PLUS LEFT SIDE:									(SEE BELOW FOR RIGHT SIDE PINS)
-//							 _________________________________
-//							|	███████	PCB antenna ██████	  |
-//							|	███████	PCB antenna ██████	  |
-#define ENCODER_PIN_A		21							//    | 4
-#define ENCODER_PIN_B		22							//    | 17
-//							14							//    | 16
-//							32							//    | 19
-#define MOTOR_PWM_2_PIN		15							//    | 23
-#define MOTOR_PWM_1_PIN		33							//    | 18
-//						 	27							//    | 35	//	35 (A5)
-#define ARDUCAM_CS		 	12				// LEDs:	//    | 36	//	36 (A4)
-//						 	13 (LED_BUILTIN)  -->	░ status  |	A3	//	39 (A3)
-//						 	|VUSB (5V)				░ charging|	A2	//	34 (A2)
-//						 	|EN (ground to disable)	░ power	  |	A1	//	25 (A1)
-//						 	|VBAT (3.7 V)			RST	█	  |	A0	//	26 (A0)
-//						 	┌----┐							  |	GND
-//						 	│ JST					BOOT█	  |	NC (not connected)
-//						 	│ (3.7 V battery)				  |	3.3 V
-//						 	└----┘							  |	RESET
-//						 	┌----┐							  |
-//						 	│ QWIIC							  |
-//						 	└----┘		┌----┐				  |
-//							|___________│USBC│________________|
+//		RP2040 Adalogger Left Side						(SEE BELOW FOR RIGHT SIDE PINS)
+//							 ____________________________
+//							|	░░░░░░░SD SLOT░░░░░░░░	|
+//							|	░░░░░░░░░░░░░░░░░░░░░░	|
+//							2// (SDA)░░░░░░░░░░░░░░░░░	| 4
+//							3// (SCL)░░░░░░░░░░░░░░░░░	| 0		//	(TX)
+#define ENCODER_PIN_A		5//	░░░░░░░░░░░░░░░░░░░░░░	| 1		//	(RX)
+#define ENCODER_PIN_B		6//	░░░░░░░░░░░░░░░░░░░░░░	| 8		//	(MISO)
+#define MOTOR_PWM_2_PIN		9//	░░░░░░░░░░░░░░░░░░░░░░	| 15	//	(MOSI)
+#define MOTOR_PWM_1_PIN		10//_______					| 14	//	(SCK)
+//						 	11//|QWIIC|			 ___	| 25	//
+#define ARDUCAM_CS		 	12//¯¯¯¯¯¯			|RGB|	| 24	//
+//						 	13//(LED_BUILTIN)	¯¯¯¯	| A3	//	29 (A3)
+//						 	|VUSB (5V)					| A2	//	28 (A2)
+//						 	|EN (ground to disable)		| A1	//	27 (A1)
+//						 	|VBAT (3.7 V)				| A0	//	26 (A0)
+//						 	┌----┐				BOOT█	| GND
+//						 	│ JST						| 3.3 V
+//						 	│ (3.7 V battery)	RST █	| 3.3 V
+//						 	└----┘___	┌----┐	 ___	| RESET
+//							|____|LED|__│USBC│__|CHG|___|
 //										│USBC│
 //
 //
 ///////////////////////////////////////////////////////////
-//		THING PLUS RIGHT SIDE:
-//
-//								███████	PCB antenna ██████
-//								███████	PCB antenna ██████
+//		RP2040 Adalogger RIGHT SIDE:
+//							 ____________________________
+//							|	░░░░░░░SD SLOT░░░░░░░░	|
+//							|	░░░░░░░░░░░░░░░░░░░░░░	|
 //															4
-									#define XBEE_TX			17  // ESP32 TX -> XBee DIN
-									#define XBEE_RX			16  // ESP32 RX <- XBee DOUT
-									#define SPI_MISO		19	//	19 (MISO)
-									#define SPI_MOSI		23	//	23 (MOSI)
-									#define SPI_SCK			18	//	18 (SCK)
-									//						35			(A5)
-									#define ADC_PIN			36	//	36	(A4)
-									#define SUN_NY_PIN		A3	//	39 (A3)
-									#define SUN_NX_PIN		A2	//	34 (A2)
-									#define SUN_PY_PIN		A1	//	25 (A1)
+									#define XBEE_TX			0		//	(TX)
+									#define XBEE_RX			1		//	(RX)T
+									#define SPI_MISO		8		//	(MISO)
+									#define SPI_MOSI		15	//	(MOSI)
+									#define SPI_SCK			14	//	(SCK)
+									//						25	//
+									#define ADC_PIN			24	//
+									#define SUN_NY_PIN		A3	//	29 (A3)
+									#define SUN_NX_PIN		A2	//	28 (A2)
+									#define SUN_PY_PIN		A1	//	27 (A1)
 									#define SUN_PX_PIN		A0	//	26 (A0)
-//						 	┌----┐							GND
-//						 	│ JST							NC (not connected)
-//						 	│ (3.7 V battery)				3.3 V
-//						 	└----┘							RESET
-//						 	┌----┐
-//						 	│ QWIIC
-//						 	└----┘		┌----┐
-//										│USBC│
-//										│USBC│
+//						 	┌----┐				BOOT█	| GND
+//						 	│ JST						| 3.3 V
+//						 	│ (3.7 V battery)	RST █	| 3.3 V
+//						 	└----┘___	┌----┐	 ___	| RESET
+//						 	|____|LED|__│USBC│__|CHG|___|
+//						 				│USBC│
 
 
 
@@ -200,8 +194,7 @@
 
 // OTHER:
 
-#define SD_CS_PIN 5  // Chip select pin for the microSD card on Thing Plus
-// #define SD_CS_PIN 33  // Chip select pin for the microSD card on Feather Adalogger
+#define SD_CS_PIN 33  // Chip select pin for the microSD card on Feather Adalogger
 
 #define Xbee Serial2
 
