@@ -125,7 +125,7 @@ void setup() {
   //----------------------------------------------
   // Initialize Sun Sensor
   //----------------------------------------------
-  analogReadResolution(12);
+  // analogReadResolution(12);
 
   //----------------------------------------------
   // Initialize current Sensor

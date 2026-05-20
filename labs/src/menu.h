@@ -230,8 +230,8 @@ inline void metrology_example() {
 
 		logger.add("time", "ms", (int)millis());
 		logger.add("adc_10_bit", "ct", adc);
-		logger.add("adc_6_bit", "ct", (adc & 1111110000));
-		logger.add("non_linear_6_bit", "ct", ( (adc & 0b1111000000) ?  0b111111: (adc & 0b111111)));
+		logger.add("adc_3_bit", "ct", (adc >> 7)*128);
+		// logger.add("non_linear_3_bit", "ct", ( (adc & 0b1110000000) ?  0b111111: (adc>>5)*4));
 
 		logger.logToSerial(Serials);
 
