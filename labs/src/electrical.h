@@ -107,12 +107,13 @@ inline void IV_data(){
       logger.add("V", "V", testPoint_voltage_V);
 
       if (dataFile) {
-        logger.logToCSV(dataFile);
         if (!CSV_header_complete) {
           logger.create_CSV_header(dataFile);
           CSV_header_complete = true;
         }
 
+        logger.logToCSV(dataFile);
+        
         if (!(test_point_count % serial_decimation)) {
           // print to serial sometimes
           logger.logToSerial(Serials);
@@ -125,21 +126,6 @@ inline void IV_data(){
       test_point_count++;
   }
 
-      // // Print data to file:
-      // dataFile.print(millis());
-      // dataFile.print(",");
-      // dataFile.print(testPoint_current_mA,6);
-      // dataFile.print(",");
-      // dataFile.println(testPoint_voltage_V,6);
-      // dataFile.flush(); // save file
-      //
-      // //Print to Serial:
-      // Xbee.print("Current(mA):");
-      // Xbee.print(testPoint_current_mA,6);
-      // Xbee.print(",Voltage(V):");
-      // Xbee.println(testPoint_voltage_V,6);
-      // // Xbee.print(",collectTime(ms):");
-      // // Xbee.println(millis() - startTime); //~95 ms per test point
     } // end while(true)
   }// end function IV_data()
 // }
