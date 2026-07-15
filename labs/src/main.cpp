@@ -94,6 +94,14 @@ void setup() {
   sd_init(SD_CS_PIN);
   //----------------------------------------------
 
+    // initialize ADC
+    if(!ads.begin()) {
+        while (true) {
+            Serials.println("Failed to initialize ADS.");
+            delay(500);
+        }
+    }
+
   //----------------------------------------------
   // Initialize MAX17048 fuel gauge
   //----------------------------------------------

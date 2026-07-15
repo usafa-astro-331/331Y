@@ -9,53 +9,69 @@
 // https://learn.sparkfun.com/tutorials/esp32-thing-plus-usb-c-hookup-guide/hardware-overview
 
 ///////////////////////////////////////////////////////////
-//		RP2040 Adalogger Left Side						(SEE BELOW FOR RIGHT SIDE PINS)
-//							 ____________________________
-//							|	░░░░░░░SD SLOT░░░░░░░░	|
-//							|	░░░░░░░░░░░░░░░░░░░░░░	|
-//							2// (SDA)░░░░░░░░░░░░░░░░░	| 4
-//							3// (SCL)░░░░░░░░░░░░░░░░░	| 0		//	(TX)
-#define ENCODER_PIN_A		5//	░░░░░░░░░░░░░░░░░░░░░░	| 1		//	(RX)
-#define ENCODER_PIN_B		6//	░░░░░░░░░░░░░░░░░░░░░░	| 8		//	(MISO)
-#define MOTOR_PWM_2_PIN		9//	░░░░░░░░░░░░░░░░░░░░░░	| 15	//	(MOSI)
-#define MOTOR_PWM_1_PIN		10//_______					| 14	//	(SCK)
-//						 	11//|QWIIC|			 ___	| 25	//
-#define ARDUCAM_CS		 	12//¯¯¯¯¯¯			|RGB|	| 24	//
-//						 	13//(LED_BUILTIN)	¯¯¯¯	| A3	//	29 (A3)
-//						 	|VUSB (5V)					| A2	//	28 (A2)
-//						 	|EN (ground to disable)		| A1	//	27 (A1)
-//						 	|VBAT (3.7 V)				| A0	//	26 (A0)
-//						 	┌----┐				BOOT█	| GND
-//						 	│ JST						| 3.3 V
-//						 	│ (3.7 V battery)	RST █	| 3.3 V
-//						 	└----┘___	┌----┐	 ___	| RESET
-//							|____|LED|__│USBC│__|CHG|___|
-//										│USBC│
+//		RP Pico (with PiCowbell Adalogger https://learn.adafruit.com/adafruit-picowbell-adalogger-for-pico/pinouts)
 //
+//                      LEFT SIDE
 //
+//                                                   USB
+//                                          _________USB__________
+#define XBEE_TX				0		//  1 	|	                |  40       Vbus
+#define XBEE_RX				1		//  2 	|	  LED (GP25)    |  39       Vsys
+//                             		//  3 	|	 ░░░░ GND ░░░░  |  38
+//                          2		//  4 	|	                |  37       EN
+//                          3		//  5 	|	                |  36       3V3
+//                          4		//  6 	|	                |  35
+#define ARDUCAM_CS          5		//  7 	|	                |  34   GP28
+//                              	//  8 	|	 ░░░░ GND ░░░░  |  33
+//                          6		//  9 	|	                |  32   GP27
+//                          7		//  10	|	                |  31   GP26
+//                          8		//  11	|	                |  30       RUN
+//                          9		//  12	|	                |  29   GP22
+//                             	    //  13	|	 ░░░░ GND ░░░░  |  28
+//                          10	    //  14	|	                |  27   GP21
+//                          11	    //  15	|	                |  26   GP20
+#define ENCODER_PIN_A 		12	    //  16	|	                |  25   GP19
+#define ENCODER_PIN_B 		13	    //  17	|	                |  24   GP18
+//                             		//  18	|	 ░░░░ GND ░░░░  |  23
+#define MOTOR_PWM_2_PIN		14	    //  19	|	                |  22   GP17
+#define MOTOR_PWM_1_PIN		15	    //  20	|	                |  21   GP16
+//                                          ▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔
+
 ///////////////////////////////////////////////////////////
-//		RP2040 Adalogger RIGHT SIDE:
-//							 ____________________________
-//							|	░░░░░░░SD SLOT░░░░░░░░	|
-//							|	░░░░░░░░░░░░░░░░░░░░░░	|
-//															4
-									#define XBEE_TX			0	//	(TX)
-									#define XBEE_RX			1	//	(RX)
-									#define SPI_MISO		8	//	(MISO)
-									#define SPI_MOSI		15	//	(MOSI)
-									#define SPI_SCK			14	//	(SCK)
-									//						25	//
-									#define ADC_PIN			24	//
+///
+///                     RIGHT SIDE
+///
+/////
+//                                             USB
+//                                      _______USB_______
+                                   //   |          Vbus  //  40   (5V/USB)
+                                   //   |          Vsys  //  39   (3.3V) (power in)
+                                   //   | ░░░░ GND ░░░░  //  38
+                                   //   |          EN    //  37
+                                   //   |          3V3   //  36   (power out)
+                                   //   |                //  35
+                                   //   |            28  //  34
+                                   //   | ░░░░ GND ░░░░  //  33
+                                   //   |            27  //  32
+                 #define ADC_PIN                     26  //  31
+                                   //                    //  30   RUN
+                                   //   |            22  //  29
+                                   //   | ░░░░ GND ░░░░  //  28
+                                   //   |            21  //  27
+                                   //   |            20  //  26
+                 #define SPI_MOSI                    19  //  25
+                 #define SPI_SCK                     18  //  24
+                                    //  | ░░░░ GND ░░░░  //  23
+                 #define SD_CS_PIN                   17  //  22
+                 #define SPI_MISO                    16  //  21
+//                                      ▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔
+
+
+
 									#define SUN_NY_PIN		A3	//	29 (A3)
 									#define SUN_NX_PIN		A2	//	28 (A2)
 									#define SUN_PY_PIN		A1	//	27 (A1)
 									#define SUN_PX_PIN		A0	//	26 (A0)
-//						 	┌----┐				BOOT█	| GND
-//						 	│ JST						| 3.3 V
-//						 	│ (3.7 V battery)	RST █	| 3.3 V
-//						 	└----┘___	┌----┐	 ___	| RESET
-//						 	|____|LED|__│USBC│__|CHG|___|
-//						 				│USBC│
 
 
 
@@ -194,7 +210,6 @@
 
 // OTHER:
 
-#define SD_CS_PIN 33  // Chip select pin for the microSD card on Feather Adalogger
 
 #define Xbee Serial2
 

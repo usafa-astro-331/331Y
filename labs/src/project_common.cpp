@@ -68,6 +68,7 @@ size_t DualSerial::write(uint8_t c) {
 SdFs sd;
 SdFile fout;
 
+Adafruit_ADS1015 ads;
 
 // --- Global Functions ---
 

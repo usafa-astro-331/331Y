@@ -1,5 +1,8 @@
 #pragma once
 
+#include <Adafruit_ADS1X15.h>
+extern Adafruit_ADS1015 ads;
+
 #include <Arduino.h>
 #include <variant>
 #include <vector>
