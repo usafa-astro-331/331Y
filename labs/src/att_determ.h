@@ -91,10 +91,11 @@ inline void attitude_sensors() {
       sun_plusY = 0;
       sun_minusY = 0;
       for (int i = 0; i < n_sun_sensor_reads; i++) {
-        sun_plusX += analogRead(SUN_PX_PIN);
-        sun_minusX += analogRead(SUN_NX_PIN);
-        sun_plusY += analogRead(SUN_PY_PIN);
-        sun_minusY += analogRead(SUN_NY_PIN);
+
+          sun_plusY += ads.readADC_SingleEnded(0);
+          sun_plusX += ads.readADC_SingleEnded(1);
+          sun_minusY += ads.readADC_SingleEnded(2);
+          sun_minusX += ads.readADC_SingleEnded(3);
       }
       sun_plusX /= n_sun_sensor_reads;
       sun_minusX /= n_sun_sensor_reads;
