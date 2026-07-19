@@ -1,7 +1,7 @@
 
 #include "definitions.h"     // Project definitions (this directory)
 #include "sd_functions.h"
-#include "zmodem.h"
+// #include "zmodem.h"
 #include <HardwareSerial.h>
 
 // File-scope objects (NOT in the header)

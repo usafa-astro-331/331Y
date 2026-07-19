@@ -60,7 +60,7 @@ inline uint8_t main_menu_size = GET_MENU_SIZE(main_menu);
 inline SerialMenuEntry electrical_menu[] = {
 	{"\nelectrical menu", false, ' ', [](){ menu.show(); } },
 	{"1: IV data", false, '1', [](){ IV_data(); pause_refresh();} },
-	{"2: battery telemetry",false, '2', [](){ send_battery_telemetry(); pause_refresh();} },
+	// {"2: battery telemetry",false, '2', [](){ send_battery_telemetry(); pause_refresh();} },
 	{"0: return to main menu", false, '0', [](){ menu.load(main_menu,main_menu_size); menu.show(); } },
 	{" ", false, 'z', [](){ menu.show(); } },
    };

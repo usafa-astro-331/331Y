@@ -1,6 +1,6 @@
 #pragma once
 
-#define Xbee Serial2
+#define Xbee Serial1
 
 #include "../project_common.h"
 extern DualSerial Serials;

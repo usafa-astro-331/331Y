@@ -51,7 +51,7 @@
 	#endif
 
 // #define ZSERIAL Serial
-#define Xbee Serial2
+#define Xbee Serial1
 #define ZSERIAL Xbee
 #define ZMODEM_SPEED 9600 // adjust for your board and needs
 

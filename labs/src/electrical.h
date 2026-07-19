@@ -8,7 +8,7 @@
 
 Adafruit_INA238 ina238 = Adafruit_INA238();
 
-SFE_MAX1704X lipo; // SparkFun Thing Plus ESP32-WROOM onboard fuel gauge (I2C addr 0x36)
+// SFE_MAX1704X lipo; // SparkFun Thing Plus ESP32-WROOM onboard fuel gauge (I2C addr 0x36)
 
 
 constexpr int num_samples_per_testpoint = 40; // number of samples per testpoint to average over
@@ -28,31 +28,31 @@ constexpr int num_samples_per_testpoint = 40; // number of samples per testpoint
  * Output format (single line):
  *   BAT,V=<volts>,SOC=<percent>,CR=<percent_per_hr>
  */
-inline void send_battery_telemetry() {
-
-    const float v = lipo.getVoltage();
-    const float soc = lipo.getSOC();
-    const float crate = lipo.getChangeRate(); // %/hr (positive=charging, negative=discharging)
-
-    // // Ground-station friendly, parseable response
-    // SerialX.print("BAT,V=");
-    // SerialX.print(v, 3);
-    // SerialX.print("V, SOC=");
-    // SerialX.print(soc, 1);
-    // SerialX.print("%, CR=");
-    // SerialX.print(crate, 3);
-    // SerialX.println("%/hr");
-
-    // Also mirror to USB serial for debugging
-    Xbee.print("[BAT] V=");
-    Xbee.print(v, 3);
-    Xbee.print(" V, SOC=");
-    Xbee.print(soc, 1);
-    Xbee.print(" %, CR=");
-    Xbee.print(crate, 3);
-    Xbee.println(" %/hr");
-}
-
+// inline void send_battery_telemetry() {
+//
+//     const float v = lipo.getVoltage();
+//     const float soc = lipo.getSOC();
+//     const float crate = lipo.getChangeRate(); // %/hr (positive=charging, negative=discharging)
+//
+//     // // Ground-station friendly, parseable response
+//     // SerialX.print("BAT,V=");
+//     // SerialX.print(v, 3);
+//     // SerialX.print("V, SOC=");
+//     // SerialX.print(soc, 1);
+//     // SerialX.print("%, CR=");
+//     // SerialX.print(crate, 3);
+//     // SerialX.println("%/hr");
+//
+//     // Also mirror to USB serial for debugging
+//     Xbee.print("[BAT] V=");
+//     Xbee.print(v, 3);
+//     Xbee.print(" V, SOC=");
+//     Xbee.print(soc, 1);
+//     Xbee.print(" %, CR=");
+//     Xbee.print(crate, 3);
+//     Xbee.println(" %/hr");
+// }
+//
 
 /*---------------------------------------------------------------------------------------------*/
 // IV_data Test:
@@ -130,12 +130,13 @@ inline void IV_data(){
   }// end function IV_data()
 // }
 
-inline void initINA238()
+bool initINA238()
 {
   if (!ina238.begin()) {
     Xbee.println("[ERROR] Couldn't find INA238 chip");
-    while (1)
-      ;
+    // while (1)
+      return false;
+
   }
   Xbee.println("[INFO] Found INA238 chip");
   // set shunt resistance and max current
@@ -147,6 +148,6 @@ inline void initINA238()
   ina238.setVoltageConversionTime(INA2XX_TIME_150_us);
     ina238.setCurrentConversionTime(INA2XX_TIME_150_us);
 
-
+return true;
 } // end function initINA238()
 

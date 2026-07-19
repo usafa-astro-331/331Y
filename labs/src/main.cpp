@@ -9,14 +9,14 @@
 // #include <SdFat.h>                                        // SD Card library
 #include "definitions.h"                                  // Project definitions (this directory)
 #include "sd_functions.h"                                 //SD helper functions (this directory)
-#include <SparkFun_MAX1704x_Fuel_Gauge_Arduino_Library.h> // MAX17048 fuel gauge
+// #include <SparkFun_MAX1704x_Fuel_Gauge_Arduino_Library.h> // MAX17048 fuel gauge
 #include <ICM_20948.h>                                    // Sparkfun IMU library
 #include <TB9051FTGMotorCarrier.h>                        // Pololu Motor Carrier Library
 #include <Adafruit_INA238.h>
 #include "PicoEncoder.h"
-#include <Adafruit_NeoPixel.h>
+// #include <Adafruit_NeoPixel.h>
 
-Adafruit_NeoPixel strip(neopixel_count, neopixel_pin);
+// Adafruit_NeoPixel strip(neopixel_count, neopixel_pin);
 
 // #include "communication.h"
 
@@ -44,13 +44,14 @@ FsFile dataFile;   // data file object
 
 
 
-// SFE_MAX1704X lipo; // SparkFun Thing Plus ESP32-WROOM onboard fuel gauge (I2C addr 0x36)
 // ICM_20948_I2C imu_sensor; // IMU object
 // Motor Variables/Object
 constexpr uint8_t pwm1Pin{MOTOR_PWM_1_PIN}; // PWM1
 constexpr uint8_t pwm2Pin{MOTOR_PWM_2_PIN}; // PWM2
 TB9051FTGMotorCarrier driver{ pwm1Pin, pwm2Pin };// Instantiate TB9051FTGMotorCarrier
 PicoEncoder enc; // https://github.com/pmarques-dev/PicoEncoder
+// // SFE_MAX1704X lipo; // SparkFun Thing Plus ESP32-WROOM onboard fuel gauge (I2C addr 0x36)
+// // Motor Variables/Object
 
 // Variables:
 uint32_t timeLastCheckForCommand; // time of next Xbee check
@@ -65,25 +66,34 @@ uint32_t interval_heartBeat = 500; // interval between heartbeat (ms)
 // SETUP:
 /////////////////////////////////////////////////////////////////////////////////////////////////
 void setup() {
-
-  //neopixel setup
-  strip.begin();
-  strip.show(); // initializae all pixels to OFF
-  
-  Wire.begin(); // Initialize I2C communication
-
-  pinMode(LED_BUILTIN, OUTPUT);
-  neopixelWrite(RGB_BUILTIN, 25, 0, 0); // Default to red (R=255, G=0, B=0)
-  
-  //----------------------------------------------
-  // Initialize Serial links
-  //----------------------------------------------
-  Xbee.setRX(XBEE_RX);
-  Xbee.setRX(XBEE_TX);
+  //
+  // //neopixel setup
+  // strip.begin();
+  // strip.show(); // initializae all pixels to OFF
+  //
+  // Wire.begin(); // Initialize I2C communication
+  //
+  // pinMode(LED_BUILTIN, OUTPUT);
+  // neopixelWrite(RGB_BUILTIN, 25, 0, 0); // Default to red (R=255, G=0, B=0)
+  //
+  // //----------------------------------------------
+  // // Initialize Serial links
+  // //----------------------------------------------
+  // Xbee.setRX(XBEE_RX);
+  // Xbee.setRX(XBEE_TX);
   Xbee.begin(57600);  // Begin MCU <> XBee communication
-  Xbee.setTimeout(20);
-  Serial.begin(115200); // Begin Serial communication with computer
-  // while (!Serial) {delay(10);} // Wait for user to open Serial monitor before proceeding
+  // Xbee.setTimeout(20);
+  Serial.begin(9600); // Begin Serial communication with computer
+  // // Wait for user to open Serial monitor (up to 3 seconds)
+  // for (int i = 0; i < 300 && !Serial; i++) {
+  delay(100);
+  // }
+
+    while (!Serial) {
+        delay(100);
+        toggle_LED();
+
+    }
 
   Serials.print("[INFO] KestrelSAT online \npress 1 for options\n\n");
   // ----------------------------------------------
@@ -96,41 +106,41 @@ void setup() {
 
     // initialize ADC
     if(!ads.begin()) {
-        while (true) {
-            Serials.println("Failed to initialize ADS.");
+        // while (true) {
+            Serial.println("Failed to initialize ADC.");
             delay(500);
-        }
+        // }
     }
 
   //----------------------------------------------
   // Initialize MAX17048 fuel gauge
   //----------------------------------------------
-  if (!lipo.begin(Wire)) // Uses I2C address 0x36)
-  {
-    Serials.println("[WARN] MAX17048 not detected on I2C (0x36). Battery telemetry (cmd 4) will be unavailable.");
-  } else {
-    lipo.quickStart();    // Improves initial SOC accuracy after boot. Returns 0 on success.
-    Serials.println("[INFO] MAX17048 online.");
-  }
+  // if (!lipo.begin(Wire)) // Uses I2C address 0x36)
+  // {
+  //   Serials.println("[WARN] MAX17048 not detected on I2C (0x36). Battery telemetry (cmd 4) will be unavailable.");
+  // } else {
+  //   lipo.quickStart();    // Improves initial SOC accuracy after boot. Returns 0 on success.
+  //   Serials.println("[INFO] MAX17048 online.");
+  // }
   //----------------------------------------------
 
   //----------------------------------------------
   // Initialize ICM20948
   //----------------------------------------------
-  if (imu_sensor.begin(Wire, 1) != ICM_20948_Stat_Ok) {
-    Xbee.println("[CAUTION] IMU not found.");
-    while (1);
-  } else{
-    // // 1. Set to Continuous Mode for consistent sampling
-    // imu_sensor.setSampleMode((ICM_20948_Internal_Acc | ICM_20948_Internal_Gyr), ICM_20948_Sample_Mode_Continuous);
-    // // 2. Configure Sample Rate Divider (formula: 1125 / (1 + divider) Hz)
-    // ICM_20948_smplrt_t mySmplrt;
-    // mySmplrt.a = 1; // Accel divider 1: 1125 / (1+1) = ~562.5 Hz
-    // mySmplrt.g = 1; // Gyro divider 1: 1125 / (1+1) = ~562.5 Hz
-    // imu_sensor.setSampleRate(ICM_20948_Internal_Acc, mySmplrt);
-    // imu_sensor.setSampleRate(ICM_20948_Internal_Gyr, mySmplrt);    
-    Xbee.println("[INFO] IMU Initialized.");
-  }
+  // if (imu_sensor.begin(Wire, 1) != ICM_20948_Stat_Ok) {
+  //   Serials.println("[CAUTION] IMU not found.");
+  //   while (1);
+  // } else{
+  //   // // 1. Set to Continuous Mode for consistent sampling
+  //   // imu_sensor.setSampleMode((ICM_20948_Internal_Acc | ICM_20948_Internal_Gyr), ICM_20948_Sample_Mode_Continuous);
+  //   // // 2. Configure Sample Rate Divider (formula: 1125 / (1 + divider) Hz)
+  //   // ICM_20948_smplrt_t mySmplrt;
+  //   // mySmplrt.a = 1; // Accel divider 1: 1125 / (1+1) = ~562.5 Hz
+  //   // mySmplrt.g = 1; // Gyro divider 1: 1125 / (1+1) = ~562.5 Hz
+  //   // imu_sensor.setSampleRate(ICM_20948_Internal_Acc, mySmplrt);
+  //   // imu_sensor.setSampleRate(ICM_20948_Internal_Gyr, mySmplrt);
+  //   Xbee.println("[INFO] IMU Initialized.");
+  // }
   //----------------------------------------------
 
   //----------------------------------------------
@@ -141,7 +151,9 @@ void setup() {
   //----------------------------------------------
   // Initialize current Sensor
   //----------------------------------------------
-  initINA238();
+  if (!initINA238())
+      Serials.println("[ERROR] INA238 not detected.");
+
 
   //----------------------------------------------
   // Initialize Reaction Wheel
@@ -166,8 +178,9 @@ void setup() {
 /////////////////////////////////////////////////////////////////////////////////////////////////
 void loop() {
 
-  menu.run(100);
-  delay(100);
+  menu.run(1000);
+  delay(1000);
+    Serial.println("loop");
   
 } // end loop()
 
