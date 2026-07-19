@@ -1,5 +1,7 @@
 #pragma once
 
+#include <iostream>
+#include <vector>
 #include <unordered_set>
 
 /* ATTITUDE DETERMINATION
@@ -8,7 +10,7 @@
 
 #include "project_common.h"
 #include "zmodem.h"
-
+#include <Adafruit_BNO08x.h>
 
 
 // inline constexpr uint32_t serial_decimation = 5; // only print every 5th point to serial
@@ -18,7 +20,8 @@ const uint32_t interval_testPoint = 50;  // time interval between test points (m
 const uint32_t serial_interval = 250; // time interval between serial-printed test points (ms)
 
 extern float gyro_Z, mag_X, mag_Y;
-extern ICM_20948_I2C imu_sensor;
+extern Adafruit_BNO08x bno08x;
+inline sh2_SensorValue_t sensorValue;
 
 extern int sun_plusX, sun_minusX, sun_plusY, sun_minusY;
 
@@ -41,6 +44,25 @@ extern float sun_direction;
  */
 inline void attitude_sensors() {
   bool CSV_header_complete = false;
+
+    // setup altitude/accel variables ////////
+    float altitudes = 0.0;  // holds a moving sum of altitudes
+    float altitude;         // avg altitude in last cycle
+    float max_altitude = 0.0; // holds max reported altitude
+
+    std::vector<float> accels = {0, 0, 0};  // holds moving sums of 3 accels
+    float accel_x, accel_y, accel_z ;       // 3 acceleration variables
+    std::vector<float> gyros = {0, 0, 0};  // holds moving sums of 3 accels
+    float gyro_x, gyro_y, gyro_z ;       // 3 acceleration variables
+    std::vector<float> mags = {0, 0, 0};  // holds moving sums of 3 accels
+    float mag_x, mag_y, mag_z ;       // 3 acceleration variables
+
+    float sensor_reads = 0.0f;              // num sensor reads in last cycle
+    float accel_reads = 0.0f;
+    float gyro_reads = 0.0f;
+    float alt_reads = 0.0f;
+
+
 
   if (!create_and_open_file(&dataFile, "att_determ", "attitude_sensors_")) {
     Serials.println("[ERROR] Failed to create data file. Aborting test.");
@@ -68,6 +90,34 @@ inline void attitude_sensors() {
     return;
   }
 
+    while (bno08x.getSensorEvent(&sensorValue)) {
+        // new data available
+        switch (sensorValue.sensorId) {
+
+        case SH2_ACCELEROMETER:
+            // accumulate acceleration values between data file writes
+            accels.at(0) += sensorValue.un.linearAcceleration.x;
+            accels.at(1) += sensorValue.un.linearAcceleration.y;
+            accels.at(2) += sensorValue.un.linearAcceleration.z;
+            accel_reads++;
+            break;
+
+        case SH2_GYROSCOPE_CALIBRATED:
+            gyros.at(0) += sensorValue.un.gyroscope.x;
+            gyros.at(1) += sensorValue.un.gyroscope.y;
+            gyros.at(2) += sensorValue.un.gyroscope.z;
+            gyro_reads++;
+            break;
+
+        case SH2_MAGNETIC_FIELD_CALIBRATED:
+            mags.at(0) = sensorValue.un.magneticField.x;
+            mags.at(1) = sensorValue.un.magneticField.y;
+            mags.at(2) = sensorValue.un.magneticField.z;
+            break;
+        default: ;
+        }
+    }
+
   timeNext_testPoint = millis();
   int test_point_count = 0;
   neopixelWrite(RGB_BUILTIN, 25, 16, 0); // Set to orange (R=255, G=165, B=0)
@@ -78,11 +128,44 @@ inline void attitude_sensors() {
       test_point_count++;
       timeNext_testPoint += interval_testPoint; // Update time for next Test Point
 
-      // Collect IMU Test Point:
-      imu_sensor.getAGMT();
-      gyro_Z = imu_sensor.gyrZ();
-      mag_X = imu_sensor.magX();
-      mag_Y = imu_sensor.magY();
+      // // Collect IMU Test Point:
+      // imu_sensor.getAGMT();
+      // gyro_Z = imu_sensor.gyrZ();
+      // mag_X = imu_sensor.magX();
+      // mag_Y = imu_sensor.magY();
+
+        // calculate data from accumulated values
+        if (alt_reads == 0) {
+            altitude = NAN;
+        }
+        else{
+            altitude = altitudes/alt_reads;
+            if (altitude > max_altitude) {max_altitude = altitude;}
+        }
+
+        if (accel_reads == 0) {
+            accel_x = NAN; accel_y = NAN; accel_z = NAN;
+        }
+        else{
+            accel_x = accels.at(0)/accel_reads;
+            accel_y = accels.at(1)/accel_reads;
+            accel_z = accels.at(2)/accel_reads;
+        }
+
+        if (gyro_reads == 0) {
+            gyro_x = NAN; gyro_y = NAN; gyro_z = NAN;
+        }
+        else{
+            gyro_x =  gyros.at(0) /gyro_reads;
+            gyro_y =  gyros.at(1) /gyro_reads;
+            gyro_z =  gyros.at(2) /gyro_reads;
+        }
+
+        mag_x =  mags.at(0);
+        mag_y =  mags.at(1);
+        mag_z =  mags.at(2);
+
+
 
       // Collect Sun Sensor Test Point:
       // Average readings for each analog channel
@@ -120,9 +203,9 @@ inline void attitude_sensors() {
       logger.clear();
 
        logger.add("time", "ms", timeNow);
-       logger.add( "gZ",  "dps",   gyro_Z);
-       logger.add( "mX", "uT",    mag_X);
-       logger.add( "mY",  "uT",   mag_Y);
+       logger.add( "gZ",  "dps",   gyro_z);
+       logger.add( "mX", "uT",    mag_x);
+       logger.add( "mY",  "uT",   mag_y);
        logger.add( "sDir", "count",  sun_direction);
        logger.add( "spX", "count",   sun_plusX);
        logger.add( "spY", "count",   sun_plusY);
@@ -142,9 +225,19 @@ inline void attitude_sensors() {
         if (!(test_point_count % serial_decimation)) {
           logger.logToSerial(Serials);
           dataFile.flush();
+
         } // print to serial sometimes
 
       } // end if (dataFile)
+        // reset data accumulators and counts to zero
+        accel_reads = 0.0f;
+        gyro_reads = 0.0f;
+        alt_reads = 0.0f;
+
+        altitudes = 0.0f;
+        accels = {0.0, 0.0, 0.0};
+        gyros = {0.0, 0.0, 0.0};
+        mags = {0.0, 0.0, 0.0};
     } // end if (timeNow>timeNext_testPoint)
 
     } // end of while(true)
@@ -157,3 +250,22 @@ inline void attitude_sensors() {
 
   } // end of lab6
 
+// setReports() ////////
+// for the BNO085
+// Here is where you define the sensor outputs you want to receive
+inline void setReports(void) {
+    Serial.println("Setting desired reports");
+    // Set report rate to 20000us (20ms) which is 50Hz.
+    // This ensures we get at least one update per 25ms logging interval.
+    if (! bno08x.enableReport(SH2_ACCELEROMETER, 20000) ) {
+        Serial.println("Could not enable acceleration vector");
+    }
+    if (! bno08x.enableReport(SH2_GYROSCOPE_CALIBRATED, 20000) ) {
+        Serial.println("Could not enable rotation vector");
+    }
+    if (! bno08x.enableReport(SH2_MAGNETIC_FIELD_CALIBRATED, 20000) ) {
+        Serial.println("Could not enable magnetic vector");
+    }
+
+}
+// end function setReports() ////////

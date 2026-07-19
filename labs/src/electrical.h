@@ -130,7 +130,7 @@ inline void IV_data(){
   }// end function IV_data()
 // }
 
-bool initINA238()
+inline bool initINA238()
 {
   if (!ina238.begin()) {
     Xbee.println("[ERROR] Couldn't find INA238 chip");

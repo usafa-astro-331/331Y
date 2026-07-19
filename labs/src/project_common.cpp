@@ -1,14 +1,19 @@
 #include "project_common.h"
 #include <HardwareSerial.h>
+
+#include "Adafruit_BNO08x.h"
 #include "definitions.h"
 #include "sd_functions.h"
 #include "SdFat.h"
+
 
 // Initialize Global Objects
 // (Note: Ensure Serial1/Serial2 match your actual hardware wiring)
 
 DualSerial Serials(Serial, Xbee);
 TelemetryLogger logger;
+
+// Adafruit_BNO08x bno08x;
 
 // --- TelemetryLogger Implementation ---
 

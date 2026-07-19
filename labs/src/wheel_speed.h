@@ -20,7 +20,7 @@ extern TB9051FTGMotorCarrier driver;
 
 extern PicoEncoder enc;
 
-ICM_20948_I2C imu_sensor; // IMU object
+// ICM_20948_I2C imu_sensor; // IMU object
 
 extern const uint32_t interval_testPoint;
 extern const uint32_t serial_interval;
@@ -119,11 +119,11 @@ inline void open_loop_att_control() {
       float speedx = set_wheel_speed(millis(), t0_ms, &TEST_COMPLETE);
       driver.setOutput(speedx);
 
-      // Collect IMU Test Point:
-      imu_sensor.getAGMT();
-      gyro_Z = imu_sensor.gyrZ();
-      mag_X = imu_sensor.magX();
-      mag_Y = imu_sensor.magY();
+      // // Collect IMU Test Point:
+      // imu_sensor.getAGMT();
+      // gyro_Z = imu_sensor.gyrZ();
+      // mag_X = imu_sensor.magX();
+      // mag_Y = imu_sensor.magY();
 
       // Collect Sun Sensor Test Point:
       // Average readings for each analog channel

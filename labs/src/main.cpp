@@ -10,7 +10,7 @@
 #include "definitions.h"                                  // Project definitions (this directory)
 #include "sd_functions.h"                                 //SD helper functions (this directory)
 // #include <SparkFun_MAX1704x_Fuel_Gauge_Arduino_Library.h> // MAX17048 fuel gauge
-#include <ICM_20948.h>                                    // Sparkfun IMU library
+#include <Adafruit_BNO08x.h>                                    // Adafruit BNO08x library
 #include <TB9051FTGMotorCarrier.h>                        // Pololu Motor Carrier Library
 #include <Adafruit_INA238.h>
 #include "PicoEncoder.h"
@@ -18,14 +18,14 @@
 
 // Adafruit_NeoPixel strip(neopixel_count, neopixel_pin);
 
-// #include "communication.h"
+#include "communication.h"
 
 #include "project_common.h"
 FsFile dataFile;   // data file object
 
-// extern HardwareSerial Xbee;
-// extern HardwareSerial SerialX; // empty serial port, exists to prevent code errors from calls to Serial2
-// DualSerial Serials(Serial, Xbee);
+// #include <SerialUART.h>
+// extern SerialUART Xbee;
+// extern SerialUART SerialX; // empty serial port, exists to prevent code errors from calls to Serial2
 //
 // TelemetryLogger logger;
 
@@ -44,7 +44,7 @@ FsFile dataFile;   // data file object
 
 
 
-// ICM_20948_I2C imu_sensor; // IMU object
+Adafruit_BNO08x bno08x; // IMU object
 // Motor Variables/Object
 constexpr uint8_t pwm1Pin{MOTOR_PWM_1_PIN}; // PWM1
 constexpr uint8_t pwm2Pin{MOTOR_PWM_2_PIN}; // PWM2
@@ -71,7 +71,9 @@ void setup() {
   // strip.begin();
   // strip.show(); // initializae all pixels to OFF
   //
-  // Wire.begin(); // Initialize I2C communication
+    Wire.setClock(400000); // Uncomment for Fast Mode: 400 kHz
+
+  Wire.begin(); // Initialize I2C communication
   //
   // pinMode(LED_BUILTIN, OUTPUT);
   // neopixelWrite(RGB_BUILTIN, 25, 0, 0); // Default to red (R=255, G=0, B=0)
@@ -98,19 +100,24 @@ void setup() {
   Serials.print("[INFO] KestrelSAT online \npress 1 for options\n\n");
   // ----------------------------------------------
 
+
+    // BNO085 setup ////////
+    // Try to initialize!
+    // inline void initialize_bno08x(void){
+        if (!bno08x.begin_I2C()) {
+            Serial.println("Failed to find BNO08x chip");
+        } else {
+            Serial.println("BNO08x Found!");
+            setReports();
+        }
+    // }   // end BNO085 IMU setup ////////
+
+
   //----------------------------------------------
   // Initialize SD Card
   //----------------------------------------------
   sd_init(SD_CS_PIN);
   //----------------------------------------------
-
-    // initialize ADC
-    if(!ads.begin()) {
-        // while (true) {
-            Serial.println("Failed to initialize ADC.");
-            delay(500);
-        // }
-    }
 
   //----------------------------------------------
   // Initialize MAX17048 fuel gauge
@@ -124,21 +131,13 @@ void setup() {
   // }
   //----------------------------------------------
 
-  //----------------------------------------------
-  // Initialize ICM20948
-  //----------------------------------------------
-  // if (imu_sensor.begin(Wire, 1) != ICM_20948_Stat_Ok) {
+  // //----------------------------------------------
+  // // Initialize BNO085
+  // //----------------------------------------------
+  // if (!bno08x.begin_I2C()) {
   //   Serials.println("[CAUTION] IMU not found.");
-  //   while (1);
-  // } else{
-  //   // // 1. Set to Continuous Mode for consistent sampling
-  //   // imu_sensor.setSampleMode((ICM_20948_Internal_Acc | ICM_20948_Internal_Gyr), ICM_20948_Sample_Mode_Continuous);
-  //   // // 2. Configure Sample Rate Divider (formula: 1125 / (1 + divider) Hz)
-  //   // ICM_20948_smplrt_t mySmplrt;
-  //   // mySmplrt.a = 1; // Accel divider 1: 1125 / (1+1) = ~562.5 Hz
-  //   // mySmplrt.g = 1; // Gyro divider 1: 1125 / (1+1) = ~562.5 Hz
-  //   // imu_sensor.setSampleRate(ICM_20948_Internal_Acc, mySmplrt);
-  //   // imu_sensor.setSampleRate(ICM_20948_Internal_Gyr, mySmplrt);
+  //   while (!bno08x.begin_I2C()); {delay(100); }
+  // } else {
   //   Xbee.println("[INFO] IMU Initialized.");
   // }
   //----------------------------------------------
@@ -178,9 +177,9 @@ void setup() {
 /////////////////////////////////////////////////////////////////////////////////////////////////
 void loop() {
 
-  menu.run(1000);
-  delay(1000);
-    Serial.println("loop");
+  menu.run(10);
+  delay(10);
+    // Serial.println("loop");
   
 } // end loop()
 

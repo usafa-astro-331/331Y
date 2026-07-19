@@ -211,7 +211,7 @@
 // OTHER:
 
 
-#define Xbee Serial2
+#define Xbee Serial1
 
 #define XBEE_SPEED 57600
 
@@ -225,8 +225,11 @@
 // strip.setPixelColor(0, 0, 0, 0);
 // strip.show();
 
-#define neopixelWrite(a,b,c,d) { \
-			strip.setPixelColor((b), (c), (d), 0); \
-			strip.show(); \
-}
+#define neopixelWrite(a, b, c, d) {;}
+#define RGB_BUILTIN
+
+// #define neopixelWrite(a,b,c,d) { \
+// 			strip.setPixelColor((b), (c), (d), 0); \
+// 			strip.show(); \
+// }
 
