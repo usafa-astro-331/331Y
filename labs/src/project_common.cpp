@@ -3,8 +3,11 @@
 
 #include "Adafruit_BNO08x.h"
 #include "definitions.h"
-#include "sd_functions.h"
+// #include "sd_functions.h"
 #include "SdFat.h"
+
+extern SdFs sd;
+extern FsFile dataFile;
 
 
 // Initialize Global Objects
@@ -69,9 +72,8 @@ size_t DualSerial::write(uint8_t c) {
 
 
 // File-scope objects (NOT in the header)
-// static SdFat sd;
-SdFs sd;
-SdFile fout;
+// SdFs sd;
+// FsFile fout;
 
 Adafruit_ADS1015 ads;
 
@@ -241,13 +243,59 @@ bool user_has_typed_x() {
     return false;
 }
 
-bool create_and_open_file(FsFile *dataFile2, const String& directory, const String& filename_preamble) {
+bool create_and_open_file(FsFile* dataFile2, const String& directory, const String& filename_preamble) {
+    sd.chdir();
+    dataFile2->close();
+
+    sd.ls("/");
+
+    if (sd.exists("folder1")) {
+        if (sd.rmdir("folder1")) {
+            Serials.println("folder1 removed inside");
+        }
+        else {
+            Serials.println("folder1 not removedasdf?");
+        }
+    }
+
+    if (!sd.mkdir("asdf")){
+        Serials.println("mkdir asdf failed");
+    }
+    else {
+        Serials.println("folderasdf created");
+
+        if (!sd.chdir("folder1")) {
+            Serials.println("chdir failed");
+        }
+        else {
+            Serials.println("chdir success");
+        }
+    }
+
+
+
+    Serials.println(directory); Serials.println(filename_preamble);
+
+
     sd.chdir(); // change to root ("/")
+
+    if (sd.exists("folder1")) {
+        sd.remove("folder1");
+        Serials.println("folder1 removed");
+    }
+
+        if (sd.mkdir("folder1")) {
+            Serials.println("folder1 created");
+        }
+        else {
+            Serials.println("mkdir1 failed");
+        }
 
     if (!sd.exists(directory)) {
         Serials.println("[INFO] Creating directory: " + directory);
         // mkdir("/"+directory);
-        if (!sd.mkdir(directory)) {
+
+        if (!sd.mkdir("/attde")) {
             Serials.println("[ERROR] could not create directory.");
             return false;
         }

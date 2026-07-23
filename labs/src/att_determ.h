@@ -63,8 +63,7 @@ inline void attitude_sensors() {
     float alt_reads = 0.0f;
 
 
-
-  if (!create_and_open_file(&dataFile, "att_determ", "attitude_sensors_")) {
+  if (!create_and_open_file(&dataFile, "att_de", "attitude_sensors_")) {
     Serials.println("[ERROR] Failed to create data file. Aborting test.");
     return;
   }

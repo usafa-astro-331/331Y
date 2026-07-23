@@ -3,12 +3,17 @@
 #include <Adafruit_ADS1X15.h>
 extern Adafruit_ADS1015 ads;
 
+
+
 #include <Arduino.h>
 #include <variant>
 #include <vector>
 
 // #include "FsLib/FsFile.h"
 #include <SdFat.h>
+
+extern SdFs sd;
+extern FsFile dataFile;
 
 // Configuration
 inline constexpr uint32_t serial_decimation = 5;
@@ -19,7 +24,7 @@ extern DualSerial Serials;
 class TelemetryLogger;
 extern TelemetryLogger logger;
 
-extern FsFile dataFile;   // data file object
+// extern FsFile dataFile;   // data file object
 
 /**
  * TelemetryLogger class

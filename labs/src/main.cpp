@@ -21,7 +21,11 @@
 #include "communication.h"
 
 #include "project_common.h"
+
+// declare sd card and datafile
+SdFs sd;
 FsFile dataFile;   // data file object
+FsFile fout;
 
 // #include <SerialUART.h>
 // extern SerialUART Xbee;
@@ -116,7 +120,63 @@ void setup() {
   //----------------------------------------------
   // Initialize SD Card
   //----------------------------------------------
-  sd_init(SD_CS_PIN);
+  // sd_init(SD_CS_PIN);
+    // pinMode(SD_CS_PIN, OUTPUT);
+    while (!sd.begin(SD_CS_PIN)) {
+        Serials.println("[ERROR] SD card initialization failed. Card present?");
+        delay(2000);
+    }
+    Serials.println("[INFO] SD Card Initialized.");
+
+    sd.ls("/");
+
+    sd.chdir();
+    if (sd.exists("folder1")) {
+        if (sd.rmdir("folder1")) {
+            Serials.println("folder1 removed");
+        }
+        else {
+            Serials.println("folder1 not removed");
+        }
+    }
+
+    if (!sd.mkdir("folder1")){
+        Serials.println("mkdir asdf failed");
+    }
+    else {
+        Serials.println("folder1 created");
+
+        if (!sd.chdir("folder1")) {
+            Serials.println("chdir f1 failed");
+        }
+        else {
+            Serials.println("chdir f1 success");
+        }
+    }
+
+    if (!sd.chdir()) {
+        Serials.println("chdir to root failed");
+    }
+    else {
+        Serials.println("chdir to root success");
+    }
+    delay(10);
+
+    if (sd.rmdir("folder1")) {
+        Serials.println("folder1 removed top");
+    }
+    else {
+        Serials.println("folder1 not removed??");
+    }
+
+    if (!create_and_open_file(&dataFile, "att", "att1")) {
+        Serials.println("failed here");;
+    }
+    else{ Serials.println("success here"); }
+
+    sd.rmdir("/attde");
+
+
   //----------------------------------------------
 
   //----------------------------------------------

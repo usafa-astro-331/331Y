@@ -5,9 +5,8 @@
 #include <HardwareSerial.h>
 
 // File-scope objects (NOT in the header)
-// static SdFat sd;
 extern SdFs sd;
-extern SdFile fout;
+extern FsFile dataFile;
 
 /*---------------------------------------------------------------------------------------------*/
 // Function Definitions:
@@ -22,9 +21,13 @@ extern SdFile fout;
 bool sd_init(uint8_t csPin)
 {
     pinMode(SD_CS_PIN, OUTPUT);
-    if (!sd.begin(SD_CS_PIN, SD_SCK_MHZ(25))) {
-        while (1) { Xbee.println("[ERROR] SD card initialization failed. Card present?"); delay(2000); }
-    } else {Xbee.println("[INFO] SD Card Initialized.");}
+    while (!sd.begin(SD_CS_PIN, SD_SCK_MHZ(25))) {
+        Xbee.println("[ERROR] SD card initialization failed. Card present?");
+        delay(2000);
+    }
+
+    Xbee.println("[INFO] SD Card Initialized.");
+
     return true;
 }
 

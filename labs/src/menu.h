@@ -132,8 +132,10 @@ inline void folder_ls(const String& directory) {
 }
 
 inline void transfer_file_from_directory(const String& directory_name) {
-	if (!sd.chdir(directory_name)) {
-		Serials.printf("[ERROR] directory %c not found \n", directory_name.c_str());
+	if (!sd.chdir(directory_name.c_str())) {
+	    Serials.print("[ERROR] directory ");
+	    Serials.print(directory_name);
+	    Serials.println(" not found");
 		return;
 	}
 
@@ -158,19 +160,19 @@ inline void transfer_file_from_directory(const String& directory_name) {
 	dirsz.rewindDirectory();
 
 	int filenum = 1;
-	while (fout.openNext(&dirsz)) {
+	while (dataFile.openNext(&dirsz)) {
 		if (filenum < choice) {
 			filenum++;
-			fout.close();
+			dataFile.close();
 		}
 		else {
-			fout.getName(zfile_name, 256);
+			dataFile.getName(zfile_name, 256);
 			ZSERIAL.print(F("rz\n"));
 			ZSERIAL.flush();
 			sendzrqinit();
 			delay(200);
 			wcs(zfile_name);
-			fout.close();
+			dataFile.close();
 			break;
 		}
 	}
