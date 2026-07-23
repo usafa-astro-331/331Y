@@ -35,8 +35,10 @@ bool create_and_open_file(FsFile* dataFile2, const String& directory, const Stri
     sd.chdir(); // change to root ("/")
 
     if (sd.exists("folder1")) {
-        sd.remove("folder1");
-        Serials.println("folder1 removed");
+        if (sd.rmdir("folder1")) {
+            Serials.println("folder1 removed");
+        }
+        else {Serials.println("remove1 failed");}
     }
 
         if (sd.mkdir("folder1")) {
@@ -50,7 +52,7 @@ bool create_and_open_file(FsFile* dataFile2, const String& directory, const Stri
         Serials.println("[INFO] Creating directory: " + directory);
         // mkdir("/"+directory);
 
-        if (!sd.mkdir("directory")) {
+        if (!sd.mkdir(directory)) {
             Serials.println("[ERROR] could not create directory.");
             return false;
         }
