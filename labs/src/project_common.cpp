@@ -267,7 +267,6 @@ bool create_and_open_file(FsFile* dataFile2, const String& directory, const Stri
     int fileNumber = 1;
 
     do {
-        // We use .c_str() here because snprintf expects a const char*
         snprintf(filename, sizeof(filename),
                  "%s%03d.csv",
                  filename_preamble.c_str(),

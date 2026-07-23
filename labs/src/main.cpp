@@ -128,54 +128,6 @@ void setup() {
     }
     Serials.println("[INFO] SD Card Initialized.");
 
-    sd.ls("/");
-
-    sd.chdir();
-    if (sd.exists("folder1")) {
-        if (sd.rmdir("folder1")) {
-            Serials.println("folder1 removed");
-        }
-        else {
-            Serials.println("folder1 not removed");
-        }
-    }
-
-    if (!sd.mkdir("folder1")){
-        Serials.println("mkdir asdf failed");
-    }
-    else {
-        Serials.println("folder1 created");
-
-        if (!sd.chdir("folder1")) {
-            Serials.println("chdir f1 failed");
-        }
-        else {
-            Serials.println("chdir f1 success");
-        }
-    }
-
-    if (!sd.chdir()) {
-        Serials.println("chdir to root failed");
-    }
-    else {
-        Serials.println("chdir to root success");
-    }
-    delay(10);
-
-    if (sd.rmdir("folder1")) {
-        Serials.println("folder1 removed top");
-    }
-    else {
-        Serials.println("folder1 not removed??");
-    }
-
-    if (!create_and_open_file(&dataFile, "att", "att1")) {
-        Serials.println("failed here");;
-    }
-    else{ Serials.println("success here"); }
-
-    sd.rmdir("/attde");
-
 
   //----------------------------------------------
 

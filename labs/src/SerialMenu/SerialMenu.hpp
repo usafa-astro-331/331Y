@@ -348,7 +348,7 @@ class SerialMenu
       return Xbee.read();
     }
 
-    // return a number input read form the serial console.
+    // return a number input read from the serial console.
     // Note: this routine is blocking execution until a number is input
     template <class T>
     inline T getNumber(const char * const message = nullptr)
@@ -420,7 +420,7 @@ class SerialMenu
     // Returns false if there was no menu input, true if there was
     bool run(const uint16_t loopDelayMs)
     {
-      static char heartbeats[] = {'|','/','-','\\'};
+      static char heartbeats[] = {'|','/','-',0x5c};
       static uint8_t heartbeat_num = 0;
 
       const bool userInputAvailable = Xbee.available();
