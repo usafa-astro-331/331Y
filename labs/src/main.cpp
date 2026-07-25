@@ -10,18 +10,22 @@
 
 #include "project_common.h"
 
+#include "sd_functions.h"
+
 // declare sd card and datafile
 SdFs sd;
 FsFile dataFile;   // data file object
 FsFile fout;
 
+#include "menu.h"
+Adafruit_BNO08x bno08x; // IMU object
 /////////////////////////////////////////////////////////////////////////////////////////////////
 // SETUP:
 /////////////////////////////////////////////////////////////////////////////////////////////////
 void setup() {
   //
   //
-    Wire.setClock(400000); // Uncomment for Fast Mode: 400 kHz
+    Wire.setClock(100000); // bno086 messes with i2c past 100 kHz
 
   Wire.begin(); // Initialize I2C communication
 
@@ -41,6 +45,20 @@ void setup() {
   Serials.print("[INFO] KestrelSAT online \npress 1 for options\n\n");
   // ----------------------------------------------
 
+
+    // BNO085 setup ////////
+    // Try to initialize!
+    // inline void initialize_bno08x(void){
+    if (!bno08x.begin_I2C()) {
+        Serial.println("Failed to find BNO08x chip");
+    } else {
+        Serial.println("BNO08x Found!");
+        setReports();
+    }
+    // }   // end BNO085 IMU setup ////////
+
+
+
     while (!sd.begin(SD_CS_PIN)) {
         Serials.println("[ERROR] SD card initialization failed. Card present?");
         delay(2000);
@@ -55,6 +73,8 @@ void setup() {
     sd.rmdir("/attde");
 
 
+    menu.load(main_menu,GET_MENU_SIZE(main_menu));
+    menu.show();
 } // end setup()
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -62,7 +82,7 @@ void setup() {
 /////////////////////////////////////////////////////////////////////////////////////////////////
 void loop() {
 
-  // menu.run(10);
+  menu.run(10);
   delay(10);
     // Serial.println("loop");
   

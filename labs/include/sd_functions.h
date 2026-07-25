@@ -6,9 +6,11 @@
 /*---------------------------------------------------------------------------------------------*/
 // Function Prototypes (see defintiions in .cpp file):
 /*---------------------------------------------------------------------------------------------*/
-bool sd_init(uint8_t csPin);
+// bool sd_init(uint8_t csPin);
+//
+// bool sd_createDataFile(FsFile *dataFile, const char *preamble);
+// void sd_listFiles(String dirName, int depth);
+// void sd_printFileMenu(const String& path);
+// void sd_printFile(const char *filename);
 
-bool sd_createDataFile(FsFile *dataFile, const char *preamble);
-void sd_listFiles(String dirName, int depth);
-void sd_printFileMenu(const String& path);
-void sd_printFile(const char *filename);
+bool create_and_open_file(FsFile *dataFile, const String& directory, const String& filename_preamble);
