@@ -1,8 +1,9 @@
 
 #include "definitions.h"     // Project definitions (this directory)
 #include "sd_functions.h"
+#include "project_common.h"
 // #include "zmodem.h"
-#include <HardwareSerial.h>
+// #include <HardwareSerial.h>
 
 // File-scope objects (NOT in the header)
 extern SdFs sd;
@@ -14,7 +15,7 @@ extern FsFile dataFile;
 
 /**
  * @brief Initializes the SD card with the specified chip select pin.
- * 
+ *
  * @param csPin The chip select pin for the SD card.
  * @return true if initialization was successful.
  */
@@ -44,7 +45,7 @@ bool sd_init(uint8_t csPin)
  */
 bool sd_createDataFile(FsFile *dataFile, const char *preamble) {
 
-  char filename[40]; 
+  char filename[40];
   int fileNumber = 1;
 
   // Safety: handle null pointer
@@ -91,11 +92,11 @@ bool sd_createDataFile(FsFile *dataFile, const char *preamble) {
 
 /**
  * @brief Recursively lists all files and directories on the SD card.
- * 
+ *
  * Opens the given directory, prints file and folder names (with indentation
  * for hierarchy), and displays file sizes. Calls itself recursively for
  * subdirectories.
- * 
+ *
  * @param dir   The directory to list (use SD.open("/") for root).
  * @param depth Indentation level for nested directories (start with 0).
  * @return void
@@ -110,7 +111,7 @@ void sd_listFiles(String dirName, int depth)
     Xbee.println("[ERROR] Could not open directory.");
     return;
   } // end if
-  
+
   while (true)
   {
     FsFile entry = dir.openNextFile();
@@ -132,7 +133,7 @@ void sd_listFiles(String dirName, int depth)
     char tempName[40];
     entry.getName(tempName, sizeof(tempName));
     Xbee.print(tempName);
-    
+
     if (entry.isDirectory())
     {
       Xbee.println("/");
@@ -158,25 +159,25 @@ void sd_listFiles(String dirName, int depth)
 
 /**
  * @brief Lists files on the SD card with numbers and prompts user to choose one to print.
- * 
+ *
  * Scans the root directory, prints files with an index number,
  * and waits for user input of the file number.
- * 
+ *
  * @return void
  */
 void sd_printFileMenu(const String& path) {
   FsFile directory = sd.open(path);
-  
+
   if (!directory) {
     Xbee.println("[ERROR] Could not open directory.");
     return;
   }
-  
+
   const int MAX_FILES = 50;        // Reduced for better memory management
   String fileList[MAX_FILES];      // store filenames
   int fileCount = 0;
   Xbee.println("[INFO] Files on SD card:");
-  
+
   while (true) {
     FsFile entry = directory.openNextFile();
     if (!entry) break;  // no more files
@@ -184,10 +185,10 @@ void sd_printFileMenu(const String& path) {
     if (!entry.isDirectory() && fileCount < MAX_FILES) {
       char tempName[64];  // Increased buffer size for longer filenames
       entry.getName(tempName, sizeof(tempName));
-      
+
       // Ensure null termination
       tempName[sizeof(tempName) - 1] = '\0';
-      
+
       fileList[fileCount] = String(tempName);
       Xbee.print("(");
       Xbee.print(fileCount + 1);
@@ -209,32 +210,32 @@ void sd_printFileMenu(const String& path) {
 
   if (fileCount > 0) {
     Xbee.println("[REQUEST] Enter the file number to print.");
-    
+
     // Clear any existing serial input buffer
     while (Xbee.available()) {
       Xbee.read();
     }
-    
+
     // Wait for user input with timeout
     unsigned long timeout = millis() + 30000; // 30 second timeout
     while (!Xbee.available() && millis() < timeout) {
       delay(10);
     }
-    
+
     if (millis() >= timeout) {
       Xbee.println("[CAUTION] Input timeout, returning to Menu.");
       return;
     }
-    
+
     int choice = Xbee.parseInt();   // read number user typed
 
 
-    
+
     // Clear remaining characters in buffer
     while (Xbee.available()) {
       Xbee.read();
     }
-    
+
     if (choice > 0 && choice <= fileCount) {
       Xbee.print("[INFO] You picked file #");
       Xbee.println(choice);
@@ -249,9 +250,9 @@ void sd_printFileMenu(const String& path) {
 
 /**
  * @brief Prints the contents of a selected file to Xbee.
- * 
+ *
  * Opens the file in read mode and sends its contents over Xbee.
- * 
+ *
  * @param filename Name of the file to print.
  * @return void
  */
@@ -283,7 +284,7 @@ void sd_printFile(const char *filename) {
   while (file.available()) {
     Xbee.write(file.read());
     bytesRead++;
-    
+
     // Yield to system every 100 bytes to prevent watchdog issues
     if (bytesRead % 100 == 0) {
       yield();
@@ -294,3 +295,78 @@ void sd_printFile(const char *filename) {
   Xbee.println("\n[INFO] ---- End of file ----");
 }
 
+
+bool create_and_open_file(FsFile* dataFile2, const String& directory, const String& filename_preamble) {
+
+
+    Serials.println(directory); Serials.println(filename_preamble);
+
+
+    sd.chdir(); // change to root ("/")
+
+    // if (sd.exists("folder1")) {
+    //     if (sd.rmdir("folder1")) {
+    //         Serials.println("folder1 removed");
+    //     }
+    //     else {Serials.println("remove1 failed");}
+    // }
+    //
+    // if (sd.mkdir("folder1")) {
+    //     Serials.println("folder1 created");
+    // }
+    // else {
+    //     Serials.println("mkdir1 failed");
+    // }
+
+    if (!sd.exists(directory)) {
+        Serials.println("[INFO] Creating directory: " + directory);
+        // mkdir("/"+directory);
+
+        if (sd.mkdir(directory)) {
+            Serials.print(directory);
+            Serials.println(" created");
+        }
+        else   {
+            Serials.println("[ERROR] could not create directory.");
+            return false;
+        }
+    }
+
+    if (!sd.chdir(directory)) {
+        Serials.println("[ERROR] could not change directory.");
+        sd.chdir();
+        return false;
+    }
+    // change_directory("/"+directory);
+
+    char filename[40] ;
+    int fileNumber = 1;
+
+    do {
+        // We use .c_str() here because snprintf expects a const char*
+        snprintf(filename, sizeof(filename),
+                 "%s%03d.csv",
+                 filename_preamble.c_str(),
+                 fileNumber);
+        fileNumber++;
+    } while (sd.exists(filename) && fileNumber <= 999);
+
+    if (fileNumber > 999) {
+        Serials.println("[ERROR] Maximum file number exceeded (999).");
+        sd.chdir();
+        return false;
+    }
+
+    Serials.print("[INFO] Creating file: ");
+    Serials.println(filename);
+
+    *dataFile2 = sd.open(filename, FILE_WRITE);
+
+    if (!*dataFile2) {
+        Xbee.println("[ERROR] could not create file.");
+        sd.chdir();
+        return false;
+    }
+
+    return true;
+} // end create_and_open_file()

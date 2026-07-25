@@ -98,10 +98,10 @@ inline uint8_t att_control_menu_size = GET_MENU_SIZE(att_control_menu);
 
 inline SerialMenuEntry file_menu[] = {
 	{"\nfile menu", false, ' ', [](){ menu.show(); } },
-	{"1: communication files",      false, '1', [](){ transfer_file_from_directory("communication"); pause_refresh();} },
-	{"2: electrical files",false, '2', [](){ transfer_file_from_directory("electrical"); pause_refresh();} },
-	{"3: attitude determination files",false, '3', [](){ transfer_file_from_directory("att_determ"); pause_refresh();} },
-	{"4: attitude control files",false, '4', [](){ transfer_file_from_directory("att_control"); pause_refresh();} },
+	// {"1: communication files",      false, '1', [](){ transfer_file_from_directory("communication"); pause_refresh();} },
+	// {"2: electrical files",false, '2', [](){ transfer_file_from_directory("electrical"); pause_refresh();} },
+	// {"3: attitude determination files",false, '3', [](){ transfer_file_from_directory("att_determ"); pause_refresh();} },
+	// {"4: attitude control files",false, '4', [](){ transfer_file_from_directory("att_control"); pause_refresh();} },
 	// {"z: manage files",false, '4', [](){ lab7_run_test_B(); pause_refresh();} },
 	{"0: return to main menu", false, '0', [](){ menu.load(main_menu,main_menu_size); menu.show(); } },
 {" ", false, 'x', [](){ menu.show(); } },
@@ -126,98 +126,103 @@ inline void pause_refresh()
 }
 
 inline void folder_ls(const String& directory) {
-	change_directory(directory);
-	directory_listing();
-	change_directory("/");
+    sd.chdir(directory);
+    sd.ls(&Serials);
+    sd.chdir();
+	// change_directory(directory);
+	// directory_listing();
+	// change_directory("/");
 }
 
-inline void transfer_file_from_directory(const String& directory_name) {
-	if (!sd.chdir(directory_name.c_str())) {
-	    Serials.print("[ERROR] directory ");
-	    Serials.print(directory_name);
-	    Serials.println(" not found");
-		return;
-	}
+// inline void transfer_file_from_directory(const String& directory_name) {
+// 	if (!sd.chdir(directory_name.c_str())) {
+// 	    Serials.print("[ERROR] directory ");
+// 	    Serials.print(directory_name);
+// 	    Serials.println(" not found");
+// 		return;
+// 	}
+//
+// 	directory_listing();
+//
+//      Serials.println("[REQUEST] Enter the file number to print.");
+//
+// 	int choice = get_int_from_ground();
+//
+// 	if (choice==-98789) {
+// 		Serials.println("no selection/invalid selection. Aborting");
+// 		sd.chdir();
+// 		delay(500);
+// 		return;
+// 	}
+//
+//        Serials.print("[INFO] You picked file #");  Serials.println(choice);
+//
+// 	FsFile dirsz;
+//
+// 	dirsz.openCwd();
+// 	dirsz.rewindDirectory();
+//
+// 	int filenum = 1;
+// 	while (dataFile.openNext(&dirsz)) {
+// 		if (filenum < choice) {
+// 			filenum++;
+// 			dataFile.close();
+// 		}
+// 		else {
+// 			dataFile.getName(zfile_name, 256);
+// 			ZSERIAL.print(F("rz\n"));
+// 			ZSERIAL.flush();
+// 			sendzrqinit();
+// 			delay(200);
+// 			wcs(zfile_name);
+// 			dataFile.close();
+// 			break;
+// 		}
+// 	}
+// 	dirsz.close();
+// 	saybibi();
+// 	Xbee.println("transfer complete");
+//
+// 	sd.chdir();
+// 	delay(500);
+// } // end function transfer files from directory()
 
-	directory_listing();
 
-     Serials.println("[REQUEST] Enter the file number to print.");
 
-	int choice = get_int_from_ground();
-
-	if (choice==-98789) {
-		Serials.println("no selection/invalid selection. Aborting");
-		sd.chdir();
-		delay(500);
-		return;
-	}
-
-       Serials.print("[INFO] You picked file #");  Serials.println(choice);
-
-	FsFile dirsz;
-
-	dirsz.openCwd();
-	dirsz.rewindDirectory();
-
-	int filenum = 1;
-	while (dataFile.openNext(&dirsz)) {
-		if (filenum < choice) {
-			filenum++;
-			dataFile.close();
-		}
-		else {
-			dataFile.getName(zfile_name, 256);
-			ZSERIAL.print(F("rz\n"));
-			ZSERIAL.flush();
-			sendzrqinit();
-			delay(200);
-			wcs(zfile_name);
-			dataFile.close();
-			break;
-		}
-	}
-	dirsz.close();
-	saybibi();
-	Xbee.println("transfer complete");
-
-	sd.chdir();
-	delay(500);
-} // end function transfer files from directory()
-
-/**
- * @brief ADC-based metrology example
- *
- * This function continuously reads the ADC pin and logs data to the serial interface.
- *
- * Functionality:
- * - Enables 10-bit ADC resolution.
- * - Reads the analog value from the specified ADC pin.
- * - Logs the following attributes to the serial interface:
- *   - Elapsed time in milliseconds.
- *   - 10-bit ADC value.
- *   - Reduced 3-bit ADC value (3 most significant bits of the 10-bit result).
- *   - A non-linear 3-bit ADC value (reads first 3 bits then saturates at 7)
- * - Provides an exit option by checking for user input ('X').
- *
- * Logging:
- * - Utilizes the `TelemetryLogger` class to structure and log the data.
- * - Clears previous log entries before adding new data points.
- * - All logs are written to the serial interface using the `DualSerial` instance.
- *
- * Behavior:
- * - Waits 1 second before entering the infinite logging loop.
- * - Captures data approximately every 250 milliseconds.
- * - Exits the loop and the function when the user types 'X'.
- *
- * Precondition:
- * - `ADC_PIN` should be defined and properly connected to the ADC source.
- * - The `logger` object and `Serials` instance must be initialized.
- * - `user_has_typed_x()` function must be implemented to detect the exit condition.
- *
- * @see TelemetryLogger
- * @see DualSerial
- * @see user_has_typed_x
- */
+// /**
+//  * @brief ADC-based metrology example
+//  *
+//  * This function continuously reads the ADC pin and logs data to the serial interface.
+//  *
+//  * Functionality:
+//  * - Enables 10-bit ADC resolution.
+//  * - Reads the analog value from the specified ADC pin.
+//  * - Logs the following attributes to the serial interface:
+//  *   - Elapsed time in milliseconds.
+//  *   - 10-bit ADC value.
+//  *   - Reduced 3-bit ADC value (3 most significant bits of the 10-bit result).
+//  *   - A non-linear 3-bit ADC value (reads first 3 bits then saturates at 7)
+//  * - Provides an exit option by checking for user input ('X').
+//  *
+//  * Logging:
+//  * - Utilizes the `TelemetryLogger` class to structure and log the data.
+//  * - Clears previous log entries before adding new data points.
+//  * - All logs are written to the serial interface using the `DualSerial` instance.
+//  *
+//  * Behavior:
+//  * - Waits 1 second before entering the infinite logging loop.
+//  * - Captures data approximately every 250 milliseconds.
+//  * - Exits the loop and the function when the user types 'X'.
+//  *
+//  * Precondition:
+//  * - `ADC_PIN` should be defined and properly connected to the ADC source.
+//  * - The `logger` object and `Serials` instance must be initialized.
+//  * - `user_has_typed_x()` function must be implemented to detect the exit condition.
+//  *
+//  * @see TelemetryLogger
+//  * @see DualSerial
+//  * @see user_has_typed_x
+//  */
 inline void metrology_example() {
 	Serials.println("'X' to exit");
 	delay(1000);
