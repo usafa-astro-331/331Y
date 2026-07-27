@@ -45,7 +45,7 @@ uint32_t interval_heartBeat = 500; // interval between heartbeat (ms)
 void setup() {
   //
   //
-    Wire.setClock(100000); // bno086 messes with i2c past 100 kHz
+    Wire.setClock(50000); // bno086 messes with i2c past 100 kHz
 
   Wire.begin(); // Initialize I2C communication
 
@@ -78,7 +78,10 @@ void setup() {
     }
     // }   // end BNO085 IMU setup ////////
 
-
+    if (!ads.begin()) {
+        Serial.println("Failed to initialize ADS.");
+        while (1);
+    }
 
   //----------------------------------------------
   // Initialize SD Card

@@ -97,24 +97,15 @@ inline void attitude_sensors() {
     return;
   }
 
-    // if (bno08x.wasReset()) {
-    //     Serial.print("sensor was reset ");
-    //     setReports();
-    // }
-
-
-
 
   timeNext_testPoint = millis();
-  int test_point_count = 0;
+  uint16_t test_point_count = 0;
   neopixelWrite(RGB_BUILTIN, 25, 16, 0); // Set to orange (R=255, G=165, B=0)
 
   while(!user_has_typed_x()){
     uint32_t timeNow = millis();
-    if(timeNow > timeNext_testPoint){ // Collect Test Point loop
-      test_point_count++;
 
-        while (!bno08x.getSensorEvent(&sensorValue)) {
+        if (bno08x.getSensorEvent(&sensorValue)) {
             // new data available
             switch (sensorValue.sensorId) {
 
@@ -134,18 +125,18 @@ inline void attitude_sensors() {
             delay(1);
         } // end while (!bno08x...)
 
-      // // Collect IMU Test Point:
-      // imu_sensor.getAGMT();
-      // gyro_Z = imu_sensor.gyrZ();
-      // mag_X = imu_sensor.magX();
-      // mag_Y = imu_sensor.magY();
+      if(timeNow > timeNext_testPoint){ // save test point to file
+          test_point_count++;
+          timeNext_testPoint += interval_testPoint;
 
         // calculate data from accumulated values
 
-        if (gyro_reads == 0) {
+        if (gyro_reads==0) {
             gyro_x = NAN; gyro_y = NAN; gyro_z = NAN;
         }
         else{
+            gyro_x =  gyros.at(0) /gyro_reads;
+            gyro_y =  gyros.at(1) /gyro_reads;
             gyro_z =  gyros.at(2) /gyro_reads;
         }
 
@@ -155,6 +146,7 @@ inline void attitude_sensors() {
         else {
             mag_x =  mags.at(0);
             mag_y =  mags.at(1);
+            mag_z =  mags.at(2);
         }
 
 
@@ -166,15 +158,17 @@ inline void attitude_sensors() {
       sun_minusY = 0;
       for (int i = 0; i < n_sun_sensor_reads; i++) {
 
-          sun_plusY += ads.readADC_SingleEnded(0);
-          sun_plusX += ads.readADC_SingleEnded(1);
-          sun_minusY += ads.readADC_SingleEnded(2);
-          sun_minusX += ads.readADC_SingleEnded(3);
+          // sun_plusY += ads.readADC_SingleEnded(0);
+          // sun_plusX += ads.readADC_SingleEnded(1);
+          // sun_minusY += ads.readADC_SingleEnded(2);
+          // sun_minusX += ads.readADC_SingleEnded(3);
+
       }
       sun_plusX /= n_sun_sensor_reads;
       sun_minusX /= n_sun_sensor_reads;
       sun_plusY /= n_sun_sensor_reads;
       sun_minusY /= n_sun_sensor_reads;
+
 
       // ////////////* find sun direction *////////////////////////////////////////
       // // // uncomment sun_plusX & sun_plusY lines to calculate sun direction
@@ -204,8 +198,6 @@ inline void attitude_sensors() {
        logger.add( "snY", "count",   sun_minusY);
 
 
-      uint8_t ii = 0;
-      if (dataFile) {
         logger.logToCSV(dataFile);
         if (!CSV_header_complete) {
           logger.create_CSV_header(dataFile);
@@ -219,7 +211,7 @@ inline void attitude_sensors() {
 
         } // print to serial sometimes
 
-      } // end if (dataFile)
+
         // reset data accumulators and counts to zero
         mag_reads = false;
         gyro_reads = 0.0f;
@@ -228,7 +220,7 @@ inline void attitude_sensors() {
         mags = {0.0, 0.0, 0.0};
     } // end if (timeNow>timeNext_testPoint)
 
-    } // end of while(true)
+    } // end of while(!user_has_typed_x())
 
   sd.chdir();
 
@@ -246,10 +238,10 @@ inline void setReports(void) {
     // Set report rate to 20000us (20ms) which is 50Hz.
     // This ensures we get at least one update per 25ms logging interval.
 
-    if (! bno08x.enableReport(SH2_GYROSCOPE_CALIBRATED, 20000) ) {
+    if (! bno08x.enableReport(SH2_GYROSCOPE_CALIBRATED, 10000) ) {
         Serials.println("Could not enable rotation vector");
     }
-    if (! bno08x.enableReport(SH2_MAGNETIC_FIELD_CALIBRATED, 20000) ) {
+    if (! bno08x.enableReport(SH2_MAGNETIC_FIELD_CALIBRATED, 10000) ) {
         Serials.println("Could not enable magnetic vector");
     }
 
