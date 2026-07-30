@@ -215,8 +215,10 @@
 
 #define XBEE_SPEED 57600
 
-#define MOTOR_VOLTAGE           5.05f
-#define CT_PER_REV              64 // encoder counts per revolution
+#define MOTOR_VOLTAGE           5.0f
+#define CT_PER_REV              464.64f  // encoder counts per gearbox revolution
+                                        //  https://www.pololu.com/product/4802
+#define SUBSTEP_PER_CT        256.0f      // https://github.com/pmarques-dev/PicoEncoder
 
 #define COMMAND_TIMEOUT 10000 // time in ms to wait for user response
 

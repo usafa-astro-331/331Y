@@ -171,7 +171,7 @@ void setup() {
   //----------------------------------------------
   driver.enable(); // TB9051FTG Motor Driver
   driver.setOutput(0);
-  enc.begin(16); // Motor Encoder
+  enc.begin(ENCODER_PIN_A); // Motor Encoder
   //----------------------------------------------
 
   Serials.println("[INFO] SETUP COMPLETE.");
@@ -189,8 +189,10 @@ void setup() {
 /////////////////////////////////////////////////////////////////////////////////////////////////
 void loop() {
 
-  menu.run(10);
-  delay(10);
+  // menu.run(10);
+  delay(300);
+    enc.update();
+    Serials.println(enc.step);
     // Serial.println("loop");
   
 } // end loop()

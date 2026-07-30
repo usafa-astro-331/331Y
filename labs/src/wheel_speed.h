@@ -249,24 +249,31 @@ inline void stream_RW_speed() {
   delay(100);
   while(!Xbee.available() ){} // wait for user to send any key to start test
   delay(100); // small delay to ensure serial buffer is fully received
+    timeNext_testPoint = millis() ;
+    uint8_t test_point_count = 0;
 
-  while(true){
-    // Check for User Input:
-    if (user_has_typed_x()) {
-      dataFile.close();
-      driver.setOutput(0);
-      return;
-    }
+  while(!user_has_typed_x() ) {
+      if (millis() > timeNext_testPoint) {          // Collect Test Point loop
+          timeNext_testPoint += interval_testPoint;  // Update time for next Test Point
+          test_point_count ++;
 
-    #define ENC_SAMPLE_MS 50
+          if (!(test_point_count % serial_decimation)) {
 
-      // If you use full-quad (x4), make sure CT_PER_REV reflects *counts per rev after decoding*
-      float rev = (float)enc.position / ((float)CT_PER_REV * 10.0);
-      float rpm = (float)enc.speed / ((float)CT_PER_REV * 10.0);
+              enc.update();
+              float position  = (float)enc.position / CT_PER_REV / SUBSTEP_PER_CT;
+              float speed = (float)enc.speed / CT_PER_REV/ SUBSTEP_PER_CT;
 
-      Serials.printf("count:%lld,rpm:%.2f\n", (long long)rev, rpm);
+              // Print data to SD & XBee serial:
+              logger.clear();
+              logger.add("position", "?", enc.step);
+              logger.add("speed", "rps", speed);
+              logger.logToSerial(Serials);
+          }
 
-    }
+
+      }
+  }
+    return;
   } //end stream_RWspeed()
 
 
@@ -333,7 +340,7 @@ inline void full_speed_step_input() {
       uint32_t time = millis() - t0;
 
       // Get commanded reaction wheel speed:
-      float w_RW_cmd = -speed_pwm * 1000.0 * MOTOR_VOLTAGE / 12.0;
+      float w_RW_cmd = -speed_pwm * 1000.0 * MOTOR_VOLTAGE / 6.0;
 
       float rev = (float)enc.position / ((float)CT_PER_REV * 10.0);
       float w_RW_meas = (float)enc.speed / ((float)CT_PER_REV * 10.0);
@@ -345,11 +352,12 @@ inline void full_speed_step_input() {
       logger.add("RW_cmd", "RPM", w_RW_cmd);
       logger.add("RW_meas", "RPM", w_RW_meas);
 
-      uint8_t ii = 0;
+
       if (dataFile) {
         if (!CSV_header_complete){logger.create_CSV_header(dataFile); CSV_header_complete = true;}
         logger.logToCSV(dataFile);
         if (!(test_point_count % serial_decimation)) {
+            Serials.println(test_point_count);
           // print to serial sometimes
           logger.logToSerial(Serials);
           dataFile.flush();

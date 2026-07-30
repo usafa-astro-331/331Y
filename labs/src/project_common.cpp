@@ -219,10 +219,12 @@ bool get_command_from_ground() {
 
 bool user_has_typed_x() {
     static bool first_key = false;
+    delay(1);
+
     if (Xbee.available() == 0) return false;
 
-    switch (tolower(Xbee.peek())) {
-    case 'x':
+    switch (Xbee.peek()) {
+    case 'x': case 'X':
         Xbee.read(); // Clear the character from buffer
         Serials.print("[CAUTION] Test Canceled Early. File closed.");
         return true;
@@ -236,7 +238,7 @@ bool user_has_typed_x() {
         if (!first_key) {
 
         first_key = true;
-        Serials.printf("[CAUTION] Invalid Input (%c) continuing test...", (char)Xbee.read());
+        Serials.printf("[CAUTION] Invalid Input (%c), continuing...", (char)Xbee.read());
         return false;
     }
     }
