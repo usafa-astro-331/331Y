@@ -12,8 +12,11 @@ extern Adafruit_ADS1015 ads;
 // #include "FsLib/FsFile.h"
 #include <SdFat.h>
 
+#include "Adafruit_ADS1X15.h"
+
 extern SdFs sd;
 extern FsFile dataFile;
+extern Adafruit_ADS1015 ads;
 
 // Configuration
 inline constexpr uint32_t serial_decimation = 5;
@@ -71,6 +74,4 @@ int get_int_from_ground();
 bool get_command_from_ground();
 
 bool user_has_typed_x();
-
-bool create_and_open_file(FsFile *dataFile, const String& directory, const String& filename_preamble);
 

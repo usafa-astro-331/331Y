@@ -18,7 +18,7 @@
 extern FsFile dataFile;   // data file object
 extern TB9051FTGMotorCarrier driver;
 
-extern PicoEncoder enc;
+ PicoEncoder enc;
 
 // ICM_20948_I2C imu_sensor; // IMU object
 
